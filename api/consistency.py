@@ -512,7 +512,7 @@ def get_consistency(
             # Orient so `current` is always the requested article and `other` is the sibling
             if d["lang_a"] == art["lang"] and d["page_id_a"] == art["page_id"]:
                 conflicts.append({
-                    "id": d["id"], "type": d["conflict_type"], "confidence": d["confidence"],
+                    "id": d["id"], "type": d["conflict_type"], "confidence": d["confidence"], "current_is_a": True,
                     "explanation": d["explanation"], "verifier_reason": d["verifier_reason"],
                     "current": {"lang": d["lang_a"], "title": d["title_a"], "url": d["url_a"],
                                 "claim": d["claim_a"], "quote": d["quote_a"]},
@@ -521,7 +521,7 @@ def get_consistency(
                 })
             else:
                 conflicts.append({
-                    "id": d["id"], "type": d["conflict_type"], "confidence": d["confidence"],
+                    "id": d["id"], "type": d["conflict_type"], "confidence": d["confidence"], "current_is_a": False,
                     "explanation": d["explanation"], "verifier_reason": d["verifier_reason"],
                     "current": {"lang": d["lang_b"], "title": d["title_b"], "url": d["url_b"],
                                 "claim": d["claim_b"], "quote": d["quote_b"]},
