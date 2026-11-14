@@ -10,10 +10,6 @@ review_passages(passages, conflicts=...) judges each passage's WORDING (not its 
   and, if asked, finds conflicts: two passages from DIFFERENT articles stating incompatible facts
   about the same thing, each with its exact phrase (checked against the text).
 
-check_draft(text, passages, lang) does the same review for an editor's own draft sentence, lists
-the draft's factual errors against the passages (a wrong date, year, number or name, each with the
-exact phrase on both sides), and says which passages support or contradict it (POST /api/check).
-
 Results are cached in memory by a hash of the passage text (the conflicts by the set of
 passages), so asking again, or another question that retrieves the same paragraph, costs no call.
 """
@@ -68,36 +64,6 @@ time, or two passages of the same article. Most sets have no conflicts; then ret
 
 Reply with JSON only, no other text:
 {"passages": [...], "conflicts": [...]}"""
-
-DRAFT_TASK = """
-
-An editor wants to add the DRAFT below to Wikipedia. You also get numbered passages from \
-Wikipedia, each with its article.
-
-Task A. Judge the DRAFT's wording by the rules above:
-  {"level": "ok"}  or  {"level": "flagged", "category": ..., "phrases": [up to 3 exact phrases \
-from the draft], "reason": "<one line>", "worst_sentence": "<exact>", "suggestion": "<neutral \
-rewording, in the draft's language, same facts>"}
-
-Task B. Fact-check the DRAFT against the passages. Compare EVERY date, year, number, name and \
-place in the draft, character by character, with what the passages say about the same event. \
-List each fact the draft gets wrong, even if the difference is small or looks like a typo \
-(808 instead of 1808 is an error; 20 February instead of 21 February is an error):
-  {"draft_phrase": "<exact wrong phrase from the draft>", "n": <passage number>, \
-"passage_phrase": "<exact phrase from that passage with the right fact>", \
-"problem": "<one line: what is wrong>", "fix": "<the whole draft with only that fact corrected>"}
-Leaving out a detail is not an error. Rounding (about 300 for 312) is not an error. If nothing \
-is wrong, give an empty list.
-
-Task C. For EVERY passage say whether it supports or contradicts the draft's facts, or is \
-unrelated (only on a related subject, or neither confirms nor denies it):
-  {"n": <number>, "stance": "supports" | "contradicts" | "unrelated", \
-"phrase": "<the exact phrase from the passage that supports or contradicts it, or empty>"}
-A passage about the same event that gives a different date, year, number or name contradicts \
-the draft. A broader or narrower scope does not.
-
-Reply with JSON only, no other text:
-{"draft": {...}, "facts": [...], "evidence": [...]}"""
 
 _lock = threading.Lock()
 _passage_cache: "OrderedDict[str, dict]" = OrderedDict()
@@ -162,52 +128,6 @@ def review_passages(passages: list[dict], conflicts: bool = False, lang: str | N
             found_conf = _clean_conflicts(data.get("conflicts") or [], passages)
             _remember(_conflict_cache, conf_key, found_conf)
     return {"by_n": judged, "conflicts": found_conf, "llm_call": llm_call,
-            "ms": round((time.perf_counter() - t0) * 1000)}
-
-
-def check_draft(text: str, passages: list[dict], lang: str | None = None) -> dict:
-    """Review an editor's draft: wording, factual errors, and the stance of each passage. One LLM call."""
-    t0 = time.perf_counter()
-    blocks = "\n\n".join(f"[{n}] (article: {p['title']})\n{p['text']}" for n, p in enumerate(passages, 1))
-    lang_line = (f'\nWrite every "reason" and "problem" in {lang}. Keep "phrases", "draft_phrase", '
-                 '"passage_phrase", "suggestion" and "fix" in their own language.') if lang else ""
-    reply = chat([{"role": "system", "content": RULES + DRAFT_TASK + lang_line},
-                  {"role": "user", "content": f"DRAFT:\n{text}\n\nPassages:\n\n{blocks}"}],
-                 max_tokens=MAX_TOKENS, role="review")
-    data = _parse_json(reply)
-    draft = _clean_judgement(data.get("draft") or {}, text)
-    evidence = {}
-    for item in data.get("evidence") or []:
-        try:
-            n = int(item.get("n"))
-        except (TypeError, ValueError):
-            continue
-        if not 1 <= n <= len(passages):
-            continue
-        stance = str(item.get("stance", "")).strip().lower()
-        phrase = str(item.get("phrase") or "").strip()
-        evidence[n] = {"stance": stance if stance in ("supports", "contradicts") else "unrelated",
-                       "phrase": phrase if phrase and phrase in passages[n - 1]["text"] else None}
-    facts = []
-    for item in data.get("facts") or []:
-        if not isinstance(item, dict):
-            continue
-        dp = str(item.get("draft_phrase") or "").strip()
-        if not dp or dp not in text:
-            print(f"[review] fact issue dropped (phrase not in draft): {item}", file=sys.stderr, flush=True)
-            continue
-        try:
-            n = int(item.get("n"))
-        except (TypeError, ValueError):
-            n = None
-        if n is not None and not 1 <= n <= len(passages):
-            n = None
-        pp = str(item.get("passage_phrase") or "").strip()
-        facts.append({"draft_phrase": dp, "n": n,
-                      "passage_phrase": pp if n and pp and pp in passages[n - 1]["text"] else None,
-                      "problem": str(item.get("problem") or "").strip() or None,
-                      "fix": str(item.get("fix") or "").strip() or None})
-    return {"draft": draft, "facts": facts, "evidence": evidence,
             "ms": round((time.perf_counter() - t0) * 1000)}
 
 
