@@ -9,11 +9,12 @@
   <header>
     <div class="masthead">
       <span class="wordmark">Aikakone</span>
-      <button id="refreshBtn" class="quiet-btn" title="Compare this article with its other language editions again" hidden>Check again</button>
+      <button id="refreshBtn" class="quiet-btn" title="Compare this article with its other language editions again, ignoring the stored result" hidden>Check again</button>
     </div>
     <h1 id="pageTitle" class="page-title">Wikipedia, checked across languages and time</h1>
     <nav class="modes" id="modes" aria-label="Tools">
-      <button class="mode active" data-mode="check" title="Conflicts and missing content across language editions">Check</button>
+      <button class="mode active" data-mode="conflicts" title="Statements that contradict the other language editions">Conflicts<span class="n" id="nConflicts"></span></button>
+      <button class="mode" data-mode="gaps" title="Important content the other language editions have and this page lacks">Missing here<span class="n" id="nGaps"></span></button>
       <button class="mode" data-mode="ask" title="Ask Wikipedia, with citations, today or as of a past date">Ask</button>
       <button class="mode" data-mode="drift" title="How this article's position changed over the years, edit by edit">Drift</button>
     </nav>

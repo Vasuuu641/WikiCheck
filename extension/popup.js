@@ -7,8 +7,9 @@ const searchForm = document.getElementById("searchForm");
 const searchInput = document.getElementById("searchInput");
 const titleEl = document.getElementById("pageTitle");
 
-let mode = "check";          // check | ask | drift
-let checkTab = "conflicts";  // conflicts | gaps, inside Check
+let mode = "conflicts";      // conflicts | gaps | ask | drift
+let checkData = null;        // the last /api/consistency result: Conflicts and Missing here share it
+let checkKey = "";           // which article checkData is for
 let currentWiki = null;      // the article in the tab, or one picked from search results
 let currentTabId = null;
 let driftSource = null;
@@ -46,6 +47,15 @@ function parseWikiUrl(url) {
   } catch {
     return null;
   }
+}
+
+const isCheck = m => m === "conflicts" || m === "gaps";
+const wikiKey = w => (w ? `${w.lang}:${w.title}` : "");
+
+function setCounts(data) {
+  const show = data && data.found && data.article?.wikidata_id;
+  document.getElementById("nConflicts").textContent = show ? (data.conflicts || []).length : "";
+  document.getElementById("nGaps").textContent = show ? (data.gaps || []).length : "";
 }
 
 const pageTitle = () => (currentWiki ? currentWiki.title.replace(/_/g, " ") : "");
@@ -179,7 +189,6 @@ function renderData(data) {
 
   const confs = data.conflicts || [];
   const gaps = data.gaps || [];
-  if (checkTab === "conflicts" && confs.length === 0 && gaps.length > 0) checkTab = "gaps";
 
   const editions = (data.siblings || [])
     .map(s => `<a href="${esc(s.url)}" target="_blank" title="${esc(s.title)}">${esc(langName(s.lang))}</a>`).join(", ");
@@ -187,13 +196,7 @@ function renderData(data) {
     <p class="also">Compared with ${editions || "no other edition"}.
       <span title="${data.cached ? "Read from MariaDB" : "Analysed now and stored in MariaDB"}">${data.cached ? "Stored result" : "Analysed now"}, ${data.took_ms} ms.</span></p>`;
 
-  const tabs = `
-    <div class="tabs" role="tablist">
-      <button class="tab ${checkTab === "conflicts" ? "active" : ""}" data-tab="conflicts" role="tab">Conflicts<span class="n">${confs.length}</span></button>
-      <button class="tab ${checkTab === "gaps" ? "active" : ""}" data-tab="gaps" role="tab">Missing here<span class="n">${gaps.length}</span></button>
-    </div>`;
-
-  const list = checkTab === "conflicts"
+  const list = mode === "conflicts"
     ? (confs.length ? confs.map(conflictHtml).join("")
         : `<div class="state">No statement here contradicts the other editions.</div>`)
     : (gaps.length ? gaps.map(gapHtml).join("")
@@ -202,11 +205,7 @@ function renderData(data) {
   const sql = data.sql ? `
     <details><summary>The SQL MariaDB ran</summary><pre>${esc(data.sql.conflicts)}\n\n${esc(data.sql.gaps)}</pre></details>` : "";
 
-  content.innerHTML = also + tabs + list + sql;
-  content.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", () => {
-    checkTab = btn.dataset.tab;
-    renderData(data);
-  }));
+  content.innerHTML = also + list + sql;
   content.querySelectorAll(".find").forEach(btn => btn.addEventListener("click", () => {
     const c = confs[Number(btn.dataset.idx)];
     if (c) highlightOnCurrentPage(c.current.quote, btn);
@@ -215,8 +214,17 @@ function renderData(data) {
 
 async function load(refresh = false) {
   const seq = ++loadSeq;
+  const key = wikiKey(currentWiki);
   setHeader();
   refreshBtn.hidden = false;
+  if (!refresh && checkData && checkKey === key) {   // switching Conflicts <-> Missing here: no new request
+    renderData(checkData);
+    return;
+  }
+  const firstLook = checkKey !== key;
+  checkData = null;
+  checkKey = key;
+  setCounts(null);
   content.innerHTML = spinnerState("Comparing this article with its other language editions…",
     "A stored result comes back at once. A first analysis takes about 20 s.");
   try {
@@ -225,10 +233,15 @@ async function load(refresh = false) {
     const res = await fetch(`${API_BASE}/api/consistency?${qs}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    if (seq !== loadSeq || mode !== "check") return;
+    if (seq !== loadSeq || !isCheck(mode)) return;
+    checkData = data;
+    setCounts(data);
+    // First look at an article with no conflict but some missing content: open Missing here.
+    if (firstLook && mode === "conflicts" && !(data.conflicts || []).length && (data.gaps || []).length) setMode("gaps", false);
     renderData(data);
   } catch (err) {
-    if (seq !== loadSeq || mode !== "check") return;
+    if (seq !== loadSeq || !isCheck(mode)) return;
+    checkKey = "";
     content.innerHTML = `<div class="state">The Aikakone service at ${esc(API_BASE)} did not answer.
       <small>Start it with <code>make api</code> in the repository, then reopen this popup. (${esc(err.message)})</small></div>`;
   }
@@ -244,7 +257,7 @@ async function runSearch(q) {
     const res = await fetch(`${API_BASE}/api/consistency/search?` + new URLSearchParams({ q }));
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const d = await res.json();
-    if (seq !== loadSeq || mode !== "check") return;
+    if (seq !== loadSeq || !isCheck(mode)) return;
 
     const conf = (d.conflicts || []).map(c => `
       <div class="item">
@@ -306,7 +319,7 @@ searchForm.addEventListener("submit", e => {
   e.preventDefault();
   const q = searchInput.value.trim();
   if (!q) return;
-  setMode("check", false);
+  if (!isCheck(mode)) setMode("conflicts", false);
   runSearch(q);
 });
 
@@ -327,8 +340,8 @@ function setMode(next, render = true) {
     b.classList.toggle("active", on);
     b.setAttribute("aria-pressed", on ? "true" : "false");
   });
-  refreshBtn.hidden = next !== "check" || !currentWiki;
-  searchForm.hidden = next !== "check";
+  refreshBtn.hidden = !isCheck(next) || !currentWiki;
+  searchForm.hidden = !isCheck(next);
   if (!render) return;
   if (next === "ask") renderAsk();
   else if (next === "drift") renderDrift();
@@ -336,7 +349,9 @@ function setMode(next, render = true) {
   else renderNotWiki();
 }
 
-document.querySelectorAll("#modes .mode").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+document.querySelectorAll("#modes .mode").forEach(b => b.addEventListener("click", () => {
+  if (b.dataset.mode !== mode) setMode(b.dataset.mode);
+}));
 
 // ---------------------------------------------------------------------------------------------
 // Ask: cited answer from MariaDB passages, today or as of a date (api/ask.py)
@@ -525,5 +540,5 @@ function runDrift(q) {
 chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
   currentTabId = tabs[0]?.id ?? null;
   currentWiki = parseWikiUrl(tabs[0]?.url);
-  setMode("check");
+  setMode("conflicts");
 });
