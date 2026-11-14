@@ -129,7 +129,7 @@ def page(q: str = "", fixture: str = "", lang: str = ""):
 PAGE = r"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WikiCheck · Opinion drift</title>
+<title>WikiCheck · Version history</title>
 <style>
 /* Same look as the WikiCheck extension: Wikipedia's own type and colours, the two diff colours for
    "what it said" (yellow) and "what it says now" (blue). The ribbon colours encode a stance scale. */
@@ -244,12 +244,12 @@ footer { margin-top:40px; padding-top:10px; border-top:1px solid var(--soft); co
 <body>
 <header><div class="wrap">
   <div class="wordmark">WikiCheck</div>
-  <h1 id="title">Opinion drift</h1>
+  <h1 id="title">Version history</h1>
   <p class="lede">How Finnish Wikipedia's position on the same claims changed over the years, down to the edit that changed it.</p>
 </div></header>
 <main class="wrap">
 <form id="f"><input type="text" id="q" aria-label="Article or question" placeholder="An article, or a question such as Who started the Winter War?" value="{{ q }}" autofocus>
-<button id="go" type="submit">Trace</button></form>
+<button id="go" type="submit">Trace versions</button></form>
 <p class="ex" id="ex">Try{% for e in examples %}<button type="button" class="quiet" data-q="{{ e }}">{{ e }}</button>{% endfor %}<button type="button" class="quiet" data-fixture="1">A recorded run</button></p>
 <ul class="steps" id="steps" hidden>
   <li id="st-load">Reading the edit histories</li>
@@ -354,7 +354,7 @@ function start(q, fixture) {
   clearInterval(tickTimer); tickTimer = setInterval(() => {
     if (S.running && !S.done) { const e = ((Date.now() - tStart) / 1000);
       const el = document.querySelector('.steps li.run'); if (el) el.dataset.t = e.toFixed(0); } }, 500);
-  $('title').textContent = fixture ? 'A recorded run' : (q || 'Opinion drift');
+  $('title').textContent = fixture ? 'A recorded run' : (q || 'Version history');
   document.title = 'WikiCheck · ' + $('title').textContent;
   es = new EventSource('/api/drift/stream?fixture=' + (fixture ? '1' : '') + (FAST ? '&fast=1' : '') + '&q=' + encodeURIComponent(q || '') +
                        (q && q === PARAM_Q && PARAM_LANG ? '&lang=' + encodeURIComponent(PARAM_LANG) : ''));
@@ -379,7 +379,7 @@ function start(q, fixture) {
     if (S.rounds.length) { const li = $('st-bisect'); li.textContent = li.textContent.replace(/: .*/, '') +
       ': ' + S.changes.length + ' found'; } render(); });
   es.addEventListener('summary', e => { const d = JSON.parse(e.data); S.summary = d.text; if (!d.text) return;
-    $('summary').innerHTML = esc(d.text).split(/\n+/).filter(Boolean).map(p => '<p>' + p.replace(/^(ANSWER:|DRIFT:|RÉPONSE:|DÉRIVE:|SVAR:|DRIFT:|VASTAUS:|MUUTOS:)/, '<b>$1</b>') + '</p>').join('') +
+    $('summary').innerHTML = esc(d.text).split(/\n+/).filter(Boolean).map(p => '<p>' + p.replace(/^(ANSWER:|CHANGES:|DRIFT:|RÉPONSE:|DÉRIVE:|SVAR:|VASTAUS:|MUUTOS:)/, '<b>$1</b>') + '</p>').join('') +
       '<span class="ai">Written by Gemini from the articles and the changes below. Check the sources.</span>';
     $('summary').hidden = false; });
   es.addEventListener('done', e => { S.done = JSON.parse(e.data); stepText('st-bisect',

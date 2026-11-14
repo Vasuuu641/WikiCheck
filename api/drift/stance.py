@@ -265,13 +265,13 @@ def make_claims(question, arts):
 
 
 SUMMARY_SYSTEM = (
-    "You write the short summary at the top of an 'opinion drift' page. A reader asked a question; the page traced how several "
+    "You write the short summary at the top of a 'Version history' page. A reader asked a question; the page traced how several "
     "Finnish Wikipedia articles changed their position on shared claims over their edit history. You get the question, the "
     "opening of each article as it stands now, each claim's current position per article, and the change points found "
     "(date, article, what changed). Write plain text in the language of the question, at most 110 words, in exactly two "
     "paragraphs. The first starts with 'ANSWER:' and says what the current articles say in answer to the question, citing "
     "articles as [1], [2]; if they do not really address the question, say so plainly and do not guess. The second starts "
-    "with 'DRIFT:' and says whether the position on this has drifted: name the biggest change with its date and article, "
+    "with 'CHANGES:' and says how the position on this changed across versions: name the biggest change with its date and article, "
     "or say that no change point was found (and that this may be because the articles are only loosely related to the "
     "question). Use only the material given. Do not say who is right; report what the articles say."
 )
