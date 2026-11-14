@@ -460,6 +460,11 @@ function renderDrift() {
   if (title) runDrift(title);
 }
 
+// One colour per stance, the same as the chart on the full page, whichever side of "became" it is on.
+const STANCE_CLASS = { "stated as fact": "st-fact", "stated with attribution": "st-attr", "not addressed": "st-none",
+  "presented as disputed": "st-disp", "denied": "st-deny" };
+const stanceChip = w => `<span class="stance ${STANCE_CLASS[String(w).trim().toLowerCase()] || "st-none"}">${esc(w)}</span>`;
+
 // "Claim label: stated as fact until February 2018, not addressed since"
 function splitHeadline(h) {
   const m = String(h || "").match(/^(.*?):\s*(.+?) until (\w+ \d{4}),\s*(.+?) since$/);
@@ -469,7 +474,9 @@ function splitHeadline(h) {
 function runDrift(q) {
   stopDrift();
   const out = document.getElementById("driftOut");
-  const fullUrl = `${SITE_BASE}/drift?q=${encodeURIComponent(q)}`;
+  // On an article, q is its title and lang its edition: the service then runs on that article alone.
+  const onPage = currentWiki && q === pageTitle() ? `&lang=${encodeURIComponent(currentWiki.lang)}` : "";
+  const fullUrl = `${SITE_BASE}/drift?q=${encodeURIComponent(q)}${onPage}`;
   const SHOWN = 12;   // the popup is small: newest first, the rest are on the full page
   let articles = [], claims = {}, changes = [], summary = "", finished = false;
   let status = "Finding the article and its edit history…";
@@ -486,7 +493,7 @@ function runDrift(q) {
         <li>
           <span class="when">${esc(h ? h.when : (c.t || "").slice(0, 7))}</span>
           <span class="claim move">${esc(label)}</span>
-          ${h ? `<span class="move"><span class="was">${esc(h.was)}</span> became <span class="now">${esc(h.now)}</span></span>` : ""}
+          ${h ? `<span class="move">${stanceChip(h.was)} became ${stanceChip(h.now)}</span>` : ""}
           <span class="edit-note">${c.comment ? `Edit summary: “${esc(c.comment)}”. ` : ""}<a href="${esc(diff)}" target="_blank">See the edit</a></span>
         </li>`;
     }).join("");
@@ -509,8 +516,6 @@ function runDrift(q) {
   };
 
   draw();
-  // On an article, q is its title and lang its edition: the service then runs on that article alone.
-  const onPage = currentWiki && q === pageTitle() ? `&lang=${encodeURIComponent(currentWiki.lang)}` : "";
   driftSource = new EventSource(`${SITE_BASE}/api/drift/stream?q=${encodeURIComponent(q)}${onPage}`);
   on("sources", d => { articles = d.articles || []; status = "Writing the claims to follow…"; });
   on("claims", d => { (d.claims || []).forEach(c => { claims[c.id] = c; }); status = `Reading old versions against ${Object.keys(claims).length} claims…`; });

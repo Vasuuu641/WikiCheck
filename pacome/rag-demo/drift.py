@@ -132,144 +132,176 @@ def evidence():
 def page():
     q = request.args.get("q", "").strip()
     fixture = bool(request.args.get("fixture"))
-    return render_template_string(PAGE, nav=hub.BANNER, q=q, fixture=fixture, examples=EXAMPLES)
+    lang = request.args.get("lang", "").strip()[:3]
+    return render_template_string(PAGE, q=q, lang=lang, fixture=fixture, examples=EXAMPLES)
 
 
 PAGE = r"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Opinion drift · MariaDB time travel</title>
+<title>Aikakone · Opinion drift</title>
 <style>
-:root { --bg:#fff; --fg:#202122; --muted:#54595d; --line:#a2a9b1; --soft:#eaecf0; --card:#f8f9fa;
-        --link:#3366cc; --accent:#36c; --code:#f8f9fa; --red:#d33; --green:#14866d;
-        --fact:#1f5fbf; --attr:#9dc3ea; --disp:#f4a35f; --deny:#d1490f; --serif:Georgia,Times,serif;
-        --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; }
-@media (prefers-color-scheme: dark) {
-:root { --bg:#101418; --fg:#eaecf0; --muted:#a2a9b1; --line:#54595d; --soft:#27292d; --card:#1b1f23;
-        --link:#88a3e8; --accent:#6485d1; --code:#1b1f23; --red:#ff4242; --green:#2ec4a0;
-        --fact:#5b8fd6; --attr:#3d5f8f; --disp:#9a5c2e; --deny:#d1490f; } }
+/* Same look as the Aikakone extension: Wikipedia's own type and colours, the two diff colours for
+   "what it said" (yellow) and "what it says now" (blue). The ribbon colours encode a stance scale. */
+:root {
+  --paper:#ffffff; --wash:#f8f9fa; --ink:#202122; --muted:#54595d; --rule:#a2a9b1; --soft:#eaecf0;
+  --link:#3366cc; --this:#feeec8; --this-edge:#f0c14b; --other:#d8ecff; --other-edge:#6fa8dc;
+  --alert:#b32424; --good:#14866d;
+  --fact:#1f5fbf; --attr:#9dc3ea; --disp:#f4a35f; --deny:#d1490f;
+  /* names the chart script uses */
+  --bg:var(--paper); --fg:var(--ink); --line:var(--rule); --card:var(--wash); --accent:var(--link); --red:#d33; --green:var(--good);
+  --serif:"Linux Libertine","Libertinus Serif",Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
 * { box-sizing:border-box }
-body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.6 var(--sans) }
+html, body { margin:0 }
+body { background:var(--paper); color:var(--ink); font:14px/1.55 var(--sans) }
 a { color:var(--link); text-decoration:none } a:hover { text-decoration:underline }
-main { max-width:1400px; margin:0 auto; padding:20px clamp(16px,3vw,48px) 64px }
-h1 { font:400 1.8rem/1.3 var(--serif); margin:0 0 4px; padding-bottom:2px; border-bottom:1px solid var(--line) }
-.sub { color:var(--muted); margin:6px 0 14px; font-size:.9rem }
-form { display:flex; flex-wrap:wrap; gap:0; max-width:900px }
-input[type=text] { flex:1 1 320px; padding:7px 12px; font:inherit; font-size:1rem; color:inherit; background:var(--bg);
-                   border:1px solid var(--line); border-right:0; border-radius:2px 0 0 2px }
-input[type=text]:focus { outline:0; border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent) }
-button { padding:7px 18px; font:inherit; font-weight:700; color:#fff; background:var(--accent); border:1px solid var(--accent);
-         border-radius:0 2px 2px 0; cursor:pointer } button:disabled { opacity:.6; cursor:wait }
-.grid { display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:24px; align-items:start; margin-top:10px }
-@media (max-width:900px) { .grid { grid-template-columns:1fr } aside.panel { position:static !important } }
-aside.panel { position:sticky; top:12px; max-height:calc(100vh - 24px); overflow-y:auto; background:var(--card);
-              border:1px solid var(--line); font-size:.88rem }
-aside.panel h2 { margin:0; padding:7px 10px; text-align:center; background:var(--soft); font:700 .95rem var(--sans);
-                 border-bottom:1px solid var(--line) }
-.panel .pad { padding:10px 12px }
-.status { font-size:.9rem; color:var(--muted); margin:10px 0 } .status b { color:var(--fg) }
-.err { color:var(--red); border:1px solid var(--red); background:rgba(221,51,51,.06); padding:10px 12px; margin:12px 0 }
-#headlines { margin:12px 0; padding:0; list-style:none; font-size:.92rem }
-#headlines li { padding:3px 0 3px 18px; position:relative }
-#headlines li::before { content:'\25B6'; position:absolute; left:0; color:var(--accent); font-size:.7em; top:7px }
-#sparkwrap { display:flex; flex-wrap:wrap; gap:14px; margin:12px 0 6px }
-.spark { border:1px solid var(--line); background:var(--card); padding:6px 8px; font-size:.75rem; cursor:pointer }
-.spark.sel { outline:2px solid var(--accent) } .spark b { display:block; font-weight:600; margin-bottom:2px }
-#strips { border:1px solid var(--line); background:var(--card); position:relative }
-svg text { font:11px var(--sans); fill:var(--muted) }
-.lane { cursor:pointer } .tick { cursor:pointer }
-.legend { display:flex; gap:16px; flex-wrap:wrap; font-size:.8rem; color:var(--muted); margin:8px 2px }
-.legend i { display:inline-block; width:22px; height:11px; margin-right:5px; vertical-align:-1px; border:1px solid var(--line) }
-pre { background:var(--code); border:1px solid var(--soft); padding:8px; overflow-x:auto; font-size:.75rem; line-height:1.4 }
-.quote { border-left:3px solid var(--accent); margin:6px 0; padding:4px 10px; background:var(--soft); font-size:.85rem }
-.del { color:var(--red); text-decoration:line-through } .add { color:var(--green) }
-.kv { display:grid; grid-template-columns:auto 1fr; gap:2px 10px; font-size:.85rem } .kv b { font-weight:600 }
-.cursorline { stroke:var(--accent); stroke-width:1.5; cursor:ew-resize }
-#asoftext { max-height:340px; overflow-y:auto; white-space:pre-wrap; font-size:.8rem; line-height:1.5 }
-.steps { list-style:none; padding:10px 12px; margin:16px 0 0; font-size:.9rem; background:var(--card);
-         border:1px solid var(--line); border-left:4px solid var(--accent) }
-.steps li { padding:2px 0; color:var(--muted) } .steps li.done { color:var(--fg) }
-.steps li::before { content:'\25CB'; display:inline-block; width:1.5em }
-.steps li.done::before { content:'\2713'; color:var(--green); font-weight:700 }
-.steps li.err { color:var(--red) } .steps li.err::before { content:'\2717'; display:inline-block; width:1.5em; font-weight:700 }
-.steps li.run::before { content:''; width:.8em; height:.8em; margin-right:.7em; vertical-align:-1px; display:inline-block;
-                        border:2px solid var(--line); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite }
-.steps li.run[data-t]::after { content:' ' attr(data-t) ' s'; color:var(--accent); font-variant-numeric:tabular-nums }
-@keyframes spin { to { transform:rotate(360deg) } }
-#loadbar { height:3px; background:var(--soft); overflow:hidden; position:relative; margin:2px 0 10px; display:none }
-#loadbar.on { display:block }
-#loadbar i { position:absolute; left:0; top:0; height:3px; width:38%; background:var(--accent); animation:slide 1.15s ease-in-out infinite }
-@keyframes slide { 0% { transform:translateX(-100%) } 100% { transform:translateX(320%) } }
-#strips.pending { min-height:200px; background:
-   repeating-linear-gradient(0deg,var(--card) 0 108px,var(--line) 108px 110px) }
-.srcwrap { font-size:.88rem; margin:14px 0 4px; background:var(--card); border:1px solid var(--line); padding:8px 12px }
-ol.src { padding:0; margin:4px 0 0; list-style:none; counter-reset:s }
-ol.src li { counter-increment:s; padding:2px 0 2px 24px; position:relative }
-ol.src li::before { content:counter(s); position:absolute; left:2px; top:2px; color:var(--muted); font-weight:700 }
-.badge { display:inline-block; font-size:.68rem; text-transform:uppercase; padding:0 5px; border:1px solid var(--line);
-         border-radius:2px; margin-right:6px; color:var(--muted); background:var(--bg) }
-.meta { color:var(--muted); font-size:.8rem }
+button { font:inherit; cursor:pointer }
+:focus-visible { outline:2px solid var(--link); outline-offset:1px }
 [hidden] { display:none !important }
-.summary { border:1px solid var(--line); border-left:4px solid var(--accent); background:var(--card); padding:10px 14px; margin:12px 0; font-size:.95rem; max-width:900px }
-.summary p { margin:4px 0 } .summary .ai { display:block; margin-top:6px; font-size:.75rem; color:var(--muted) }
-.ex { margin:10px 0 0; font-size:.85rem; color:var(--muted) } .ex a { margin-right:14px; white-space:nowrap }
-.tools { display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin:10px 0 4px; font-size:.85rem; color:var(--muted) }
-.tools button { padding:3px 10px; font-weight:400; color:var(--fg); background:var(--card); border:1px solid var(--line); border-radius:2px }
+.wrap { max-width:1240px; margin:0 auto; padding:0 clamp(16px,3vw,32px) }
+
+header { border-bottom:1px solid var(--rule) }
+header .wrap { padding-top:16px; padding-bottom:14px }
+.wordmark { font:400 14px/1 var(--serif); letter-spacing:.04em; color:var(--muted) }
+h1 { margin:6px 0 4px; font:400 30px/1.2 var(--serif) }
+.lede { margin:0; color:var(--muted); max-width:72ch }
+
+main.wrap { padding-top:18px; padding-bottom:48px }
+form { display:flex; max-width:680px }
+input[type=text] { flex:1; min-width:0; padding:7px 10px; font:inherit; font-size:15px; color:inherit; background:var(--paper);
+  border:1px solid var(--rule); border-right:0; border-radius:2px 0 0 2px; outline:none }
+input[type=text]:focus { border-color:var(--link); box-shadow:inset 0 0 0 1px var(--link) }
+form button { padding:7px 18px; font-weight:600; color:#fff; background:var(--link); border:1px solid var(--link); border-radius:0 2px 2px 0 }
+form button:hover { background:#2a4b8d; border-color:#2a4b8d } form button:disabled { opacity:.6; cursor:wait }
+.quiet { padding:0; color:var(--link); background:none; border:0 } .quiet:hover { text-decoration:underline }
+.ex { margin:8px 0 0; font-size:13px; color:var(--muted) } .ex .quiet { margin-left:14px; text-align:left }
+
+.steps { list-style:none; padding:0; margin:14px 0 0; font-size:13px; color:var(--muted) }
+.steps li { padding:1px 0 } .steps li.done { color:var(--ink) }
+.steps li::before { content:''; display:inline-block; width:1.4em }
+.steps li.done::before { content:'\2713'; color:var(--good); font-weight:700 }
+.steps li.err { color:var(--alert) } .steps li.err::before { content:'\2717'; font-weight:700 }
+.steps li.run::before { width:.75em; height:.75em; margin-right:.65em; vertical-align:-1px; border:2px solid var(--soft);
+  border-top-color:var(--link); border-radius:50%; animation:spin .8s linear infinite }
+.steps li.run[data-t]::after { content:', ' attr(data-t) ' s'; font-variant-numeric:tabular-nums }
+@keyframes spin { to { transform:rotate(360deg) } }
+@media (prefers-reduced-motion: reduce) { .steps li.run::before, #loadbar i { animation-duration:3s } }
+.status { margin:10px 0 0; color:var(--muted) } .status b { color:var(--ink) }
+#loadbar { height:2px; background:var(--soft); overflow:hidden; position:relative; margin:10px 0 0; display:none; max-width:680px }
+#loadbar.on { display:block }
+#loadbar i { position:absolute; left:0; top:0; height:2px; width:38%; background:var(--link); animation:slide 1.15s ease-in-out infinite }
+@keyframes slide { 0% { transform:translateX(-100%) } 100% { transform:translateX(320%) } }
+.err { margin:12px 0; padding:8px 12px; color:var(--alert); background:#fee7e6; border-left:3px solid var(--alert) }
+
+.grid { display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:36px; align-items:start; margin-top:18px }
+@media (max-width:960px) { .grid { grid-template-columns:1fr } aside.panel { position:static !important; max-height:none !important; padding-left:0 !important; border-left:0 !important } }
+h2 { margin:26px 0 6px; padding-bottom:3px; font:400 19px/1.3 var(--serif); border-bottom:1px solid var(--soft) }
+
+.summary { margin-bottom:6px; font:400 17px/1.6 var(--serif); max-width:72ch }
+.summary p { margin:0 0 8px } .summary b { font:600 12px var(--sans); color:var(--muted); margin-right:4px }
+.summary .ai { display:block; font:12px var(--sans); color:var(--muted) }
+#srcwrap > h2 { margin-top:10px }
+ol.src { margin:4px 0 0; padding-left:22px } ol.src li { padding:1px 0 } ol.src li::marker { color:var(--muted) }
+.meta { color:var(--muted); font-size:12.5px } p.meta { margin:0 }
+
+/* the changes of position: same timeline as the extension */
+.timeline { margin:8px 0 0; padding:0; list-style:none; border-left:2px solid var(--soft); max-width:78ch }
+.timeline li { position:relative; padding:9px 0 9px 16px }
+.timeline li::before { content:""; position:absolute; left:-6px; top:15px; width:8px; height:8px; border-radius:50%;
+  background:var(--paper); border:2px solid var(--rule) }
+.timeline li.sel::before { background:var(--link); border-color:var(--link) }
+.timeline .empty::before { display:none }
+.when { font-size:12.5px; color:var(--muted) }
+.move { display:block } a.claim { font-weight:600; color:var(--ink) } li.sel a.claim, a.claim:hover { color:var(--link) }
+/* stance chips: the chart's colours (stated as fact, attributed, not addressed, disputed, denied) */
+.stance { padding:0 4px; border-radius:2px; white-space:nowrap }
+.st-fact { background:var(--fact); color:#fff } .st-attr { background:var(--attr); color:#202122 }
+.st-none { background:transparent; color:#54595d; box-shadow:inset 0 0 0 1px #a2a9b1 }
+.st-disp { background:var(--disp); color:#202122 } .st-deny { background:var(--deny); color:#fff }
+.edit-note { display:block; margin-top:2px; font-size:12.5px; color:var(--muted) }
+
+/* the charts */
+.tools { display:flex; gap:18px; align-items:center; flex-wrap:wrap; margin:0 0 8px; font-size:13px; color:var(--muted) }
 .tools label { cursor:pointer }
-#strips { overflow-x:auto } #strips svg { min-width:760px }
-.tick:focus { outline:none } circle.tick:focus-visible { stroke:var(--fg); stroke-width:2 }
-#headlines .empty { color:var(--muted) } #headlines li.sel a { font-weight:700 }
-footer { margin-top:36px; padding-top:12px; border-top:1px solid var(--line); color:var(--muted); font-size:.8rem }
+#sparkwrap { display:flex; flex-wrap:wrap; gap:6px 18px; margin:4px 0 10px }
+.spark { padding:2px 0 4px; font-size:12px; cursor:pointer; border-bottom:2px solid transparent }
+.spark b { display:block; font-weight:400; color:var(--link) } .spark:hover b { text-decoration:underline }
+.spark.sel { border-bottom-color:var(--ink) } .spark.sel b { color:var(--ink); font-weight:600 }
+#strips { position:relative; overflow-x:auto; border-top:1px solid var(--soft) } #strips svg { min-width:760px }
+#strips.pending { min-height:180px; background:repeating-linear-gradient(0deg,var(--paper) 0 58px,var(--soft) 58px 59px) }
+svg text { font:11px var(--sans); fill:var(--muted) }
+.lane, .tick { cursor:pointer } .tick:focus { outline:none } circle.tick:focus-visible { stroke:var(--ink); stroke-width:2 }
+.cursorline { stroke:var(--link); stroke-width:1.5; cursor:ew-resize }
+.legend { display:flex; gap:6px 16px; flex-wrap:wrap; font-size:12.5px; color:var(--muted); margin:8px 0 0 }
+.legend i { display:inline-block; width:20px; height:10px; margin-right:5px; vertical-align:-1px; border:1px solid var(--rule) }
+
+/* the evidence panel */
+aside.panel { position:sticky; top:16px; max-height:calc(100vh - 32px); overflow-y:auto; padding-left:20px; border-left:1px solid var(--soft); font-size:13.5px }
+aside.panel h2 { margin-top:0 }
+.muted { color:var(--muted) }
+.quote { margin:6px 0; padding:5px 10px; border-left:3px solid var(--soft); font:400 14.5px/1.5 var(--serif); overflow-wrap:anywhere }
+.quote.del { background:var(--this); border-color:var(--this-edge) }
+.quote.add { background:var(--other); border-color:var(--other-edge) }
+.kv { display:grid; grid-template-columns:auto 1fr; gap:2px 12px; margin-top:8px; font-size:13px } .kv b { font-weight:400; color:var(--muted) }
+pre { margin:8px 0; padding:8px; overflow-x:auto; font:11px/1.45 ui-monospace,Menlo,Consolas,monospace; background:var(--wash); border:1px solid var(--soft) }
+#asoftext { max-height:360px; overflow-y:auto; white-space:pre-wrap; font:400 14px/1.55 var(--serif) }
+p.err { margin:6px 0 }
+
+footer { margin-top:40px; padding-top:10px; border-top:1px solid var(--soft); color:var(--muted); font-size:12.5px; max-width:90ch }
 </style></head>
 <body>
-{{ nav|safe }}
-<main>
-<h1>Opinion drift</h1>
-<p class="sub">What the five closest Finnish Wikipedia articles <em>said then and say now</em> about your question.
-Every step in the ribbons below sits on a real edit found by binary search over the MariaDB edit log.</p>
-<form id="f"><input type="text" id="q" placeholder="Ask in English, Finnish or Swedish" value="{{ q }}" autofocus>
-<button id="go" type="submit">Trace drift</button></form>
-<p class="ex" id="ex">Try: {% for e in examples %}<a href="/drift?q={{ e|urlencode }}">{{ e }}</a>{% endfor %}<a href="/drift?fixture=1">replay the demo</a></p>
-<div class="tools" id="tools" hidden>
-  <label><input type="checkbox" id="onlychg"> only claims with a change point</label>
-  <button type="button" id="dl">Download results (JSON)</button><button type="button" id="cp">Copy link</button>
-</div>
+<header><div class="wrap">
+  <div class="wordmark">Aikakone</div>
+  <h1 id="title">Opinion drift</h1>
+  <p class="lede">How Finnish Wikipedia's position on the same claims changed over the years, down to the edit that changed it.</p>
+</div></header>
+<main class="wrap">
+<form id="f"><input type="text" id="q" aria-label="Article or question" placeholder="An article, or a question such as Who started the Winter War?" value="{{ q }}" autofocus>
+<button id="go" type="submit">Trace</button></form>
+<p class="ex" id="ex">Try{% for e in examples %}<button type="button" class="quiet" data-q="{{ e }}">{{ e }}</button>{% endfor %}<button type="button" class="quiet" data-fixture="1">A recorded run</button></p>
 <ul class="steps" id="steps" hidden>
-  <li id="st-load">Reading Finnish edit histories (lazy load, ~4 s per article)</li>
-  <li id="st-claims">Generating the shared claims (Gemini)</li>
-  <li id="st-grid">Grid round: scoring 9 versions per article against every claim (~45 requests)</li>
-  <li id="st-bisect">Bisecting change points (up to 14 rounds)</li>
+  <li id="st-load">Reading the edit histories</li>
+  <li id="st-claims">Writing the claims to follow</li>
+  <li id="st-grid">Reading old versions against every claim</li>
+  <li id="st-bisect">Narrowing down the edits</li>
 </ul>
 <p class="status" id="status" hidden></p>
 <div id="loadbar"><i></i></div>
 <div class="err" id="err" hidden></div>
-<div class="srcwrap" id="srcwrap" hidden><b>Sources</b> — the five Finnish articles behind the strips:<ol id="srclist" class="src"></ol></div>
-<div class="summary" id="summary" hidden></div>
-<ul id="headlines"></ul>
 <div class="grid">
 <section>
+  <div class="summary" id="summary" hidden></div>
+  <div id="srcwrap" hidden><h2>Articles followed</h2>
+    <p class="meta">Numbered as the lanes in each row of the chart.</p><ol id="srclist" class="src"></ol></div>
+  <h2 id="charthead" hidden>Position over time</h2>
+  <div class="tools" id="tools" hidden>
+    <label><input type="checkbox" id="onlychg"> Only claims that changed</label>
+    <button type="button" class="quiet" id="dl">Download the results (JSON)</button>
+    <button type="button" class="quiet" id="cp">Copy link</button>
+  </div>
   <div id="sparkwrap"></div>
   <div id="strips"></div>
-  <div class="legend">
-    <span><i style="background:var(--fact)"></i>stated as fact</span>
-    <span><i style="background:var(--attr)"></i>attributed / hedged</span>
-    <span><i style="background:transparent"></i>not addressed</span>
-    <span><i style="background:var(--disp)"></i>presented as disputed</span>
-    <span><i style="background:var(--deny)"></i>denied</span>
-    <span><i style="background:repeating-linear-gradient(45deg,var(--line) 0 2px,transparent 2px 6px)"></i>edit war</span>
-    <span>opacity = how present the claim is; <b>|</b> = the exact change-point edit</span>
+  <div class="legend" id="legend" hidden>
+    <span><i style="background:var(--fact)"></i>Stated as fact</span>
+    <span><i style="background:var(--attr)"></i>Attributed or hedged</span>
+    <span><i style="background:transparent"></i>Not addressed</span>
+    <span><i style="background:var(--disp)"></i>Presented as disputed</span>
+    <span><i style="background:var(--deny)"></i>Denied</span>
+    <span><i style="background:repeating-linear-gradient(45deg,var(--line) 0 2px,transparent 2px 6px)"></i>Edit war</span>
+    <span>Fainter means less present. A dot marks the exact edit that changed a position.</span>
   </div>
+  <h2 id="chghead" hidden>Changes of position</h2>
+  <ol class="timeline" id="headlines"></ol>
 </section>
-<aside class="panel"><h2>Proof</h2><div class="pad" id="proof">
-<p class="muted">Click a tick for the edit that changed a position, a ribbon cell for the evidence paragraph,
-or drag the vertical cursor to read an article as it stood that day.</p></div></aside>
+<aside class="panel"><h2>Evidence</h2><div id="proof">
+<p class="muted">Choose a change, a dot or a coloured cell to see the edit and its text, or drag the blue line across
+the chart to read an article as it stood on that day.</p></div></aside>
 </div>
-<footer>Text: Wikipedia, CC BY-SA 4.0 · Stances scored by the Gemini Decisions API against the same claims for every
-version · Boundaries located by binary search over MariaDB system-versioned history · Positions and stances are
-machine-judged; check the linked diffs.<br>
-<b>Known limits:</b> Finnish history only · a topic with no Finnish article is dropped from the five ·
-snapshots are cut at 16,000 cleaned characters · a claim that appears and disappears between two grid probes
-outside an edit war can be missed.</footer>
+<footer>Text from Wikipedia, CC BY-SA 4.0. Every version is read against the same claims by the Gemini Decisions API, and each
+change is located by binary search over MariaDB's system-versioned history. Positions are machine-judged: check the edit
+before relying on it. Finnish articles only; versions are read up to 16,000 characters.</footer>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -280,7 +312,7 @@ const tms = t => Date.parse(t);
 const COL = { 2:'var(--fact)', 1:'var(--attr)', [-1]:'var(--disp)', [-2]:'var(--deny)' };
 function bucket(s, p) { if (p < 0.5) return 0; return s > 0.6 ? 2 : s > 0.15 ? 1 : s < -0.6 ? -2 : s < -0.15 ? -1 : 0; }
 const LANE_H = 10, Lanes = () => S.articles.length || 5;
-const ROW_H = () => Lanes() * LANE_H + 20;
+const ROW_H = () => Math.max(Lanes() * LANE_H + 20, 40);   // room for a two-line claim label
 function wrap(text, max, lines) {
   const words = String(text).split(' '), out = []; let cur = '';
   for (const w of words) {
@@ -332,51 +364,71 @@ function start(q, fixture) {
   clearInterval(tickTimer); tickTimer = setInterval(() => {
     if (S.running && !S.done) { const e = ((Date.now() - tStart) / 1000);
       const el = document.querySelector('.steps li.run'); if (el) el.dataset.t = e.toFixed(0); } }, 500);
-  es = new EventSource('/api/drift/stream?fixture=' + (fixture ? '1' : '') + (FAST ? '&fast=1' : '') + '&q=' + encodeURIComponent(q || ''));
+  $('title').textContent = fixture ? 'A recorded run' : (q || 'Opinion drift');
+  document.title = 'Aikakone · ' + $('title').textContent;
+  es = new EventSource('/api/drift/stream?fixture=' + (fixture ? '1' : '') + (FAST ? '&fast=1' : '') + '&q=' + encodeURIComponent(q || '') +
+                       (q && q === PARAM_Q && PARAM_LANG ? '&lang=' + encodeURIComponent(PARAM_LANG) : ''));
   es.addEventListener('sources', e => { const d = JSON.parse(e.data); S.articles = d.articles; setAxis(d.articles); $('tools').hidden = false;
     setStep('st-load', 'done'); stepText('st-claims', null, 'run');
-    $('srclist').innerHTML = d.articles.map(a => '<li id="src' + a.i + '"><span class="badge">fi</span><a href="' + esc(a.url) +
-      '" target="_blank" rel="noopener">' + esc(a.title) + '</a> <span class="meta">' + a.n_revs.toLocaleString() +
-      ' versions, ' + esc(String(a.first).slice(0, 10)) + ' → ' + esc(String(a.last).slice(0, 10)) +
-      (a.distance !== undefined ? ' · distance to your question ' + a.distance.toFixed(2) : '') + '</span></li>').join('') +
+    $('srclist').innerHTML = d.articles.map(a => '<li id="src' + a.i + '"><a href="' + esc(a.url) +
+      '" target="_blank" rel="noopener">' + esc(a.title) + '</a> <span class="meta">' + a.n_revs.toLocaleString('en') +
+      ' versions, ' + esc(String(a.first).slice(0, 4)) + ' to ' + esc(String(a.last).slice(0, 4)) + '</span></li>').join('') +
       ((d.timings && d.timings.dropped_far) ? '<li class="meta" style="list-style:none">' + d.timings.dropped_far + ' further article(s) left out: too far from your question.</li>' : '');
-    $('srcwrap').hidden = false;
-    $('status').textContent = d.articles.length + ' articles with edit history (' +
-      d.articles.reduce((s, a) => s + a.n_revs, 0).toLocaleString() + ' versions). Generating claims…'; render(); });
+    $('srcwrap').hidden = false; $('charthead').hidden = false; $('legend').hidden = false;
+    $('status').textContent = d.articles.length + ' article' + (d.articles.length === 1 ? '' : 's') + ', ' +
+      d.articles.reduce((s, a) => s + a.n_revs, 0).toLocaleString('en') + ' versions. Writing the claims…'; render(); });
   es.addEventListener('claims', e => { S.claims = JSON.parse(e.data).claims;
     setStep('st-claims', 'done'); stepText('st-grid', null, 'run'); $('strips').classList.remove('pending');
-    $('status').textContent = S.claims.length + ' claims generated. Scoring the coarse grid…'; render(); });
+    $('status').textContent = S.claims.length + ' claims. Reading old versions against them…'; render(); });
   es.addEventListener('probes', e => { const d = JSON.parse(e.data); d.items.forEach(addProbe); S.rounds.push(d.round);
     if (d.round === 0) { setStep('st-grid', 'done'); stepText('st-bisect', null, 'run'); }
-    $('status').textContent = 'Round ' + d.round + ': ' + d.items.length + ' versions scored' +
-      (d.round ? ' — narrowing ' + S.changes.length + ' change points so far…' : ' — coarse ribbons shown, sharpening next…');
+    $('status').textContent = d.round ? 'Round ' + d.round + ': ' + S.changes.length + ' change' + (S.changes.length === 1 ? '' : 's') + ' found so far, narrowing down the edits…'
+                                      : 'First pass done: the chart is rough, sharpening it now…';
     render(); });
   es.addEventListener('change', e => { const c = JSON.parse(e.data); S.changes.push(c); renderHeadlines();
-    if (S.rounds.length) { const li = $('st-bisect'); li.textContent = li.textContent.replace(/ — .*/, '') +
-      ' — found ' + S.changes.length + ' change points'; } render(); });
+    if (S.rounds.length) { const li = $('st-bisect'); li.textContent = li.textContent.replace(/: .*/, '') +
+      ': ' + S.changes.length + ' found'; } render(); });
   es.addEventListener('summary', e => { const d = JSON.parse(e.data); S.summary = d.text; if (!d.text) return;
     $('summary').innerHTML = esc(d.text).split(/\n+/).filter(Boolean).map(p => '<p>' + p.replace(/^(ANSWER:|DRIFT:|RÉPONSE:|DÉRIVE:|SVAR:|DRIFT:|VASTAUS:|MUUTOS:)/, '<b>$1</b>') + '</p>').join('') +
-      '<span class="ai">Written by Gemini from the current article openings, the claim positions and the change points above; machine-generated, check the sources.</span>';
+      '<span class="ai">Written by Gemini from the articles and the changes below. Check the sources.</span>';
     $('summary').hidden = false; });
   es.addEventListener('done', e => { S.done = JSON.parse(e.data); stepText('st-bisect',
-    'Bisection finished: ' + S.changes.length + ' change points located on exact edits', 'done'); finishRun(); });
+    'Narrowing down the edits: ' + S.changes.length + ' found, each on an exact edit', 'done'); finishRun(); });
   es.addEventListener('problem', e => { $('err').textContent = JSON.parse(e.data); $('err').hidden = false;
     const cur = document.querySelector('.steps li.run'); if (cur) cur.className = 'err'; finishRun(); });
-  es.onerror = () => { if (S.running) { $('err').textContent = 'Connection to the server was lost.'; $('err').hidden = false; finishRun(); } };
+  es.onerror = () => { if (S.running) { $('err').textContent = 'The connection to the server was lost. Run the trace again.'; $('err').hidden = false; finishRun(); } };
 }
 function finishRun() { S.running = false; $('go').disabled = false; clearInterval(tickTimer); if (es) es.close();
   $('loadbar').classList.remove('on'); $('strips').classList.remove('pending'); renderHeadlines();
-  if (S.done) $('status').innerHTML = '<b>Done in ' + ((Date.now() - tStart) / 1000).toFixed(1) + ' s:</b> ' + S.done.requests +
-    ' Decisions requests, ' + (S.done.tokens/1e6).toFixed(2) + ' M tokens' +
-    (S.done.cache_hits ? ' · ' + S.done.cache_hits + ' stances from cache (repeat runs are instant)' : '') + '.'; }
+  if (S.done) { $('status').innerHTML = '<b>' + S.changes.length + ' change' + (S.changes.length === 1 ? '' : 's') + ' of position</b> in ' +
+    ((Date.now() - tStart) / 1000).toFixed(1) + ' s. ' + S.done.requests + ' requests to the Gemini Decisions API' +
+    (S.done.cache_hits ? ', ' + S.done.cache_hits + ' answers reused from earlier runs' : '') + '.';
+    $('steps').hidden = true; } }
+// One colour per stance, the same as the chart, whichever side of "became" it is on.
+const STANCE_CLASS = { 'stated as fact': 'st-fact', 'stated with attribution': 'st-attr', 'not addressed': 'st-none',
+  'presented as disputed': 'st-disp', 'denied': 'st-deny' };
+const stanceChip = w => '<span class="stance ' + (STANCE_CLASS[String(w).trim().toLowerCase()] || 'st-none') + '">' + esc(w) + '</span>';
+// "Claim label: stated as fact until February 2018, not addressed since"
+function splitHeadline(h) {
+  const m = String(h || '').match(/^(.*?):\s*(.+?) until (\w+ \d{4}),\s*(.+?) since$/);
+  return m ? { claim: m[1], was: m[2], when: m[3], now: m[4] } : null;
+}
 function renderHeadlines() {
   const ul = $('headlines'); ul.innerHTML = '';
-  S.changes.map((c, i) => [c, i]).sort((x, y) => x[0].t < y[0].t ? -1 : 1).forEach(([c, i]) => {
+  $('chghead').hidden = !S.changes.length && !S.done;
+  S.changes.map((c, i) => [c, i]).sort((x, y) => x[0].t < y[0].t ? 1 : -1).forEach(([c, i]) => {
+    const h = splitHeadline(c.headline);
+    const label = h ? h.claim : ((S.claims.find(x => x.id === c.claim) || {}).label || c.claim);
+    const art = S.articles[c.a] ? S.articles[c.a].title : '';
     const li = document.createElement('li'); if (S.selChange === i) li.className = 'sel';
-    li.innerHTML = '<a href="#" data-idx="' + i + '"><span class="meta">' + esc(c.t.slice(0, 7)) + ' · ' + esc(S.articles[c.a].title) + '</span> — ' + esc(c.headline) + '</a>';
+    li.innerHTML = '<span class="when">' + esc(h ? h.when : c.t.slice(0, 7)) + (S.articles.length > 1 ? ', ' + esc(art) : '') + '</span>' +
+      '<a href="#" class="claim move">' + esc(label) + '</a>' +
+      (h ? '<span class="move">' + stanceChip(h.was) + ' became ' + stanceChip(h.now) + '</span>'
+         : '<span class="move">' + esc(c.headline) + '</span>') +
+      (c.comment ? '<span class="edit-note">Edit summary: “' + esc(c.comment) + '”</span>' : '');
     li.querySelector('a').onclick = ev => { ev.preventDefault(); showChange(S.changes[i], i); };
     ul.appendChild(li); });
-  if (!S.changes.length && S.done) ul.innerHTML = '<li class="empty">No change point found: the five articles kept the same position on every claim.</li>';
+  if (!S.changes.length && S.done) ul.innerHTML = '<li class="empty muted">The articles kept the same position on every claim.</li>';
 }
 
 let raf = 0;
@@ -461,7 +513,7 @@ function drawStrips() {
   svg.querySelectorAll('.claimlab').forEach(el => el.addEventListener('click', ev => { ev.stopPropagation();
     const cl = S.claims.find(x => x.id === el.dataset.c); if (!cl) return;
     $('proof').innerHTML = '<b>' + esc(cl.label) + '</b><div class="quote">' + esc(cl.text) + '</div>' +
-      (cl.theme ? '<p class="meta">theme: ' + esc(cl.theme) + '</p>' : ''); }));
+      (cl.theme ? '<p class="meta">Theme: ' + esc(cl.theme) + '</p>' : ''); }));
   svg.querySelectorAll('.lane').forEach(el => el.addEventListener('click', ev => { ev.stopPropagation();
     showEvidence(+el.dataset.a, el.dataset.c, +el.dataset.rev); }));
   dragCursor(svg);
@@ -492,7 +544,7 @@ function loadAsof(date) {
         return;
       }
       box.innerHTML = '<b>' + esc(sel.title) + '</b> — ' + esc(date) + ' (rev ' + esc(d.rev_id) + ')<br>' +
-        '<a href="https://fi.wikipedia.org/?curid=' + sel.page_id + '" target="_blank" rel="noopener">fi.wikipedia.org</a>' +
+        '<a href="https://fi.wikipedia.org/w/index.php?oldid=' + d.rev_id + '" target="_blank" rel="noopener">This version on Wikipedia</a>' +
         '<pre>' + esc(d.sql) + '</pre><div id="asoftext">' + esc(d.text) + '</div>';
     });
 }
@@ -503,19 +555,19 @@ function showChange(c, idx) {
   const w = v => (v[0] >= 0 ? '+' : '') + Number(v[0]).toFixed(2) + ' / ' + Number(v[1]).toFixed(2);
   $('proof').innerHTML =
     '<b>' + esc(cl.label) + '</b><div class="muted" style="margin-bottom:6px">' + esc(cl.text) + '</div>' +
-    '<div class="kv"><b>Date</b><span>' + esc(c.t.slice(0, 10)) + '</span><b>Editor</b><span>' + esc(c.user) + '</span>' +
-    '<b>Summary</b><span>' + esc(c.comment) + '</span><b>Stance</b><span>' + esc(w(c.from)) + ' → ' + esc(w(c.to)) + '</span></div>' +
-    '<p style="margin:8px 0 4px"><b>Removed</b></p><div class="quote del">' + c.hunk.del.map(esc).join('<br>') + '</div>' +
-    '<p style="margin:8px 0 4px"><b>Added</b></p><div class="quote add">' + c.hunk.add.map(esc).join('<br>') + '</div>' +
-    '<p><a href="https://fi.wikipedia.org/?diff=' + c.rev_after + '" target="_blank" rel="noopener">open this diff on Wikipedia</a> · ' +
-    '<a href="#" id="evlink">where does the claim sit?</a></p>' +
+    '<div class="kv"><b>Article</b><span>' + esc(a.title) + '</span><b>Date</b><span>' + esc(c.t.slice(0, 10)) + '</span><b>Editor</b><span>' + esc(c.user) + '</span>' +
+    '<b>Edit summary</b><span>' + esc(c.comment || 'none') + '</span><b>Stance, presence</b><span>' + esc(w(c.from)) + ' became ' + esc(w(c.to)) + '</span></div>' +
+    (c.hunk.del.length ? '<p style="margin:10px 0 0">What the edit removed</p><div class="quote del">' + c.hunk.del.map(esc).join('<br>') + '</div>' : '') +
+    (c.hunk.add.length ? '<p style="margin:10px 0 0">What the edit added</p><div class="quote add">' + c.hunk.add.map(esc).join('<br>') + '</div>' : '') +
+    '<p><a href="https://fi.wikipedia.org/w/index.php?diff=' + c.rev_after + '&oldid=' + c.rev_before + '" target="_blank" rel="noopener">See the edit on Wikipedia</a>' +
+    '<button type="button" class="quiet" id="evlink" style="margin-left:16px">Find the paragraph that states the claim</button></p>' +
     '<div id="evout" class="muted"></div>';
   $('evlink').onclick = ev => { ev.preventDefault();
     $('evout').textContent = 'Searching the text tree…';
     fetch('/api/drift/evidence?page_id=' + a.page_id + '&rev_id=' + c.rev_after + '&claim=' + encodeURIComponent(cl.text))
       .then(r => r.json()).then(d => {
         $('evout').innerHTML = d.error ? '<span class="err">' + esc(d.error) + '</span>' :
-          '<div class="quote">' + esc(d.paragraph) + '</div><span class="muted">' + d.questions + ' yes/no questions asked</span>'; });
+          '<div class="quote">' + esc(d.paragraph) + '</div><span class="muted">Found with ' + d.questions + ' yes or no questions.</span>'; });
   };
 }
 function showEvidence(ai, cid, revId) {
@@ -536,7 +588,7 @@ function drawSparks() {
     const pts = act.map((r, i) => (i / n * 160).toFixed(1) + ',' + (26 - r[1] / hi * 24).toFixed(1)).join(' ');
     const bars = act.map((r, i) => r[2] ? '<rect x="' + (i / n * 160).toFixed(1) + '" y="2" width="1.6" height="24" fill="var(--red)" opacity=".7"/>' : '').join('');
     return '<div class="spark' + (S.selArticle === ai ? ' sel' : '') + '" data-i="' + ai + '" title="' + esc(a.title) +
-      ': ' + a.n_revs + ' versions, ' + (a.wars || []).length + ' edit wars (red = reverts)"><b>' + esc(a.title) +
+      ': ' + a.n_revs + ' versions, ' + (a.wars || []).length + ' edit wars (red marks are reverts). Choose it to read it at the blue line."><b>' + (ai + 1) + '. ' + esc(a.title) +
       '</b><svg width="164" height="28" viewBox="0 0 164 28">' + bars +
       '<polyline points="' + pts + '" fill="none" stroke="var(--link)" stroke-width="1.2"/></svg></div>';
   }).join('');
@@ -560,7 +612,12 @@ $('cp').addEventListener('click', async () => { try { await navigator.clipboard.
 const FAST = new URLSearchParams(location.search).has('fast');
 const PARAM_FIXTURE = {{ 'true' if fixture else 'false' }};
 const PARAM_Q = {{ q|tojson }};
+const PARAM_LANG = {{ lang|tojson }};
+document.querySelectorAll('#ex button').forEach(b => b.addEventListener('click', () => {
+  const fx = !!b.dataset.fixture, q = b.dataset.q || '';
+  $('q').value = q;
+  history.replaceState(null, '', fx ? '/drift?fixture=1' : '/drift?q=' + encodeURIComponent(q));
+  start(q, fx); }));
 if (PARAM_FIXTURE || PARAM_Q) start(PARAM_Q, PARAM_FIXTURE);
-else $('status').textContent = 'Ask a question, or add ?fixture=1 to watch the demo replay.';
 </script>
 </body></html>"""

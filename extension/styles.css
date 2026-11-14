@@ -174,6 +174,9 @@ pre {
 .when { font-size: 11.5px; color: var(--muted); }
 .claim { font-weight: 600; }
 .move { display: block; }
-.was { background: var(--this); padding: 0 3px; }
-.now { background: var(--other); padding: 0 3px; }
+/* stance chips: the chart's colours (stated as fact, attributed, not addressed, disputed, denied) */
+.stance { padding:0 4px; border-radius:2px; white-space:nowrap }
+.st-fact { background:#1f5fbf; color:#fff } .st-attr { background:#9dc3ea; color:#202122 }
+.st-none { background:transparent; color:#54595d; box-shadow:inset 0 0 0 1px #a2a9b1 }
+.st-disp { background:#f4a35f; color:#202122 } .st-deny { background:#d1490f; color:#fff }
 .edit-note { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
