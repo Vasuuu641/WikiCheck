@@ -201,10 +201,7 @@ function renderData(data) {
     : (gaps.length ? gaps.map(gapHtml).join("")
         : `<div class="state">The other editions add nothing important that this page lacks.</div>`);
 
-  const sql = data.sql ? `
-    <details><summary>The SQL MariaDB ran</summary><pre>${esc(data.sql.conflicts)}\n\n${esc(data.sql.gaps)}</pre></details>` : "";
-
-  content.innerHTML = also + list + sql;
+  content.innerHTML = also + list;
   content.querySelectorAll(".find").forEach(btn => btn.addEventListener("click", () => {
     const c = confs[Number(btn.dataset.idx)];
     if (c) highlightOnCurrentPage(c.current.quote, btn);
@@ -427,8 +424,7 @@ async function runAsk(question, asOf) {
       <p class="also">${asOf ? `As Wikipedia stood on ${esc(asOf)}. ` : ""}${
         flaggedN ? `${flaggedN} source${flaggedN === 1 ? "" : "s"} flagged for wording. ` : "Every source reads as neutral. "}${(d.took_ms / 1000).toFixed(1)} s.</p>
       ${confs ? `<h2 class="section-label">Sources that disagree</h2>${confs}` : ""}
-      ${cits ? `<h2 class="section-label">Sources</h2>${cits}` : ""}
-      ${d.sql ? `<details><summary>The SQL MariaDB ran</summary><pre>${esc(d.sql)}</pre></details>` : ""}`;
+      ${cits ? `<h2 class="section-label">Sources</h2>${cits}` : ""}`;
   } catch (err) {
     if (seq !== loadSeq || !document.getElementById("askOut")) return;
     out.innerHTML = `<div class="state">No answer: ${esc(err.message)}</div>`;

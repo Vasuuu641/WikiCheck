@@ -530,12 +530,12 @@ function loadAsof(date) {
       if (d.error) { box.innerHTML = '<p class="err">' + esc(d.error) + '</p>'; return; }
       if (d.rev_id === null) {
         box.innerHTML = '<b>' + esc(sel.title) + '</b> — ' + esc(date) +
-          '<pre>' + esc(d.sql) + '</pre><p class="muted">The article did not exist yet on that date.</p>';
+          '<p class="muted">The article did not exist yet on that date.</p>';
         return;
       }
       box.innerHTML = '<b>' + esc(sel.title) + '</b> — ' + esc(date) + ' (rev ' + esc(d.rev_id) + ')<br>' +
         '<a href="https://fi.wikipedia.org/w/index.php?oldid=' + d.rev_id + '" target="_blank" rel="noopener">This version on Wikipedia</a>' +
-        '<pre>' + esc(d.sql) + '</pre><div id="asoftext">' + esc(d.text) + '</div>';
+        '<div id="asoftext">' + esc(d.text) + '</div>';
     });
 }
 function showChange(c, idx) {
