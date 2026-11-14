@@ -7,7 +7,6 @@ warmer:
 import argparse
 import json
 import threading
-import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -16,36 +15,15 @@ from urllib.parse import quote
 import numpy as np
 import requests
 
+from api import decisions
 from api.conflicts import examine
-from api.llm import google_key
-from api.search import connect
+from api.llm import CHECK_MODEL, gemini
+from api.search import connect, embed_texts as _embed
 
 GAP_THRESH = 0.48
 MIN_CHARS = 200
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 REF_LANGS = ["en", "fi", "sv", "de", "fr", "es", "ru", "ja", "it", "pt", "nl", "pl", "uk", "ar", "zh"]
 MAX_SIBLINGS = 3
-
-GAP_FILTER_PROMPT = """You are a Wikipedia editor comparing two language editions of the same topic.
-Below are candidate paragraphs from {src_lang}:{src_title} that had low embedding similarity
-against {dst_lang}:{dst_title}, followed by the full text of {dst_lang}:{dst_title}.
-
-For each candidate paragraph [idx]:
-1. Is its core factual content genuinely ABSENT from {dst_lang}:{dst_title}?
-   Mark truly_missing=false if {dst_lang}:{dst_title} already covers the same facts (even briefly or in different words),
-   or if the paragraph is just boilerplate, a list, or trivia.
-2. Rate encyclopedic importance for a reader/editor of {dst_lang}: "high" (major historical event, key bio milestone,
-   significant statistics, whole missing topic/section), "medium" (useful supporting detail), or "low" (minor local color/trivia).
-3. Write a 1-sentence English summary of what is missing (empty string if truly_missing=false).
-
-Return ONLY JSON: {{"items":[{{"idx":0,"truly_missing":true,"importance":"high","summary":"..."}}]}}
-
-=== CANDIDATE PARAGRAPHS FROM {src_lang}:{src_title} ===
-{candidates}
-
-=== TARGET ARTICLE {dst_lang}:{dst_title} ===
-{dst_text}"""
-
 
 def split_paragraphs(text: str) -> list[str]:
     parts = [p.strip() for p in re.split(r"\n+", text or "")]
@@ -56,20 +34,12 @@ def split_paragraphs(text: str) -> list[str]:
 
 
 def embed_texts(texts: list[str]) -> np.ndarray:
+    """Unit-length bge-m3 vectors of paragraphs (cut at 1,500 characters), 16 per Ollama call."""
     if not texts:
         return np.zeros((0, 1024), dtype="float32")
     out = []
-    url = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434") + "/api/embed"
-    model = os.getenv("EMBED_MODEL", "bge-m3")
     for i in range(0, len(texts), 16):
-        r = requests.post(
-            url,
-            json={"model": model, "input": [t[:1500] for t in texts[i:i + 16]],
-                  "keep_alive": "2h"},   # an unloaded bge-m3 costs ~3 s to bring back
-            timeout=300,
-        )
-        r.raise_for_status()
-        out.extend(r.json()["embeddings"])
+        out.extend(_embed([t[:1500] for t in texts[i:i + 16]]))
     m = np.array(out, dtype="float32")
     norms = np.linalg.norm(m, axis=1, keepdims=True)
     return m / np.maximum(norms, 1e-12)
@@ -103,14 +73,7 @@ def _filter_gaps_llm(src: dict, candidates: list[tuple[float, str]], dst: dict, 
             ),
         }
 
-    dr = requests.post(
-        "https://generativelanguage.googleapis.com/v1beta/decisions",
-        headers={"x-goog-api-key": google_key()},
-        json={"model": "gemini-decision-1", "input": shared_input, "questions": questions},
-        timeout=60,
-    )
-    dr.raise_for_status()
-    answers = dr.json().get("answers", {})
+    answers = decisions.ask(shared_input, questions)
 
     winners = []
     for i, (sim, para) in enumerate(cands):
@@ -135,15 +98,8 @@ def _filter_gaps_llm(src: dict, candidates: list[tuple[float, str]], dst: dict, 
         f"from {dst['lang']}:{dst['title']}.\n"
         f"Return ONLY JSON: {{\"summaries\":{{\"0\":\"...\"}}}}\n\n{win_block}"
     )
-    sr = requests.post(
-        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
-        headers={"x-goog-api-key": google_key()},
-        json={"contents": [{"parts": [{"text": sum_prompt}]}],
-              "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}},
-        timeout=30,
-    )
-    sr.raise_for_status()
-    txt = sr.json()["candidates"][0]["content"]["parts"][0]["text"]
+    txt = gemini(sum_prompt, CHECK_MODEL, timeout=30,
+                 config={"temperature": 0, "responseMimeType": "application/json"})
     m = re.search(r"\{.*\}", txt or "", re.S)
     sums = json.loads(m.group(0)).get("summaries", {}) if m else {}
 

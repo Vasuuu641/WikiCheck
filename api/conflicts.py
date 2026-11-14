@@ -9,18 +9,14 @@ Pipeline
 A conflict is `confirmed` only if it passes 3 and 4.
 """
 import json
-import os
 import re
 import unicodedata
 
-import requests
-from openai import OpenAI
-
-from api.llm import google_key
+from api import decisions
+from api.llm import CHECK_MODEL, chat, gemini
 from api.search import connect
 
 CHARS = 7000
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 TYPES = ["number", "date", "chronology", "causal_framing", "naming", "scope_omission",
          "neutrality", "other"]
 
@@ -70,27 +66,16 @@ def quote_in(quote: str, source: str) -> bool:
 def gemini_find(a: dict, b: dict) -> list[dict]:
     prompt = FIND_PROMPT.format(types=TYPES, ta=a["title"], la=a["lang"], a=a["text"][:CHARS],
                                 tb=b["title"], lb=b["lang"], b=b["text"][:CHARS])
-    r = requests.post(
-        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
-        headers={"x-goog-api-key": google_key()},
-        json={"contents": [{"parts": [{"text": prompt}]}],
-              "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}},
-        timeout=120)
-    r.raise_for_status()
-    txt = r.json()["candidates"][0]["content"]["parts"][0]["text"]
+    txt = gemini(prompt, CHECK_MODEL, config={"temperature": 0, "responseMimeType": "application/json"})
     return _json(txt).get("conflicts", [])
 
 
 def verda_verify(a: dict, b: dict, c: dict) -> dict:
-    cl = OpenAI(base_url=os.environ["LLM_BASE_URL"], api_key=os.environ["LLM_API_KEY"], timeout=90)
-    r = cl.chat.completions.create(
-        model=os.environ["LLM_MODEL"], max_tokens=4096,
-        messages=[{"role": "user", "content": VERIFY_PROMPT.format(
-            ta=a["title"], tb=b["title"], qa=c.get("quote_a", ""), qb=c.get("quote_b", ""),
-            expl=c.get("explanation", ""))}])
-    m = r.choices[0].message
+    reply = chat([{"role": "user", "content": VERIFY_PROMPT.format(
+        ta=a["title"], tb=b["title"], qa=c.get("quote_a", ""), qb=c.get("quote_b", ""),
+        expl=c.get("explanation", ""))}], max_tokens=4096)
     try:
-        return _json(m.content or getattr(m, "reasoning_content", "") or "")
+        return _json(reply)
     except Exception:
         return {"verdict": "unclear", "reason": "unparseable"}
 
@@ -102,27 +87,17 @@ def decide_verify(a: dict, b: dict, c: dict) -> dict:
         f"Passage B ({b['lang']}:{b['title']}): \"{c.get('quote_b', '')}\"\n"
         f"Claimed conflict: {c.get('explanation', '')}"
     )
-    r = requests.post(
-        "https://generativelanguage.googleapis.com/v1beta/decisions",
-        headers={"x-goog-api-key": google_key()},
-        json={
-            "model": "gemini-decision-1",
-            "input": text,
-            "questions": {
-                "is_conflict": {
-                    "type": "noul",
-                    "instructions": (
-                        "Do Passage A and Passage B genuinely CONFLICT about the same fact "
-                        "(cannot both be true as written), rather than differing in scope, "
-                        "detail, wording, or referring to different things?"
-                    ),
-                }
-            },
-        },
-        timeout=30,
-    )
-    r.raise_for_status()
-    ans = r.json().get("answers", {}).get("is_conflict", {})
+    answers = decisions.ask(text, {
+        "is_conflict": {
+            "type": "noul",
+            "instructions": (
+                "Do Passage A and Passage B genuinely CONFLICT about the same fact "
+                "(cannot both be true as written), rather than differing in scope, "
+                "detail, wording, or referring to different things?"
+            ),
+        }
+    })
+    ans = answers.get("is_conflict", {})
     p = float(ans.get("noul", 0.0))
     return {
         "verdict": "conflict" if p >= 0.65 else "not_conflict",
