@@ -27,24 +27,8 @@ History-of-Finland articles). Wikipedia text is CC BY-SA 4.0: credit Wikipedia, 
 
 ## First time
 
-Needs Python 3.11+, a MariaDB 11.7+ server (or Docker: `make db-docker`, then `DB_PORT=3307`), and
-a Gemini key. Linux x86_64 installs Ollama by itself; elsewhere install it from ollama.com.
-
-```sh
-make setup        # .venv, Ollama + bge-m3, tables; creates .env from .env.example
-                  # fill GEMINI_API_KEY and LLM_* in .env
-```
-
-Load the articles and their vectors once, with MariaDB's starter (it brings its own Python packages):
-
-```sh
-git clone --depth 1 https://github.com/MariaDB/mariadb-vector-wikipedia-rag.git pacome/reference/mariadb-vector-wikipedia-rag
-cd pacome/reference/mariadb-vector-wikipedia-rag
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-echo "DB_PORT=3306" > .env && .venv/bin/python create_tables.py && .venv/bin/python load.py --vectors
-cd -
-make demo-data    # dataset M (~315 MB) and the edit history of the showcase articles
-```
+Step by step, for a new computer: **[START.md](START.md)**. In short: install MariaDB 11.7+, put the
+`.env` file in the folder, then `make db-user` and `make setup`.
 
 ## Every day
 
