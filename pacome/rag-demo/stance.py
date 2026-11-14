@@ -155,6 +155,33 @@ def pick_articles(question, want=5):
     return out, timings, sql
 
 
+TITLE_SQL = ("SELECT lang, page_id, wikidata_id, title, url FROM article WHERE title = ? {lang}"
+             "ORDER BY FIELD(lang, 'fi', 'sv', 'en') LIMIT 1")
+
+
+def exact_article(q, lang=None):
+    """When q is the exact title of a stored article (what the browser extension sends for the page in the tab), drift is run on
+    that one article instead of searching: a bare title is too short to be close to any article vector.
+    Returns (articles, timings, sql) like pick_articles, or None when q is not a title."""
+    sql = TITLE_SQL.format(lang="AND lang = ? " if lang else "")
+    t0 = time.perf_counter()
+    conn = rag.connect()
+    try:
+        cur = conn.cursor()
+        cur.execute(sql, (q, lang) if lang else (q,))
+        row = cur.fetchone()
+    finally:
+        conn.close()
+    if not row:
+        return None
+    a = dict(zip(("lang", "page_id", "wikidata_id", "title", "url"), row), distance=0.0)
+    pid = history.resolve_fi(a)
+    if pid is None:
+        raise RuntimeError(f"\"{a['title']}\" has no Finnish edit history in the dataset. Opinion drift reads the versions of the "
+                           "Finnish article; try a question instead of a title.")
+    return [dict(a, fi_page_id=pid)], dict(embed_ms=0, search_ms=(time.perf_counter() - t0) * 1000, by_title=True), sql
+
+
 def _stable(page_id):
     """Versions worth probing: not undone within a day, and with some text."""
     return [r for r in history.revisions(page_id) if not r["reverted"] and r["bytes"] > 200]
@@ -287,11 +314,12 @@ def summarize(question, arts, claims, values, changes):
     return "".join(p.get("text", "") for p in r.json()["candidates"][0]["content"]["parts"]).strip()
 
 
-def run(question):
-    """Yield (event, data) pairs: sources, claims, probes (per round), change, done. Raises on failure."""
+def run(question, lang=None):
+    """Yield (event, data) pairs: sources, claims, probes (per round), change, done. Raises on failure.
+    A question that is exactly an article title (optionally in `lang`) runs on that article alone."""
     t0 = time.perf_counter()
     decisions.reset_stats()
-    found, timings, sql = pick_articles(question)
+    found, timings, sql = exact_article(question.strip(), lang) or pick_articles(question)
     if not found:
         raise RuntimeError("none of the closest articles has a Finnish edit history")
     arts = []

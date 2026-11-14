@@ -1,4 +1,5 @@
-const API_BASE = "http://127.0.0.1:8020";
+const API_BASE = "http://127.0.0.1:8020";   // FastAPI: consistency, ask, trace (api/)
+const SITE_BASE = "http://127.0.0.1:8001";  // Flask site: opinion drift and the full-page tools (pacome/)
 const content = document.getElementById("content");
 const refreshBtn = document.getElementById("refreshBtn");
 const searchForm = document.getElementById("searchForm");
@@ -271,7 +272,9 @@ async function runSearch(q) {
 searchForm.addEventListener("submit", e => {
   e.preventDefault();
   const q = searchInput.value.trim();
-  if (q) runSearch(q);
+  if (!q) return;
+  setMode("check", false);
+  runSearch(q);
 });
 
 chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
@@ -280,3 +283,196 @@ chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
   if (!currentWiki) return renderNotWiki();
   load(false);
 });
+
+// ---------------------------------------------------------------------------------------------
+// Modes: Check (above) | Ask (/api/ask on API_BASE) | Drift (opinion drift stream on SITE_BASE)
+// ---------------------------------------------------------------------------------------------
+
+let mode = "check";
+let driftSource = null;
+
+function stopDrift() {
+  if (driftSource) { driftSource.close(); driftSource = null; }
+}
+
+function setMode(next, render = true) {
+  mode = next;
+  stopDrift();
+  document.querySelectorAll("#modes .mode").forEach(b => b.classList.toggle("active", b.dataset.mode === next));
+  if (next !== "check") refreshBtn.hidden = true;
+  if (!render) return;
+  if (next === "ask") renderAsk();
+  else if (next === "drift") renderDrift();
+  else if (currentWiki) load(false);
+  else renderNotWiki();
+}
+
+document.querySelectorAll("#modes .mode").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+
+const pageTitle = () => (currentWiki ? currentWiki.title.replace(/_/g, " ") : "");
+
+// ---- Ask ----
+
+function withCitations(text) {
+  return esc(text)
+    .replace(/\[(\d+)\]/g, '<a class="cite" href="#cit$1">[$1]</a>')
+    .replace(/\n/g, "<br>");
+}
+
+function renderAsk() {
+  const title = pageTitle();
+  content.innerHTML = `
+    <form id="askForm" class="ask-form">
+      <textarea id="askQ" rows="2" placeholder="Ask about the history of Finland, in English, Finnish or Swedish">${
+        title ? esc(`What does Wikipedia say about ${title}?`) : ""}</textarea>
+      <div class="ask-row">
+        <label title="Answer from Wikipedia as it stood on this date (articles with loaded history)">as of
+          <input id="askAsOf" type="date" min="2003-01-01"></label>
+        <button type="submit">Ask</button>
+      </div>
+    </form>
+    <div id="askOut"><div class="state">The answer uses only passages found in MariaDB and cites each one.</div></div>`;
+  document.getElementById("askForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const q = document.getElementById("askQ").value.trim();
+    if (q) runAsk(q, document.getElementById("askAsOf").value);
+  });
+}
+
+async function runAsk(question, asOf) {
+  const out = document.getElementById("askOut");
+  out.innerHTML = `<div class="state"><div class="spinner"></div>Searching MariaDB and writing the answer…<br>
+    <small>About 10 to 20 s: retrieval, answer and neutrality review.</small></div>`;
+  try {
+    const body = { question, mode: "editor" };
+    if (asOf) body.as_of = asOf;
+    const res = await fetch(`${API_BASE}/api/ask`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+    });
+    const d = await res.json();
+    if (!res.ok || d.error) throw new Error(d.error || `HTTP ${res.status}`);
+    if (mode !== "ask" || !document.getElementById("askOut")) return;
+
+    const cits = (d.citations || []).map(c => {
+      const flagged = c.neutrality && c.neutrality.level === "flagged";
+      return `
+        <div class="card" id="cit${c.n}">
+          <div class="card-head">
+            <a href="${esc(c.url)}" target="_blank" class="src-link">[${c.n}] ${esc(c.title)} ↗</a>
+            ${flagged ? `<span class="badge conflict">${esc(c.neutrality.category || "wording")}</span>`
+                      : `<span class="badge ok">neutral</span>`}
+          </div>
+          ${flagged ? `<p class="expl">${esc(c.neutrality.reason || "")}</p>` : ""}
+          <details><summary>Passage</summary><div class="para">${esc(c.passage)}</div></details>
+          ${c.edit_url ? `<div class="meta-row"><a class="pill" href="${esc(c.edit_url)}" target="_blank">Edit article ↗</a></div>` : ""}
+        </div>`;
+    }).join("");
+
+    const confs = (d.conflicts || []).map(c => `
+      <div class="card">
+        <div class="card-head"><span class="badge conflict">sources disagree</span></div>
+        <p class="expl">${esc(c.about || "")}</p>
+        <div class="quotes">
+          <div class="quote-box"><div class="quote-label">[${esc(c.a?.n)}]</div><div class="quote-text">“${esc(c.a?.phrase)}”</div></div>
+          <div class="quote-box"><div class="quote-label">[${esc(c.b?.n)}]</div><div class="quote-text">“${esc(c.b?.phrase)}”</div></div>
+        </div>
+      </div>`).join("");
+
+    out.innerHTML = `
+      <div class="meta">
+        <div class="answer">${withCitations(d.answer || "")}</div>
+        <div class="meta-row"><span>${d.took_ms} ms</span>${asOf ? `<span class="pill">as of ${esc(asOf)}</span>` : ""}</div>
+      </div>
+      ${confs ? `<div class="section-label">Passages that disagree</div>${confs}` : ""}
+      ${cits ? `<div class="section-label">Sources cited</div>${cits}` : ""}
+      ${d.sql ? `<details><summary>Show MariaDB SQL</summary><pre>${esc(d.sql)}</pre></details>` : ""}`;
+  } catch (err) {
+    if (document.getElementById("askOut")) {
+      out.innerHTML = `<div class="state">Ask failed.<br><small>${esc(err.message)}</small></div>`;
+    }
+  }
+}
+
+// ---- Drift ----
+
+function renderDrift() {
+  const title = pageTitle();
+  content.innerHTML = `
+    <form id="driftForm" class="search-bar drift-form">
+      <input id="driftQ" type="text" value="${esc(title)}" placeholder="An article or a question, e.g. Who started the Winter War?">
+      <button type="submit">Trace</button>
+    </form>
+    <div id="driftOut"><div class="state">
+      How the Finnish articles' position on the same claims changed over the years, down to the exact edit.
+      ${title ? "" : "<br><small>Open a Wikipedia article, or type a question.</small>"}
+      <div class="demo-links"><a href="${SITE_BASE}/drift?fixture=1" target="_blank">Watch the recorded demo ↗</a></div>
+    </div></div>`;
+  document.getElementById("driftForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const q = document.getElementById("driftQ").value.trim();
+    if (q) runDrift(q);
+  });
+  if (title) runDrift(title);
+}
+
+function runDrift(q) {
+  stopDrift();
+  const out = document.getElementById("driftOut");
+  const fullUrl = `${SITE_BASE}/drift?q=${encodeURIComponent(q)}`;
+  let articles = [], claims = {}, changes = [], summary = "", status = "Finding the articles…", finished = false;
+
+  const draw = () => {
+    if (mode !== "drift" || !document.getElementById("driftOut")) return;
+    const arts = articles.map(a =>
+      `<a class="pill" href="${esc(a.url)}" target="_blank">${esc(a.title)} · ${a.n_revs} versions</a>`).join("");
+    const SHOWN = 12;   // the popup is small: newest changes first, the rest are on the full timeline
+    const list = changes
+      .slice().sort((x, y) => (x.t < y.t ? 1 : -1)).slice(0, SHOWN)
+      .map(c => `
+        <div class="card">
+          <div class="card-head">
+            <span class="badge medium">${esc((c.t || "").slice(0, 7))}</span>
+            <a class="conf" href="https://fi.wikipedia.org/w/index.php?diff=${esc(c.rev_after)}&oldid=${esc(c.rev_before)}" target="_blank">the edit ↗</a>
+          </div>
+          <p class="expl">${esc(c.headline || (claims[c.claim] || {}).label || c.claim)}</p>
+          ${c.comment ? `<div class="meta-row"><span>edit summary: “${esc(c.comment)}”</span></div>` : ""}
+          ${(c.hunk && (c.hunk.add || []).length) ? `<details><summary>What the edit added</summary><div class="para">${esc(c.hunk.add.slice(0, 2).join("\n\n"))}</div></details>` : ""}
+        </div>`).join("");
+    out.innerHTML = `
+      <div class="meta">
+        <div class="meta-title">${finished ? `${changes.length} change${changes.length === 1 ? "" : "s"} of position` : `<span class="spinner inline"></span>${esc(status)}`}</div>
+        <div class="meta-row">${arts}</div>
+        ${summary ? `<p class="expl" style="margin-top:8px">${esc(summary)}</p>` : ""}
+        <div class="meta-row" style="margin-top:8px"><a class="pill open-full" href="${esc(fullUrl)}" target="_blank">Open full timeline ↗</a></div>
+      </div>
+      ${list || (finished ? `<div class="state">No change of position found on the shared claims.</div>` : "")}
+      ${changes.length > SHOWN ? `<div class="state"><a href="${esc(fullUrl)}" target="_blank">${changes.length - SHOWN} earlier changes on the full timeline ↗</a></div>` : ""}`;
+  };
+  const on = (name, fn) => driftSource.addEventListener(name, e => { fn(JSON.parse(e.data)); draw(); });
+  const fail = msg => {
+    stopDrift();
+    if (!document.getElementById("driftOut")) return;
+    out.innerHTML = `<div class="state">${esc(msg)}
+      <div class="demo-links"><a href="${esc(fullUrl)}" target="_blank">Open the drift page ↗</a></div></div>`;
+  };
+
+  draw();
+  // On an article, q is its title and lang its edition: the service then runs on that article alone.
+  const onPage = currentWiki && q === pageTitle() ? `&lang=${encodeURIComponent(currentWiki.lang)}` : "";
+  driftSource = new EventSource(`${SITE_BASE}/api/drift/stream?q=${encodeURIComponent(q)}${onPage}`);
+  on("sources", d => { articles = d.articles || []; status = `Reading ${articles.length} article${articles.length === 1 ? "" : "s"}, writing the claims…`; });
+  on("claims", d => { (d.claims || []).forEach(c => { claims[c.id] = c; }); status = `Scoring versions against ${Object.keys(claims).length} claims…`; });
+  on("probes", d => { status = `Scoring versions against ${Object.keys(claims).length} claims (round ${(d.round || 0) + 1})…`; });
+  on("change", d => { changes.push(d); });
+  // The summary text is "ANSWER: ...", then further labelled sections: the popup shows the answer only.
+  on("summary", d => { summary = (d.text || "").replace(/^ANSWER:\s*/, "").split(/\n\s*[A-Z][A-Z ]+:/)[0].trim(); });
+  on("done", () => { finished = true; stopDrift(); });
+  driftSource.addEventListener("problem", e => {
+    let msg = e.data;
+    try { msg = JSON.parse(e.data); } catch {}
+    fail(typeof msg === "string" ? msg : (msg.message || JSON.stringify(msg)));
+  });
+  driftSource.onerror = () => {
+    if (driftSource && !finished) fail(`Could not reach the drift service at ${SITE_BASE}.`);
+  };
+}

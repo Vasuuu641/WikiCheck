@@ -146,9 +146,9 @@ def _request_body(question, articles):
 
 
 def _key():
-    key = os.environ.get("GOOGLE_API_KEY")
+    key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")   # the API in ../../api uses the second name
     if not key:
-        raise RuntimeError("GOOGLE_API_KEY is not set (put it in mariadb-wikipedia/.env)")
+        raise RuntimeError("GOOGLE_API_KEY is not set (put it in pacome/.env)")
     return key
 
 

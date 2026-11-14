@@ -1,7 +1,8 @@
 """Opinion drift (/drift): how the top articles for a question changed their stance on shared claims over time.
 
   GET /drift                    the page
-  GET /api/drift/stream?q=...   SSE; with fixture=1 replays drift_fixture.json, else runs stance.run(q) in a thread
+  GET /api/drift/stream?q=...   SSE; q is a question, or an exact article title (then &lang= may name its edition);
+                                with fixture=1 replays drift_fixture.json, else runs stance.run(q) in a thread
                                 with keep-alive comments every HEARTBEAT seconds
   GET /api/drift/asof           article text at a date (history.text_asof), with the SQL shown
   GET /api/drift/evidence       the paragraph carrying a claim at a version (stance.evidence)
@@ -48,10 +49,10 @@ def _fixture_events(fast=False):
             time.sleep(0 if fast else 0.25)
 
 
-def _pump(question, out, stop):
+def _pump(question, out, stop, lang=None):
     """Run the engine in a thread so the HTTP stream can send keep-alives while a slow step (Gemini, history load) runs."""
     try:
-        for event, data in stance.run(question):
+        for event, data in stance.run(question, lang):
             if stop.is_set():       # the reader went away: stop at the next event instead of scoring the rest
                 return
             out.put(sse(event, data))
@@ -66,6 +67,8 @@ def stream():
     q = request.args.get("q", "").strip()
     fixture = request.args.get("fixture")
     fast = bool(request.args.get("fast"))     # read here: the request context is gone once the stream starts
+    lang = request.args.get("lang", "").strip().lower()   # the extension sends the edition of the article in the tab
+    lang = lang if len(lang) == 2 and lang.isalpha() else None
 
     def events():
         try:
@@ -80,7 +83,7 @@ def stream():
             yield sse("problem", f"{type(e).__name__}: {e}")
             return
         out, stop = queue.Queue(), threading.Event()
-        threading.Thread(target=_pump, args=(q, out, stop), daemon=True).start()
+        threading.Thread(target=_pump, args=(q, out, stop, lang), daemon=True).start()
         try:
             while True:
                 try:

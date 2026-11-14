@@ -9,7 +9,7 @@
   <header>
     <div class="brand">
       <span class="logo">Aikakone</span>
-      <span class="subtitle">Cross-Language Consistency</span>
+      <span class="subtitle">Wikipedia editor companion</span>
     </div>
     <button id="refreshBtn" class="icon-btn" title="Re-analyze this article" hidden>↻</button>
   </header>
@@ -18,6 +18,12 @@
     <input id="searchInput" type="text" placeholder="Search any topic, claim, or article…">
     <button type="submit">Search</button>
   </form>
+
+  <nav class="modes" id="modes">
+    <button class="mode active" data-mode="check" title="Conflicts and missing content across languages">Check</button>
+    <button class="mode" data-mode="ask" title="Ask Wikipedia, with citations and time travel">Ask</button>
+    <button class="mode" data-mode="drift" title="How this article's position changed over the years">Drift</button>
+  </nav>
 
   <main id="content">
     <div class="state">Loading…</div>

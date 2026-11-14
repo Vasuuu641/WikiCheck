@@ -1,12 +1,17 @@
 {
   "manifest_version": 3,
   "name": "Aikakone — Wikipedia Cross-Language Checker",
-  "version": "0.1.0",
-  "description": "Surfaces cross-language factual conflicts and missing content across Finnish, Swedish, and English Wikipedia using MariaDB.",
-  "permissions": ["activeTab", "tabs"],
+  "version": "0.2.0",
+  "description": "For Wikipedia editors: cross-language conflicts and missing content, cited answers with time travel, and how an article's position drifted edit by edit. Built on MariaDB.",
+  "permissions": [
+    "activeTab",
+    "tabs"
+  ],
   "host_permissions": [
     "http://127.0.0.1:8020/*",
-    "http://localhost:8020/*"
+    "http://localhost:8020/*",
+    "http://127.0.0.1:8001/*",
+    "http://localhost:8001/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -16,11 +21,13 @@
       "matches": [
         "https://*.wikipedia.org/wiki/*"
       ],
-      "js": ["content.js"]
+      "js": [
+        "content.js"
+      ]
     }
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Aikakone Consistency Check"
+    "default_title": "Aikakone"
   }
 }

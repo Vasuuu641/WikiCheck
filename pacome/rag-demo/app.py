@@ -25,6 +25,16 @@ app.register_blueprint(refs.bp)
 app.register_blueprint(links.bp)
 app.register_blueprint(consistency.bp)
 
+
+
+@app.after_request
+def allow_extension(response):
+    """The browser extension (extension/) reads the JSON and event-stream routes from its popup."""
+    if request.path.startswith("/api/") or request.path == "/stream":
+        response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
+
+
 EXAMPLES = [
     "Which peace treaty ended the Winter War, and what did Finland lose?",
     "Kuka oli Suomen ensimmäinen presidentti ja milloin hänet valittiin?",

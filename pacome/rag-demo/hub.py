@@ -25,7 +25,10 @@ HUB = NAV + """<main><h1>Wikipedia, History of Finland</h1>
 <p class="muted">Finnish, Swedish and English Wikipedia articles stored in MariaDB with their vectors. What did you come to do?</p>
 <div class="choose">""" + "".join(
     f'<a class="card" href="{guide.SECTIONS[k][1]}"><h2>{guide.SECTIONS[k][0]}</h2><p>{guide.SECTIONS[k][2]}</p>'
-    f'<div class="list">{" · ".join(p[3] for p in guide.BY_SECTION[k])}</div></a>' for k in ("read", "edit")) + "</div></main>"
+    f'<div class="list">{" · ".join(p[3] for p in guide.BY_SECTION[k])}</div></a>' for k in ("read", "edit")) + """</div>
+<p class="muted" style="margin-top:28px">Editing on Wikipedia itself? The <b>Aikakone browser extension</b> (folder <code>extension/</code> of the
+repository: Chrome, Extensions, Developer mode, Load unpacked) checks the article in your tab for cross-language conflicts and missing
+content, answers questions with citations, and opens Opinion drift for that article. This site is its full view.</p></main>"""
 
 
 def _section_page(k):
