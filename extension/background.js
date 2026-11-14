@@ -28,6 +28,9 @@ async function updateBadge(tabId, url) {
     if (!data.found || !data.cached) {
       chrome.action.setBadgeText({ tabId, text: "?" });
       chrome.action.setBadgeBackgroundColor({ tabId, color: "#64748b" });
+      // An article of the dataset that was never analysed: start now, so the popup finds it ready.
+      // (Pages outside the dataset are not fetched or analysed until the popup is opened on them.)
+      if (data.found && data.article?.wikidata_id) prefetch(tabId, url, wiki);
       return;
     }
     const nConf = data.conflicts?.length || 0;
@@ -40,6 +43,21 @@ async function updateBadge(tabId, url) {
     });
   } catch {
     chrome.action.setBadgeText({ tabId, text: "" });
+  }
+}
+
+const started = new Set();   // one early analysis per article per browser session
+
+async function prefetch(tabId, url, wiki) {
+  const key = `${wiki.lang}:${wiki.title}`;
+  if (started.has(key)) return;
+  started.add(key);
+  try {
+    const qs = new URLSearchParams({ lang: wiki.lang, title: wiki.title, compute: "true" });
+    await fetch(`${API_BASE}/api/consistency?${qs}`);
+    updateBadge(tabId, url);    // now cached: show the count
+  } catch {
+    started.delete(key);
   }
 }
 

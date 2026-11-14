@@ -6,6 +6,7 @@ warmer:
 """
 import argparse
 import json
+import threading
 import os
 import re
 import time
@@ -63,7 +64,8 @@ def embed_texts(texts: list[str]) -> np.ndarray:
     for i in range(0, len(texts), 16):
         r = requests.post(
             url,
-            json={"model": model, "input": [t[:1500] for t in texts[i:i + 16]]},
+            json={"model": model, "input": [t[:1500] for t in texts[i:i + 16]],
+                  "keep_alive": "2h"},   # an unloaded bge-m3 costs ~3 s to bring back
             timeout=300,
         )
         r.raise_for_status()
@@ -221,8 +223,32 @@ def _pick_top_siblings(arts: list[dict], focus_art: dict) -> list[dict]:
     return sibs[:MAX_SIBLINGS]
 
 
+# One analysis per entity at a time. The extension starts an analysis when a page loads, so the
+# popup's own request often arrives while it runs: it then waits for that one instead of paying again.
+_inflight: dict[str, threading.Event] = {}
+_inflight_lock = threading.Lock()
+INFLIGHT_WAIT_S = 180
+
+
 def analyze_entity(wikidata_id: str, force: bool = False, focus_lang: str | None = None) -> dict:
-    """Compute and cache cross-language conflicts + filtered gaps for one Wikidata entity."""
+    """Compute and cache cross-language conflicts + filtered gaps for one Wikidata entity.
+    If the same entity is already being analysed, wait for that run and report it as cached."""
+    with _inflight_lock:
+        running = _inflight.get(wikidata_id)
+        if running is None:
+            mine = _inflight[wikidata_id] = threading.Event()
+    if running is not None:
+        running.wait(INFLIGHT_WAIT_S)
+        return {"wikidata_id": wikidata_id, "cached": True, "joined": True}
+    try:
+        return _analyze_entity(wikidata_id, force, focus_lang)
+    finally:
+        with _inflight_lock:
+            _inflight.pop(wikidata_id, None)
+        mine.set()
+
+
+def _analyze_entity(wikidata_id: str, force: bool = False, focus_lang: str | None = None) -> dict:
     t0 = time.time()
     with connect() as con, con.cursor() as cur:
         if not force:
