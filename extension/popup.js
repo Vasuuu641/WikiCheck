@@ -2,8 +2,6 @@ const API_BASE = "http://127.0.0.1:8020";   // the Aikakone server (api/): check
 
 const content = document.getElementById("content");
 const refreshBtn = document.getElementById("refreshBtn");
-const searchForm = document.getElementById("searchForm");
-const searchInput = document.getElementById("searchInput");
 const titleEl = document.getElementById("pageTitle");
 
 let mode = "conflicts";      // conflicts | gaps | ask | drift
@@ -245,80 +243,6 @@ async function load(refresh = false) {
 
 refreshBtn.addEventListener("click", () => currentWiki && load(true));
 
-async function runSearch(q) {
-  const seq = ++loadSeq;
-  refreshBtn.hidden = true;
-  content.innerHTML = spinnerState(`Searching for <strong>${esc(q)}</strong>…`);
-  try {
-    const res = await fetch(`${API_BASE}/api/consistency/search?` + new URLSearchParams({ q }));
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const d = await res.json();
-    if (seq !== loadSeq || !isCheck(mode)) return;
-
-    const conf = (d.conflicts || []).map(c => `
-      <div class="item">
-        <div class="item-head">
-          <span class="kind">${esc(CONFLICT_KINDS[c.conflict_type] || CONFLICT_KINDS.other)}</span>
-          <span class="aside">${esc(c.title_a)}</span>
-        </div>
-        <p class="expl">${esc(nameSides(c.explanation, `the ${langName(c.lang_a)} edition`, `the ${langName(c.lang_b)} edition`))}</p>
-        <div class="links">
-          <a href="${esc(fragmentUrl(c.url_a, c.quote_a))}" target="_blank">Read it in ${esc(langName(c.lang_a))}</a>
-          <a href="${esc(fragmentUrl(c.url_b, c.quote_b))}" target="_blank">Read it in ${esc(langName(c.lang_b))}</a>
-        </div>
-      </div>`).join("");
-
-    const gap = (d.gaps || []).map(g => `
-      <div class="item">
-        <div class="item-head">
-          <span class="kind gap">Missing in ${esc(langName(g.dst_lang))}</span>
-          <span class="aside">${esc(g.dst_title)}</span>
-        </div>
-        <p class="expl">${esc(g.summary)}</p>
-        <div class="links"><a href="${esc(fragmentUrl(g.src_url, g.paragraph))}" target="_blank">Read it in ${esc(langName(g.src_lang))}</a></div>
-      </div>`).join("");
-
-    const arts = (d.articles || []).map(a => `
-      <div class="hit">
-        <span><a href="${esc(a.url)}" target="_blank">${esc(a.title)}</a> <span class="aside">${esc(langName(a.lang))}</span></span>
-        <button class="quiet-btn" data-lang="${esc(a.lang)}" data-title="${esc(a.title)}">${
-          a.analyzed ? `${a.conflicts_count} conflict${a.conflicts_count === 1 ? "" : "s"}, ${a.gaps_count} missing` : "Check it"}</button>
-      </div>`).join("");
-
-    content.innerHTML = `
-      <p class="also">Results for “${esc(d.query)}”, ${d.took_ms} ms.
-        ${currentWiki ? `<a href="#" id="backToPage" class="back">Back to the article</a>` : ""}</p>
-      ${conf ? `<h2 class="section-label">Conflicts already found</h2>${conf}` : ""}
-      ${gap ? `<h2 class="section-label">Missing content already found</h2>${gap}` : ""}
-      ${arts ? `<h2 class="section-label">Closest articles by meaning</h2>${arts}` : ""}
-      ${(!conf && !gap && !arts) ? `<div class="state">Nothing matches “${esc(d.query)}”. Try the name of a person, place or event.</div>` : ""}`;
-
-    content.querySelectorAll(".hit .quiet-btn").forEach(btn => btn.addEventListener("click", () => {
-      currentWiki = { lang: btn.dataset.lang, title: btn.dataset.title };
-      load(false);
-    }));
-    const back = document.getElementById("backToPage");
-    if (back) back.addEventListener("click", e => {
-      e.preventDefault();
-      chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-        currentWiki = parseWikiUrl(tabs[0]?.url);
-        currentWiki ? load(false) : renderNotWiki();
-      });
-    });
-  } catch (err) {
-    if (seq !== loadSeq) return;
-    content.innerHTML = `<div class="state">The search did not run: the service at ${esc(API_BASE)} did not answer.<small>${esc(err.message)}</small></div>`;
-  }
-}
-
-searchForm.addEventListener("submit", e => {
-  e.preventDefault();
-  const q = searchInput.value.trim();
-  if (!q) return;
-  if (!isCheck(mode)) setMode("conflicts", false);
-  runSearch(q);
-});
-
 // ---------------------------------------------------------------------------------------------
 // Modes
 // ---------------------------------------------------------------------------------------------
@@ -337,7 +261,6 @@ function setMode(next, render = true) {
     b.setAttribute("aria-pressed", on ? "true" : "false");
   });
   refreshBtn.hidden = !isCheck(next) || !currentWiki;
-  searchForm.hidden = !isCheck(next);
   if (!render) return;
   if (next === "ask") renderAsk();
   else if (next === "drift") renderDrift();
