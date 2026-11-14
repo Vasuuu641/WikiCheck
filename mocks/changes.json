@@ -1,4 +1,0 @@
-{"page_id":1,"title":"Talvisota","from":"2015-01-01","to":"2026-10-01",
- "summary":"MOCK. The article grew and gained sections on casualties and international reactions.",
- "then":"older mock text","now":"newer mock text with more detail",
- "diff":[{"op":"equal","text":"mock "},{"op":"del","text":"older"},{"op":"add","text":"newer"}]}

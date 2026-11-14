@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "WikiCheck — Wikipedia Cross-Language Checker",
+  "version": "0.2.0",
+  "description": "Spot Wikipedia conflicts & missing facts across languages, find cited sources, and track how article claims changed over versions.",
+  "permissions": [
+    "activeTab",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8020/*",
+    "http://localhost:8020/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.wikipedia.org/wiki/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "WikiCheck"
+  }
+}

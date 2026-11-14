@@ -1,4 +1,4 @@
-"""Vector search against MariaDB. UNTESTED sketch from MariaDB's RAG tutorial; librarian owns this.
+"""Vector search against MariaDB, adapted from MariaDB's RAG tutorial; the librarian owns this.
 
 Rules learned in that tutorial (measured there):
 - Embed the question with the SAME model as the stored vectors (bge-m3, 1024 dims).
@@ -6,10 +6,15 @@ Rules learned in that tutorial (measured there):
   A flat join read ~22,000 rows (50 ms) instead of ~200 rows (1 ms).
 - Vector index: M=16 and SET mhnsw_ef_search = 80 (defaults were too low).
 """
+import json
 import os
 
 import pymysql
 import requests
+
+# Same options the tutorial used to embed S: Ollama needs num_ctx AND num_batch raised,
+# otherwise texts over 2,048 tokens are refused or cut.
+OLLAMA_OPTIONS = {"num_ctx": 8192, "num_batch": 8192}
 
 
 def connect():
@@ -23,32 +28,151 @@ def connect():
     )
 
 
-def embed_question(text: str) -> list[float]:
-    # Ollama embeddings endpoint; verify against `ollama` docs for your version.
+LOCAL_OLLAMA = "http://127.0.0.1:11434"
+
+
+def _embed_at(url: str, texts: list[str], timeout: int) -> list[list[float]]:
     r = requests.post(
-        os.getenv("OLLAMA_URL", "http://127.0.0.1:11434") + "/api/embed",
-        json={"model": os.getenv("EMBED_MODEL", "bge-m3"), "input": text},
-        timeout=30,
+        url.rstrip("/") + "/api/embed",
+        json={
+            "model": os.getenv("EMBED_MODEL", "bge-m3"),
+            "input": texts,
+            "truncate": True,
+            "options": OLLAMA_OPTIONS,
+            "keep_alive": "2h",   # keep bge-m3 in memory between questions
+        },
+        timeout=timeout,
     )
     r.raise_for_status()
-    return r.json()["embeddings"][0]
+    return r.json()["embeddings"]
+
+
+def embed_texts(texts: list[str]) -> list[list[float]]:
+    """Embed several texts in one Ollama call (bge-m3, same as the stored vectors). If OLLAMA_URL
+    is a remote machine (e.g. a GPU tunnel) and it does not answer, the local Ollama is used."""
+    url = os.getenv("OLLAMA_URL", LOCAL_OLLAMA)
+    local = url.rstrip("/") in (LOCAL_OLLAMA, "http://localhost:11434")
+    try:
+        return _embed_at(url, texts, 300 if local else 30)
+    except requests.RequestException:
+        if local:
+            raise
+        return _embed_at(LOCAL_OLLAMA, texts, 300)
+
+
+def embed_question(text: str) -> list[float]:
+    return embed_texts([text])[0]
 
 
 SEARCH_SQL = """
-SELECT a.lang, a.page_id, a.title, a.url, v.distance
+SELECT a.lang, a.page_id, a.rev_id, a.wikidata_id, a.title, a.url, v.distance{text}
 FROM (SELECT lang, page_id, VEC_DISTANCE_COSINE(embedding, VEC_FromText(%s)) AS distance
-      FROM article_vector
+      FROM article_vector{where}
       ORDER BY distance
       LIMIT %s) AS v
 JOIN article a USING (lang, page_id)
 ORDER BY v.distance
 """
+_SEARCH_TEMPLATE = SEARCH_SQL
+SEARCH_SQL = _SEARCH_TEMPLATE.format(text="", where="")
 
 
-def search(question: str, limit: int = 10):
-    vec = "[" + ",".join(str(x) for x in embed_question(question)) + "]"
+# Chunk-first: the nearest paragraphs (chunk_vector, eval/build_chunks.py) instead of whole
+# articles. Same shape as SEARCH_SQL: vector index in the subquery, then the joins. Chunks exist
+# only for Finnish articles (chunk has no lang column), so the join is to the fi article row.
+CHUNK_SEARCH_SQL = """
+SELECT c.page_id, c.chunk_no, c.rev_id, c.text, a.wikidata_id, a.title, a.url, v.distance
+FROM (SELECT page_id, chunk_no, VEC_DISTANCE_COSINE(embedding, VEC_FromText(%s)) AS distance
+      FROM ask_chunk_vector
+      ORDER BY distance
+      LIMIT %s) AS v
+JOIN ask_chunk c USING (page_id, chunk_no)
+JOIN article a ON a.lang = 'fi' AND a.page_id = v.page_id
+ORDER BY v.distance
+"""
+
+
+def search_chunks(vector: list[float], limit: int = 40):
+    """Nearest paragraphs to the question vector. Returns (rows, sql)."""
+    with connect() as con, con.cursor() as cur:
+        cur.execute("SET mhnsw_ef_search = %s", (max(80, limit),))
+        cur.execute(CHUNK_SEARCH_SQL, (json.dumps(vector), limit))
+        cols = [c[0] for c in cur.description]
+        return [dict(zip(cols, row)) for row in cur.fetchall()], CHUNK_SEARCH_SQL
+
+
+def articles_from_chunks(chunks: list[dict]) -> list[dict]:
+    """Distinct articles in the order of their best chunk (an article ranks where its best
+    paragraph ranks); `distance` is that best chunk's."""
+    seen, out = set(), []
+    for c in chunks:
+        if c["page_id"] not in seen:
+            seen.add(c["page_id"])
+            out.append({"lang": "fi", "page_id": c["page_id"], "wikidata_id": c["wikidata_id"],
+                        "title": c["title"], "url": c["url"], "distance": c["distance"]})
+    return out
+
+
+RRF_K = 60            # reciprocal rank fusion constant: score = 1/(K + rank in A) + 1/(K + rank in B)
+FUSION_LIST = 20      # each list contributes its top 20 articles
+FUSION_CHUNKS = 100   # nearest chunks fetched to get ~20 distinct articles for list B
+
+
+def _topic(row: dict):
+    """One key per topic: the fi, sv and en articles on one subject share a wikidata_id."""
+    return row.get("wikidata_id") or (row["lang"], row["page_id"])
+
+
+def rrf_merge(lists: list[list[dict]]) -> list[dict]:
+    """Reciprocal rank fusion of several article lists (each best first). Each list ranks topics
+    (other languages of a topic already in that list are skipped); score = sum over the lists of
+    1/(RRF_K + rank), a topic missing from a list gets nothing from it. Ties go to the better
+    rank in the first list. Returns the rows best first, each with `rrf` and `ranks` (one rank or
+    None per list); a topic's row is its Finnish article when any list has it."""
+    merged: dict = {}
+    for i, rows in enumerate(lists):
+        rank = 0
+        for r in rows:
+            entry = merged.setdefault(_topic(r), {"row": r, "ranks": [None] * len(lists)})
+            if entry["ranks"][i] is not None:
+                continue
+            rank += 1
+            entry["ranks"][i] = rank
+            if r["lang"] == "fi" and entry["row"]["lang"] != "fi":
+                entry["row"] = r
+    out = [{**e["row"], "rrf": sum(1 / (RRF_K + k) for k in e["ranks"] if k is not None),
+            "ranks": e["ranks"]} for e in merged.values()]
+    out.sort(key=lambda r: (-r["rrf"], r["ranks"][0] or 10**6))
+    return out
+
+
+def fused_search(vector: list[float], limit: int = 10):
+    """RETRIEVAL=fusion: reciprocal rank fusion of two article lists.
+      A: article-first, the 20 nearest article vectors (any language), one entry per topic.
+      B: chunk-first, articles ranked by their best paragraph in chunk_vector, top 20.
+    score = 1/(RRF_K + rank in A) + 1/(RRF_K + rank in B); an article missing from a list gets
+    nothing from it. Ties go to the better rank in A. Returns (rows, sql) like search(); each row
+    also has `rrf`, `rank_a` and `rank_b` (None when not in that list)."""
+    a_rows, a_sql = search("", limit=FUSION_LIST, vector=vector)
+    b_rows = articles_from_chunks(search_chunks(vector, limit=FUSION_CHUNKS)[0])[:FUSION_LIST]
+    out = [{**r, "rank_a": r["ranks"][0], "rank_b": r["ranks"][1]} for r in rrf_merge([a_rows, b_rows])]
+    sql =("-- RETRIEVAL=fusion: reciprocal rank fusion (k = 60) of two lists, merged in Python.\n"
+           "-- A: the 20 nearest articles\n" + a_sql.strip() +
+           f"\n\n-- B: the {FUSION_CHUNKS} nearest paragraphs, grouped by article (top 20)\n" + CHUNK_SEARCH_SQL.strip())
+    return out[:limit], sql
+
+
+def search(question: str, limit: int = 10, vector: list[float] | None = None, with_text: bool = False,
+           lang: str | None = None):
+    """Nearest articles to the question. Returns (rows, sql). Pass `vector` to skip embedding;
+    with_text=True also returns each article's text; lang ("fi", "sv", "en") searches one language."""
+    vec = json.dumps(vector if vector is not None else embed_question(question))
+    sql = SEARCH_SQL
+    if with_text or lang:
+        sql = _SEARCH_TEMPLATE.format(text=", a.text" if with_text else "",
+                                      where="\n      WHERE lang = %s" if lang else "")
     with connect() as con, con.cursor() as cur:
         cur.execute("SET mhnsw_ef_search = 80")
-        cur.execute(SEARCH_SQL, (vec, limit))
+        cur.execute(sql, (vec, lang, limit) if lang else (vec, limit))
         cols = [c[0] for c in cur.description]
-        return [dict(zip(cols, row)) for row in cur.fetchall()], SEARCH_SQL
+        return [dict(zip(cols, row)) for row in cur.fetchall()], sql

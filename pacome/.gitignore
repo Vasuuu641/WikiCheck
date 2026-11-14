@@ -1,0 +1,22 @@
+# Secrets: API keys live only in .env. Never commit it; .env.example is the template.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Ollama binary, bge-m3 model (~3.5 GB) and downloaded datasets. Re-created by make setup
+data/
+# Clone of MariaDB's starter repo with its own data (~500 MB). Re-created by make setup
+reference/
+
+# Logs and OS noise
+*.log
+.DS_Store

@@ -1,0 +1,176 @@
+/* WikiCheck popup. The look follows Wikipedia itself (the page the editor is on): serif titles with a
+   hairline, sans-serif reading text, page tabs, blue links, and the two colours of a MediaWiki diff for "this page" and
+   "the other edition". */
+:root {
+  --paper: #ffffff;
+  --wash: #f8f9fa;
+  --ink: #202122;
+  --muted: #54595d;
+  --rule: #a2a9b1;
+  --soft: #eaecf0;
+  --link: #3366cc;
+  --this: #feeec8;        /* diff: the page in the tab */
+  --this-edge: #f0c14b;
+  --other: #d8ecff;       /* diff: the other edition */
+  --other-edge: #6fa8dc;
+  --alert: #b32424;
+  --good: #14866d;
+  --serif: "Linux Libertine", "Libertinus Serif", Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  width: 460px;
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+  font: 13px/1.5 var(--sans);
+  color: var(--ink);
+  background: var(--paper);
+}
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 1px; }
+[hidden] { display: none !important; }
+
+/* ---- header: wordmark, the article, the three tools as page tabs ---- */
+header { padding: 10px 16px 0; border-bottom: 1px solid var(--rule); flex: none; }
+.masthead { display: flex; align-items: center; justify-content: space-between; min-height: 22px; }
+.wordmark { font: 400 13px/1 var(--serif); letter-spacing: .04em; color: var(--muted); }
+.page-title {
+  margin: 2px 0 8px; font: 400 21px/1.25 var(--serif); color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.page-title .edition { font: 400 12px/1 var(--sans); color: var(--muted); margin-left: 8px; white-space: nowrap; }
+.quiet-btn {
+  padding: 2px 8px; font-size: 12px; color: var(--link);
+  background: none; border: 1px solid transparent; border-radius: 2px;
+}
+.quiet-btn:hover { text-decoration: underline; }
+
+.modes { display: flex; gap: 2px; margin-bottom: -1px; }
+.mode {
+  padding: 6px 14px 7px; font-size: 13px; color: var(--link);
+  background: none; border: 1px solid transparent; border-bottom: 0; border-radius: 2px 2px 0 0;
+}
+.mode:not(.active):hover { text-decoration: underline; }
+.mode.active {
+  color: var(--ink); font-weight: 600; background: var(--paper); cursor: default;
+  border-color: var(--rule); border-bottom: 1px solid var(--paper);
+}
+.n { margin-left: 5px; font-size: 12px; font-weight: 400; color: var(--muted); }
+.n:empty { display: none; }
+
+/* ---- inputs ---- */
+.field-row { display: flex; }
+.field-row input[type=text] {
+  flex: 1; min-width: 0; padding: 6px 9px; font: inherit; color: inherit; background: var(--paper);
+  border: 1px solid var(--rule); border-right: 0; border-radius: 2px 0 0 2px; outline: none;
+}
+.field-row input[type=text]:focus, textarea:focus, input[type=date]:focus {
+  border-color: var(--link); box-shadow: inset 0 0 0 1px var(--link);
+}
+.field-row button, .primary {
+  padding: 6px 14px; font-weight: 600; color: #fff; background: var(--link);
+  border: 1px solid var(--link); border-radius: 0 2px 2px 0;
+}
+.primary { border-radius: 2px; }
+.field-row button:hover, .primary:hover { background: #2a4b8d; border-color: #2a4b8d; }
+#driftForm + #driftOut > .also:first-child, #driftForm + #driftOut > .state { margin-top: 10px; }
+
+main { padding: 12px 16px 16px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+
+/* ---- shared pieces ---- */
+.state { padding: 22px 8px; color: var(--muted); text-align: center; }
+.state strong { color: var(--ink); }
+.state small { display: block; margin-top: 4px; }
+.spinner {
+  width: 20px; height: 20px; margin: 0 auto 10px;
+  border: 2px solid var(--soft); border-top-color: var(--link);
+  border-radius: 50%; animation: spin .8s linear infinite;
+}
+.spinner.inline { display: inline-block; width: 11px; height: 11px; margin: 0 7px -1px 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
+
+.also { margin: 0 0 10px; font-size: 12px; color: var(--muted); }
+
+
+.section-label { margin: 16px 0 2px; font: 400 15px/1.3 var(--serif); border-bottom: 1px solid var(--soft); padding-bottom: 2px; }
+
+/* one finding: no box, a hairline between findings */
+.item { padding: 12px 0; border-bottom: 1px solid var(--soft); }
+.item:last-child { border-bottom: 0; }
+.item-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 3px; }
+.kind { font-size: 12px; font-weight: 600; color: var(--alert); }
+.kind.gap { color: #8a5a00; }
+.kind.calm { color: var(--muted); }
+.aside { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.expl { margin: 0 0 8px; }
+
+/* the pair of quotes, coloured like the two sides of a diff */
+.side {
+  display: grid; grid-template-columns: 62px 1fr; gap: 0 10px; align-items: start;
+  padding: 6px 8px; border-left: 3px solid; margin-top: 4px;
+}
+.side.this { background: var(--this); border-color: var(--this-edge); }
+.side.other { background: var(--other); border-color: var(--other-edge); }
+.side-label { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+.side-label a { font-weight: 600; }
+.quote { font: 400 13px/1.5 var(--sans); overflow-wrap: anywhere; }
+.cell + .cell::before { content: ""; display: inline-block; height: .9em; margin: 0 7px -1px; border-left: 1px solid var(--rule); }
+.find {
+  display: block; margin-top: 3px; padding: 0; font-size: 11.5px; color: var(--link);
+  background: none; border: 0; text-align: left;
+}
+.find:hover { text-decoration: underline; }
+
+details { margin-top: 8px; font-size: 12px; }
+summary { cursor: pointer; color: var(--link); }
+summary:hover { text-decoration: underline; }
+.para {
+  margin-top: 6px; padding: 6px 10px; border-left: 3px solid var(--soft);
+  font: 400 13px/1.55 var(--sans); white-space: pre-wrap; overflow-wrap: anywhere;
+}
+pre {
+  margin: 6px 0 0; padding: 8px; overflow-x: auto; font: 11px/1.45 ui-monospace, Menlo, Consolas, monospace;
+  background: var(--wash); border: 1px solid var(--soft); color: var(--ink);
+}
+.links { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 12px; }
+.demo-links { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.demo-links a { padding: 7px 10px; border: 1px solid var(--soft); background: var(--wash); border-radius: 2px; }
+.demo-links a:hover { background: var(--soft); }
+
+/* ---- Ask ---- */
+.ask-form textarea {
+  display: block; width: 100%; padding: 7px 9px; font: inherit; color: inherit; resize: vertical;
+  border: 1px solid var(--rule); border-radius: 2px; outline: none;
+}
+.ask-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px; color: var(--muted); }
+.ask-row input[type=date] { margin-left: 6px; padding: 3px 5px; font: inherit; color: var(--ink); border: 1px solid var(--rule); border-radius: 2px; outline: none; }
+.answer { margin: 14px 0 4px; font: 400 14.5px/1.6 var(--sans); }
+.cite { font: 400 11px/0 var(--sans); vertical-align: super; }
+.source-n { color: var(--muted); margin-right: 4px; }
+
+/* ---- Drift: changes in time order on a rail ---- */
+.summary { margin: 12px 0 2px; font: 400 14px/1.6 var(--sans); }
+.run-status { margin: 12px 0 4px; color: var(--muted); }
+.run-status strong { color: var(--ink); }
+.timeline { margin: 6px 0 0; padding: 0; list-style: none; border-left: 2px solid var(--soft); }
+.timeline li { position: relative; padding: 9px 0 9px 14px; }
+.timeline li::before {
+  content: ""; position: absolute; left: -6px; top: 15px; width: 8px; height: 8px;
+  border-radius: 50%; background: var(--paper); border: 2px solid var(--rule);
+}
+.when { font-size: 11.5px; color: var(--muted); }
+.claim { font-weight: 600; }
+.move { display: block; }
+/* stance chips: the chart's colours (stated as fact, attributed, not addressed, disputed, denied) */
+.stance { padding:0 4px; border-radius:2px; white-space:nowrap }
+.st-fact { background:#1f5fbf; color:#fff } .st-attr { background:#9dc3ea; color:#202122 }
+.st-none { background:transparent; color:#54595d; box-shadow:inset 0 0 0 1px #a2a9b1 }
+.st-disp { background:#f4a35f; color:#202122 } .st-deny { background:#d1490f; color:#fff }
+.edit-note { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }

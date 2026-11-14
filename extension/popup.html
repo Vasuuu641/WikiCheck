@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>WikiCheck</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="masthead">
+      <span class="wordmark">WikiCheck</span>
+      <button id="refreshBtn" class="quiet-btn" title="Compare this article with its other language editions again, ignoring the stored result" hidden>Check again</button>
+    </div>
+    <h1 id="pageTitle" class="page-title">Wikipedia, checked across languages and time</h1>
+    <nav class="modes" id="modes" aria-label="Tools">
+      <button class="mode active" data-mode="conflicts" title="Statements that contradict the other language editions">Conflicts<span class="n" id="nConflicts"></span></button>
+      <button class="mode" data-mode="gaps" title="Important content the other language editions have and this page lacks">Missing here<span class="n" id="nGaps"></span></button>
+      <button class="mode" data-mode="ask" title="Ask a question and get cited Wikipedia sources, neutrality checks, and conflicting passages">Find sources</button>
+      <button class="mode" data-mode="drift" title="Track how an article's claims changed across versions and edits">Version history</button>
+    </nav>
+  </header>
+
+  <main>
+    <div id="content">
+      <div class="state">Loading…</div>
+    </div>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>

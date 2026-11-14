@@ -40,20 +40,6 @@ CREATE TABLE IF NOT EXISTS article_category (
   KEY (category)
 );
 
--- Chunks for precise questions (librarian owns; filled by pipeline/). Same shape as article_vector.
-CREATE TABLE IF NOT EXISTS chunk (
-  page_id   INT UNSIGNED NOT NULL,
-  chunk_no  SMALLINT UNSIGNED NOT NULL,
-  rev_id    INT UNSIGNED NOT NULL,
-  text      TEXT NOT NULL,
-  PRIMARY KEY (page_id, chunk_no)
-);
-
-CREATE TABLE IF NOT EXISTS chunk_vector (
-  page_id   INT UNSIGNED NOT NULL,
-  chunk_no  SMALLINT UNSIGNED NOT NULL,
-  model     VARCHAR(50) NOT NULL,
-  embedding VECTOR(1024) NOT NULL,
-  PRIMARY KEY (page_id, chunk_no),
-  VECTOR INDEX (embedding) M=16 DISTANCE=cosine
-);
+-- The paragraph cache for /api/ask used to be defined here as `chunk` / `chunk_vector`. It now
+-- lives in db/006_ask_chunk.sql as `ask_chunk` / `ask_chunk_vector`, because the site in pacome/
+-- owns `chunk` / `chunk_vector` with another shape (sections in fi/sv/en). See db/README.md.

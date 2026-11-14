@@ -3,3 +3,9 @@ uvicorn[standard]
 pymysql
 python-dotenv
 requests
+openai
+numpy
+mwparserfromhell
+pyarrow
+jinja2
+pyflakes
