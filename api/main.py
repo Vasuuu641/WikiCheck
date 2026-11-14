@@ -78,3 +78,27 @@ def ask(body: AskBody):
         return mock("ask")
     from api.ask import answer_with_citations
     return answer_with_citations(body.question)
+
+
+@app.get("/api/consistency")
+def consistency(
+    lang: str,
+    title: str | None = None,
+    page_id: int | None = None,
+    compute: bool = True,
+    refresh: bool = False,
+):
+    from api.consistency import get_consistency
+    return get_consistency(lang=lang, title=title, page_id=page_id,
+                           compute_if_missing=compute, refresh=refresh)
+
+
+class AnalyzeBody(BaseModel):
+    wikidata_id: str
+    force: bool = False
+
+
+@app.post("/api/consistency/analyze")
+def consistency_analyze(body: AnalyzeBody):
+    from api.consistency import analyze_entity
+    return analyze_entity(body.wikidata_id, force=body.force)

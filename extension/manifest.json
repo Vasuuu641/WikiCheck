@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Aikakone — Wikipedia Cross-Language Checker",
+  "version": "0.1.0",
+  "description": "Surfaces cross-language factual conflicts and missing content across Finnish, Swedish, and English Wikipedia using MariaDB.",
+  "permissions": ["activeTab", "tabs"],
+  "host_permissions": [
+    "http://127.0.0.1:8020/*",
+    "http://localhost:8020/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Aikakone Consistency Check"
+  }
+}
