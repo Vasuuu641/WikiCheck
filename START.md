@@ -1,4 +1,4 @@
-# Starting Aikakone on a new computer
+# Starting WikiCheck on a new computer
 
 You need:
 
@@ -21,7 +21,7 @@ curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | sudo bash -s -- -
 sudo apt install -y mariadb-server
 ```
 
-The second line adds MariaDB's own package source. Ubuntu's built-in MariaDB is too old: Aikakone
+The second line adds MariaDB's own package source. Ubuntu's built-in MariaDB is too old: WikiCheck
 needs version 11.7 or newer, for vector search.
 
 **macOS** (with [Homebrew](https://brew.sh))
@@ -73,9 +73,9 @@ should end with `all passed`.
 1. Open `chrome://extensions`.
 2. Turn on **Developer mode** (top right).
 3. Click **Load unpacked**, then choose the `extension` folder inside `aikakone`.
-4. Pin Aikakone: puzzle icon in the toolbar, then the pin next to Aikakone.
+4. Pin WikiCheck: puzzle icon in the toolbar, then the pin next to WikiCheck.
 
-Try it: open https://sv.wikipedia.org/wiki/Regeringen_Aura_II and click the Aikakone icon. Other
+Try it: open https://sv.wikipedia.org/wiki/Regeringen_Aura_II and click the WikiCheck icon. Other
 good pages: https://en.wikipedia.org/wiki/Hauho (Missing here) and
 https://fi.wikipedia.org/wiki/Talvisota (Drift).
 

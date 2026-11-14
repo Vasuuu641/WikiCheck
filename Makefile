@@ -1,4 +1,4 @@
-# Aikakone: one server (api/, FastAPI on :8020) behind the browser extension and the drift page.
+# WikiCheck: one server (api/, FastAPI on :8020) behind the browser extension and the drift page.
 #
 #   make db-user     once: the database and its user (asks for your password: sudo)
 #   make setup       everything else, safe to repeat: .env, Python venv, Ollama + bge-m3, tables,
