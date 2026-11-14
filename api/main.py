@@ -1,4 +1,4 @@
-"""Aikakone: the one server behind the browser extension and the drift page.
+"""WikiCheck: the one server behind the browser extension and the drift page.
 
   GET  /drift, /api/drift/...                       opinion drift (api/drift/routes.py)
   GET  /api/consistency, /api/consistency/search   conflicts and missing content across language editions
@@ -16,7 +16,7 @@ load_dotenv()
 
 from .drift.routes import router as drift_router  # noqa: E402  (reads .env at import)
 
-app = FastAPI(title="Aikakone")
+app = FastAPI(title="WikiCheck")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.include_router(drift_router)
 

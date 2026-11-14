@@ -1,4 +1,4 @@
-# Aikakone — Wikipedia, checked across languages and time
+# WikiCheck — Wikipedia, checked across languages and time
 
 A browser extension for people who edit Wikipedia. On the article in the tab it shows:
 

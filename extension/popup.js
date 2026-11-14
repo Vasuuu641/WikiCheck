@@ -1,4 +1,4 @@
-const API_BASE = "http://127.0.0.1:8020";   // the Aikakone server (api/): checks, Ask, and the drift page and stream
+const API_BASE = "http://127.0.0.1:8020";   // the WikiCheck server (api/): checks, Ask, and the drift page and stream
 
 const content = document.getElementById("content");
 const refreshBtn = document.getElementById("refreshBtn");
@@ -236,7 +236,7 @@ async function load(refresh = false) {
   } catch (err) {
     if (seq !== loadSeq || !isCheck(mode)) return;
     checkKey = "";
-    content.innerHTML = `<div class="state">The Aikakone service at ${esc(API_BASE)} did not answer.
+    content.innerHTML = `<div class="state">The WikiCheck service at ${esc(API_BASE)} did not answer.
       <small>Start it with <code>make run</code> in the repository, then reopen this popup. (${esc(err.message)})</small></div>`;
   }
 }
@@ -452,7 +452,7 @@ function runDrift(q) {
     fail(String(typeof msg === "string" ? msg : (msg.message || JSON.stringify(msg))).replace(/^\w+Error:\s*/, ""));
   });
   driftSource.onerror = () => {
-    if (driftSource && !finished) fail(`The Aikakone server at ${API_BASE} did not answer. Start it with make run in the repository.`);
+    if (driftSource && !finished) fail(`The WikiCheck server at ${API_BASE} did not answer. Start it with make run in the repository.`);
   };
 }
 

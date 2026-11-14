@@ -129,9 +129,9 @@ def page(q: str = "", fixture: str = "", lang: str = ""):
 PAGE = r"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Aikakone · Opinion drift</title>
+<title>WikiCheck · Opinion drift</title>
 <style>
-/* Same look as the Aikakone extension: Wikipedia's own type and colours, the two diff colours for
+/* Same look as the WikiCheck extension: Wikipedia's own type and colours, the two diff colours for
    "what it said" (yellow) and "what it says now" (blue). The ribbon colours encode a stance scale. */
 :root {
   --paper:#ffffff; --wash:#f8f9fa; --ink:#202122; --muted:#54595d; --rule:#a2a9b1; --soft:#eaecf0;
@@ -243,7 +243,7 @@ footer { margin-top:40px; padding-top:10px; border-top:1px solid var(--soft); co
 </style></head>
 <body>
 <header><div class="wrap">
-  <div class="wordmark">Aikakone</div>
+  <div class="wordmark">WikiCheck</div>
   <h1 id="title">Opinion drift</h1>
   <p class="lede">How Finnish Wikipedia's position on the same claims changed over the years, down to the edit that changed it.</p>
 </div></header>
@@ -355,7 +355,7 @@ function start(q, fixture) {
     if (S.running && !S.done) { const e = ((Date.now() - tStart) / 1000);
       const el = document.querySelector('.steps li.run'); if (el) el.dataset.t = e.toFixed(0); } }, 500);
   $('title').textContent = fixture ? 'A recorded run' : (q || 'Opinion drift');
-  document.title = 'Aikakone · ' + $('title').textContent;
+  document.title = 'WikiCheck · ' + $('title').textContent;
   es = new EventSource('/api/drift/stream?fixture=' + (fixture ? '1' : '') + (FAST ? '&fast=1' : '') + '&q=' + encodeURIComponent(q || '') +
                        (q && q === PARAM_Q && PARAM_LANG ? '&lang=' + encodeURIComponent(PARAM_LANG) : ''));
   es.addEventListener('sources', e => { const d = JSON.parse(e.data); S.articles = d.articles; setAxis(d.articles); $('tools').hidden = false;
