@@ -71,3 +71,10 @@ def api_search(q: str, limit: int = 10):
     for h in hits:
         h["text"] = h["text"][:300]      # keep the response small
     return {"hits": hits, "sql": sql}
+
+@app.post("/api/ask")
+def ask(body: AskBody):
+    if MOCK_ASK:
+        return mock("ask")
+    from api.ask import answer_with_citations
+    return answer_with_citations(body.question)
