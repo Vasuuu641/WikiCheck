@@ -16,6 +16,7 @@ import numpy as np
 import requests
 
 from api.conflicts import examine
+from api.llm import google_key
 from api.search import connect
 
 GAP_THRESH = 0.48
@@ -102,7 +103,7 @@ def _filter_gaps_llm(src: dict, candidates: list[tuple[float, str]], dst: dict, 
 
     dr = requests.post(
         "https://generativelanguage.googleapis.com/v1beta/decisions",
-        headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"]},
+        headers={"x-goog-api-key": google_key()},
         json={"model": "gemini-decision-1", "input": shared_input, "questions": questions},
         timeout=60,
     )
@@ -134,7 +135,7 @@ def _filter_gaps_llm(src: dict, candidates: list[tuple[float, str]], dst: dict, 
     )
     sr = requests.post(
         f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
-        headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"]},
+        headers={"x-goog-api-key": google_key()},
         json={"contents": [{"parts": [{"text": sum_prompt}]}],
               "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}},
         timeout=30,

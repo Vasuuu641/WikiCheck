@@ -16,7 +16,7 @@ passage. It collects pointers an editor can check; it NEVER says which side is c
                          {title, url, sentence or null, similarity, values, same_values}}}
 
 How each part is found:
-  trace      only articles whose history is loaded (article_state with wikitext; the current row,
+  trace      only articles whose history is loaded (article_version with wikitext; the current row,
              i.e. today's revision, which can be newer than the passage). The wikitext is cut into
              paragraphs, each cleaned with the same cleaner as as_of (api/ask.py clean_wikitext);
              the paragraph whose clean text contains the phrase holds it. The phrase's sentence
@@ -66,8 +66,8 @@ _REF_BODY = re.compile(r"<ref\b([^>]*?)(?<!/)>(.*?)</ref\s*>", re.S | re.I)
 _SPLIT_SENTENCES = re.compile(r"(?<=[.!?])\s+(?=[\"'«(\[A-ZÅÄÖ])")
 
 WIKITEXT_SQL = """
-SELECT page_id, rev_id, wikitext FROM article_state WHERE page_id IN ({ph}) AND wikitext IS NOT NULL"""
-HISTORY_SQL = "SELECT DISTINCT page_id FROM article_state FOR SYSTEM_TIME ALL WHERE page_id IN ({ph})"
+SELECT page_id, rev_id, text FROM article_version WHERE page_id IN ({ph}) AND text <> ''"""
+HISTORY_SQL = "SELECT DISTINCT page_id FROM article_version FOR SYSTEM_TIME ALL WHERE page_id IN ({ph})"
 WIKIDATA_SQL = "SELECT lang, page_id, wikidata_id FROM article WHERE (lang, page_id) IN ({ph})"
 VERSIONS_SQL = """
 SELECT lang, page_id, wikidata_id, title, url, text FROM article

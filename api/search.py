@@ -28,20 +28,36 @@ def connect():
     )
 
 
-def embed_texts(texts: list[str]) -> list[list[float]]:
-    """Embed several texts in one Ollama call (bge-m3, same as the stored vectors)."""
+LOCAL_OLLAMA = "http://127.0.0.1:11434"
+
+
+def _embed_at(url: str, texts: list[str], timeout: int) -> list[list[float]]:
     r = requests.post(
-        os.getenv("OLLAMA_URL", "http://127.0.0.1:11434") + "/api/embed",
+        url.rstrip("/") + "/api/embed",
         json={
             "model": os.getenv("EMBED_MODEL", "bge-m3"),
             "input": texts,
             "truncate": True,
             "options": OLLAMA_OPTIONS,
+            "keep_alive": "2h",   # keep bge-m3 in memory between questions
         },
-        timeout=300,
+        timeout=timeout,
     )
     r.raise_for_status()
     return r.json()["embeddings"]
+
+
+def embed_texts(texts: list[str]) -> list[list[float]]:
+    """Embed several texts in one Ollama call (bge-m3, same as the stored vectors). If OLLAMA_URL
+    is a remote machine (e.g. a GPU tunnel) and it does not answer, the local Ollama is used."""
+    url = os.getenv("OLLAMA_URL", LOCAL_OLLAMA)
+    local = url.rstrip("/") in (LOCAL_OLLAMA, "http://localhost:11434")
+    try:
+        return _embed_at(url, texts, 300 if local else 30)
+    except requests.RequestException:
+        if local:
+            raise
+        return _embed_at(LOCAL_OLLAMA, texts, 300)
 
 
 def embed_question(text: str) -> list[float]:
@@ -51,14 +67,14 @@ def embed_question(text: str) -> list[float]:
 SEARCH_SQL = """
 SELECT a.lang, a.page_id, a.rev_id, a.wikidata_id, a.title, a.url, v.distance{text}
 FROM (SELECT lang, page_id, VEC_DISTANCE_COSINE(embedding, VEC_FromText(%s)) AS distance
-      FROM article_vector
+      FROM article_vector{where}
       ORDER BY distance
       LIMIT %s) AS v
 JOIN article a USING (lang, page_id)
 ORDER BY v.distance
 """
-SEARCH_SQL_TEXT = SEARCH_SQL.format(text=", a.text")   # with the article text (GET /api/search)
-SEARCH_SQL = SEARCH_SQL.format(text="")
+_SEARCH_TEMPLATE = SEARCH_SQL
+SEARCH_SQL = _SEARCH_TEMPLATE.format(text="", where="")
 
 
 # Chunk-first: the nearest paragraphs (chunk_vector, eval/build_chunks.py) instead of whole
@@ -67,10 +83,10 @@ SEARCH_SQL = SEARCH_SQL.format(text="")
 CHUNK_SEARCH_SQL = """
 SELECT c.page_id, c.chunk_no, c.rev_id, c.text, a.wikidata_id, a.title, a.url, v.distance
 FROM (SELECT page_id, chunk_no, VEC_DISTANCE_COSINE(embedding, VEC_FromText(%s)) AS distance
-      FROM chunk_vector
+      FROM ask_chunk_vector
       ORDER BY distance
       LIMIT %s) AS v
-JOIN chunk c USING (page_id, chunk_no)
+JOIN ask_chunk c USING (page_id, chunk_no)
 JOIN article a ON a.lang = 'fi' AND a.page_id = v.page_id
 ORDER BY v.distance
 """
@@ -146,13 +162,17 @@ def fused_search(vector: list[float], limit: int = 10):
     return out[:limit], sql
 
 
-def search(question: str, limit: int = 10, vector: list[float] | None = None, with_text: bool = False):
+def search(question: str, limit: int = 10, vector: list[float] | None = None, with_text: bool = False,
+           lang: str | None = None):
     """Nearest articles to the question. Returns (rows, sql). Pass `vector` to skip embedding;
-    with_text=True also returns each article's text."""
+    with_text=True also returns each article's text; lang ("fi", "sv", "en") searches one language."""
     vec = json.dumps(vector if vector is not None else embed_question(question))
-    sql = SEARCH_SQL_TEXT if with_text else SEARCH_SQL
+    sql = SEARCH_SQL
+    if with_text or lang:
+        sql = _SEARCH_TEMPLATE.format(text=", a.text" if with_text else "",
+                                      where="\n      WHERE lang = %s" if lang else "")
     with connect() as con, con.cursor() as cur:
         cur.execute("SET mhnsw_ef_search = 80")
-        cur.execute(sql, (vec, limit))
+        cur.execute(sql, (vec, lang, limit) if lang else (vec, limit))
         cols = [c[0] for c in cur.description]
         return [dict(zip(cols, row)) for row in cur.fetchall()], sql

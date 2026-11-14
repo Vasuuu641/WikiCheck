@@ -1,9 +1,9 @@
--- Possible factual conflicts between two Finnish paragraphs (chunk rows) of DIFFERENT articles,
+-- Possible factual conflicts between two Finnish paragraphs (ask_chunk rows) of DIFFERENT articles,
 -- found offline by eval/scan_conflicts.py and served to editors by GET /api/conflicts.
 --
 -- One row per pair. The pair is stored in a fixed order, side a = the lower page_id (the CHECK),
 -- so (a, b) and (b, a) are the same row and the UNIQUE key makes reruns skip it.
--- phrase_a / phrase_b are exact substrings of chunk.text at the time of the scan; a later
+-- phrase_a / phrase_b are exact substrings of ask_chunk.text at the time of the scan; a later
 -- rebuild of an article's chunks can renumber them, so match on the phrase, not only chunk_no.
 -- status: open (default) | fixed | dismissed, set by whoever handles the row.
 

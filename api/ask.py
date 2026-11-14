@@ -5,7 +5,7 @@ Steps:
      article on the same topic via wikidata_id. Keep the top 5 distinct articles.
   2. Text of those articles:
        - now:   the article table (dataset S).
-       - as_of: the version that was live on that date, from article_state
+       - as_of: the version that was live on that date, from article_version
                 FOR SYSTEM_TIME AS OF (dataset M, only articles whose history is loaded), wikitext
                 cleaned to plain text with mwparserfromhell.
   3. Split into paragraphs, embed each as "<title>: <paragraph>" with bge-m3 (same Ollama call
@@ -70,13 +70,13 @@ SELECT lang, page_id, rev_id, title, url, text FROM article WHERE (lang, page_id
 
 # The version of each article that was live at the given moment (UTC).
 HISTORY_AS_OF_SQL = """
-SELECT page_id, rev_id, title, row_start, wikitext
-FROM article_state FOR SYSTEM_TIME AS OF TIMESTAMP %s
+SELECT page_id, rev_id, title, row_start, text
+FROM article_version FOR SYSTEM_TIME AS OF TIMESTAMP %s
 WHERE page_id IN ({ph})"""
 
 # Which of the articles have any history loaded, and since when (uses KEY page_start, db/004).
 HISTORY_FIRST_SQL = """
-SELECT page_id, MIN(row_start) FROM article_state FOR SYSTEM_TIME ALL
+SELECT page_id, MIN(row_start) FROM article_version FOR SYSTEM_TIME ALL
 WHERE page_id IN ({ph}) GROUP BY page_id"""
 
 SYSTEM_PROMPT = """You answer questions about the history of Finland using ONLY the numbered \
@@ -428,7 +428,7 @@ def retrieval_mode() -> str:
 
 
 CHUNKED_SQL = """
-SELECT page_id, MIN(rev_id), MAX(rev_id) FROM chunk WHERE page_id IN ({ph}) GROUP BY page_id"""
+SELECT page_id, MIN(rev_id), MAX(rev_id) FROM ask_chunk WHERE page_id IN ({ph}) GROUP BY page_id"""
 
 
 def _chunk_first(q_vec, arts: list[dict], timer: "_Timer", tr: dict):
@@ -511,7 +511,7 @@ def _article_texts(cur, keys: list[tuple[str, int]]) -> dict:
     return {(r["lang"], r["page_id"]): r for r in rows}
 
 
-# --- as_of: the versions live on a past date, from the system-versioned article_state. ---
+# --- as_of: the versions live on a past date, from the system-versioned article_version (the site's history table, pacome/rag-demo/history.py). ---
 
 def _historic_versions(arts: list[dict], as_of_ts: str, skipped: list) -> tuple[list[dict], str]:
     """Replace each article by its version live at as_of_ts. Articles without one go to `skipped`.
@@ -690,11 +690,11 @@ def embed_paragraphs(items: list[tuple[str, str]]) -> list[list[float]]:
 
 def write_chunks(cur, page_id: int, rev_id: int, paras: list[tuple[str, list[float]]]) -> None:
     """Replace one article's chunks. The caller owns the transaction."""
-    cur.execute("DELETE FROM chunk_vector WHERE page_id = %s", (page_id,))
-    cur.execute("DELETE FROM chunk WHERE page_id = %s", (page_id,))
-    cur.executemany("INSERT INTO chunk (page_id, chunk_no, rev_id, text) VALUES (%s, %s, %s, %s)",
+    cur.execute("DELETE FROM ask_chunk_vector WHERE page_id = %s", (page_id,))
+    cur.execute("DELETE FROM ask_chunk WHERE page_id = %s", (page_id,))
+    cur.executemany("INSERT INTO ask_chunk (page_id, chunk_no, rev_id, text) VALUES (%s, %s, %s, %s)",
                     [(page_id, n, rev_id, t) for n, (t, _) in enumerate(paras)])
-    cur.executemany("INSERT INTO chunk_vector (page_id, chunk_no, model, embedding) "
+    cur.executemany("INSERT INTO ask_chunk_vector (page_id, chunk_no, model, embedding) "
                     "VALUES (%s, %s, %s, VEC_FromText(%s))",
                     [(page_id, n, _embed_model(), json.dumps(v)) for n, (_, v) in enumerate(paras)])
 
@@ -706,7 +706,7 @@ def write_chunks(cur, page_id: int, rev_id: int, paras: list[tuple[str, list[flo
 
 CACHE_READ_SQL = """
 SELECT c.page_id, c.chunk_no, c.rev_id, c.text, VEC_ToText(v.embedding)
-FROM chunk c JOIN chunk_vector v USING (page_id, chunk_no)
+FROM ask_chunk c JOIN ask_chunk_vector v USING (page_id, chunk_no)
 WHERE c.page_id IN ({ph}) AND v.model = %s
 ORDER BY c.page_id, c.chunk_no"""
 

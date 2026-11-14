@@ -3,7 +3,7 @@
     title, page_id, lang, rev_id, date_modified, wikidata_id, text_length
     languages   every article row with the same wikidata_id: [{lang, page_id, title, url}]
     categories  up to 8, from article_category
-    history     only if article_state has versions of this page (Finnish only), else null:
+    history     only if article_version has versions of this page (Finnish only), else null:
                 {versions, first_edit, latest_edit, reverts}
                 A revert is a version whose text (sha1) equals an earlier version that is not
                 the one right before it: the page went back to how it was.
@@ -28,7 +28,7 @@ SELECT category FROM article_category WHERE lang = %s AND page_id = %s ORDER BY 
 
 # Only sha1 and the start time of each version: never the wikitext (Talvisota has 2,143 versions).
 HISTORY_SQL = """
-SELECT sha1, row_start FROM article_state FOR SYSTEM_TIME ALL
+SELECT sha1, row_start FROM article_version FOR SYSTEM_TIME ALL
 WHERE page_id = %s ORDER BY row_start"""
 
 
@@ -48,7 +48,7 @@ def info(page_id: int, lang: str = "fi") -> dict | None:
         cur.execute(CATEGORIES_SQL, (lang, page_id, MAX_CATEGORIES))
         categories = [c for (c,) in cur.fetchall()]
         history = None
-        if lang == "fi":  # article_state holds Finnish pages only (eval/load_history.py)
+        if lang == "fi":  # article_version holds Finnish pages only (eval/load_history.py)
             cur.execute("SET time_zone = '+00:00'")
             cur.execute(HISTORY_SQL, (page_id,))
             versions = cur.fetchall()

@@ -32,7 +32,7 @@ REPORT_EVERY_S = 30
 
 def to_do(cur) -> list[tuple[int, int, int]]:
     """(page_id, rev_id, length) of Finnish articles whose chunks are missing or stale."""
-    cur.execute("SELECT page_id, MIN(rev_id), MAX(rev_id) FROM chunk GROUP BY page_id")
+    cur.execute("SELECT page_id, MIN(rev_id), MAX(rev_id) FROM ask_chunk GROUP BY page_id")
     done = {pid: lo for pid, lo, hi in cur.fetchall() if lo == hi}
     cur.execute("SELECT page_id, rev_id, LENGTH(text) FROM article WHERE lang = 'fi' ORDER BY page_id")
     return [(pid, rev, n) for pid, rev, n in cur.fetchall() if done.get(pid) != rev]
@@ -56,7 +56,7 @@ def main():
         cur.execute("SELECT COUNT(*), SUM(LENGTH(text)) FROM article WHERE lang = 'fi'")
         total, total_chars = cur.fetchone()
         left = to_do(cur)
-        cur.execute("SELECT COUNT(*) FROM chunk")
+        cur.execute("SELECT COUNT(*) FROM ask_chunk")
         chunks = cur.fetchone()[0]
         cur.execute("SELECT IS_USED_LOCK('build_chunks')")
         running = cur.fetchone()[0] is not None
@@ -147,7 +147,7 @@ def main():
     el = time.perf_counter() - t0
     print(f"done: {done_articles} articles, {done_paras} paragraphs, {done_chars / 1e6:.1f} M chars "
           f"in {fmt(el)} (embedding {embed_s:.0f} s, writing {write_s:.0f} s)", flush=True)
-    cur.execute("SELECT COUNT(DISTINCT page_id), COUNT(*) FROM chunk")
+    cur.execute("SELECT COUNT(DISTINCT page_id), COUNT(*) FROM ask_chunk")
     print("chunk table now: {} articles, {} chunks".format(*cur.fetchone()), flush=True)
     con.close()
 

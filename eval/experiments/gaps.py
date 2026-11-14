@@ -19,6 +19,7 @@ import requests
 from dotenv import load_dotenv
 
 load_dotenv()
+from api.llm import google_key
 from api.search import connect  # noqa: E402
 
 THRESH = 0.48
@@ -88,7 +89,7 @@ def filter_gaps(src_lang, src_title, candidates, dst_lang, dst_title, dst_text,
     )
     r = requests.post(
         f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
-        headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"]},
+        headers={"x-goog-api-key": google_key()},
         json={"contents": [{"parts": [{"text": prompt}]}],
               "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}},
         timeout=120,

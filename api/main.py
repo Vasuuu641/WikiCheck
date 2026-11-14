@@ -208,10 +208,13 @@ def changes(page_id: int, from_: str | None = Query(None, alias="from"), to: str
 
 
 @app.get("/api/search")
-def api_search(q: str, limit: int = 10):
-    """Nearest articles to a query, with the SQL. Not in docs/API_CONTRACT.md yet."""
+def api_search(q: str, limit: int = 10, lang: str | None = None):
+    """Nearest articles to a query, with the SQL; `lang` = fi | sv | en searches one language.
+    Not in docs/API_CONTRACT.md yet."""
     from .search import search
-    hits, sql = search(q, limit, with_text=True)
+    if lang not in (None, "fi", "sv", "en"):
+        return JSONResponse({"error": "lang must be fi, sv or en"}, status_code=400)
+    hits, sql = search(q, limit, with_text=True, lang=lang)
     for h in hits:
         h["text"] = h["text"][:300]      # keep the response small
     return {"hits": hits, "sql": sql}

@@ -60,8 +60,8 @@ CATS_CTE = """WITH RECURSIVE cats AS (
 
 SEEDS_SQL = CATS_CTE + """
 SELECT c.page_id, c.chunk_no, c.text, a.title, VEC_ToText(v.embedding)
-FROM chunk c
-JOIN chunk_vector v USING (page_id, chunk_no)
+FROM ask_chunk c
+JOIN ask_chunk_vector v USING (page_id, chunk_no)
 JOIN article a ON a.lang = 'fi' AND a.page_id = c.page_id
 WHERE EXISTS (SELECT 1 FROM article_category ac JOIN cats ON ac.category = cats.name
               WHERE ac.lang = 'fi' AND ac.page_id = c.page_id)
@@ -71,7 +71,7 @@ ORDER BY c.page_id, c.chunk_no"""
 COVERAGE_SQL = CATS_CTE + """
 SELECT a.page_id, a.title, a.rev_id, MIN(c.rev_id), MAX(c.rev_id), COUNT(c.chunk_no)
 FROM article a
-LEFT JOIN chunk c ON c.page_id = a.page_id
+LEFT JOIN ask_chunk c ON c.page_id = a.page_id
 WHERE a.lang = 'fi'
   AND EXISTS (SELECT 1 FROM article_category ac JOIN cats ON ac.category = cats.name
               WHERE ac.lang = 'fi' AND ac.page_id = a.page_id)
@@ -83,10 +83,10 @@ ORDER BY a.title"""
 NEIGHBOURS_SQL = """
 SELECT v.page_id, v.chunk_no, v.distance, c.text, a.title
 FROM (SELECT page_id, chunk_no, VEC_DISTANCE_COSINE(embedding, VEC_FromText(%s)) AS distance
-      FROM chunk_vector
+      FROM ask_chunk_vector
       ORDER BY distance
       LIMIT %s) AS v
-JOIN chunk c USING (page_id, chunk_no)
+JOIN ask_chunk c USING (page_id, chunk_no)
 JOIN article a ON a.lang = 'fi' AND a.page_id = v.page_id
 ORDER BY v.distance"""
 

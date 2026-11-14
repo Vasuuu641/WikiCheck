@@ -1,5 +1,5 @@
 """POST /api/trace: where a phrase in an article came from, from the article's stored edit history
-(article_state, loaded with eval/load_history.py; Finnish articles only).
+(article_version, loaded by pacome/rag-demo/history.py or eval/load_history.py; Finnish articles only).
 
   1. Every version of the article, oldest first (FOR SYSTEM_TIME ALL). Each version's wikitext
      is matched with links unwrapped ([[target|label]] -> label, [[x]] -> x), bold/italic marks
@@ -31,16 +31,16 @@ CACHE_PAGES = 8
 REV_URL = "https://fi.wikipedia.org/w/index.php?oldid={rev_id}"
 
 VERSIONS_SQL = """
-SELECT rev_id, title, row_start, anonymous, minor, edit_comment, wikitext
-FROM article_state FOR SYSTEM_TIME ALL
+SELECT rev_id, title, row_start, anonymous, minor, comment, text
+FROM article_version FOR SYSTEM_TIME ALL
 WHERE page_id = %s
 ORDER BY row_start"""
 
 STAMP_SQL = """
-SELECT COUNT(*), MAX(row_start) FROM article_state FOR SYSTEM_TIME ALL WHERE page_id = %s"""
+SELECT COUNT(*), MAX(row_start) FROM article_version FOR SYSTEM_TIME ALL WHERE page_id = %s"""
 
 AVAILABLE_SQL = """
-SELECT DISTINCT page_id FROM article_state FOR SYSTEM_TIME ALL WHERE page_id IN ({ph})"""
+SELECT DISTINCT page_id FROM article_version FOR SYSTEM_TIME ALL WHERE page_id IN ({ph})"""
 
 LINK = re.compile(r"\[\[(?:[^\]|]*\|)?([^\]]*)\]\]")
 EXT_LINK = re.compile(r"\[https?://\S+\s+([^\]]*)\]")
@@ -106,13 +106,13 @@ USER_LINK = re.compile(r"\[\[[^\]|]*?" + USER_WORDS + r"[^\]|]*?[:/][^\]]*\]\]",
 USER_LINK_CUT = re.compile(r"\[\[[^\]]*?" + USER_WORDS + r"[^\]]*$", re.I)   # comment truncated mid-link
 IPV4 = re.compile(r"(?<![\d.])\d{1,3}(?:\.\d{1,3}){3}(?![\d.])")
 IPV6 = re.compile(r"(?<![\w:])(?:[0-9A-Fa-f]{1,4}:){4,7}[0-9A-Fa-f]{1,4}(?![\w:])")
-NAMES_SQL = "SELECT DISTINCT editor FROM article_state FOR SYSTEM_TIME ALL WHERE editor IS NOT NULL"
+NAMES_SQL = "SELECT DISTINCT `user` FROM article_version FOR SYSTEM_TIME ALL WHERE `user` IS NOT NULL"
 _names: dict = {"stamp": None, "re": None}
 
 
 def _names_re(cur):
-    """One regex of every editor name in article_state, rebuilt when the history grows."""
-    cur.execute("SELECT COUNT(*) FROM article_state FOR SYSTEM_TIME ALL")
+    """One regex of every editor name in article_version, rebuilt when the history grows."""
+    cur.execute("SELECT COUNT(*) FROM article_version FOR SYSTEM_TIME ALL")
     stamp = cur.fetchone()[0]
     if _names["stamp"] != stamp:
         cur.execute(NAMES_SQL)

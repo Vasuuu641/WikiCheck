@@ -16,6 +16,7 @@ import unicodedata
 import requests
 from openai import OpenAI
 
+from api.llm import google_key
 from api.search import connect
 
 CHARS = 7000
@@ -71,7 +72,7 @@ def gemini_find(a: dict, b: dict) -> list[dict]:
                                 tb=b["title"], lb=b["lang"], b=b["text"][:CHARS])
     r = requests.post(
         f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
-        headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"]},
+        headers={"x-goog-api-key": google_key()},
         json={"contents": [{"parts": [{"text": prompt}]}],
               "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}},
         timeout=120)
@@ -103,7 +104,7 @@ def decide_verify(a: dict, b: dict, c: dict) -> dict:
     )
     r = requests.post(
         "https://generativelanguage.googleapis.com/v1beta/decisions",
-        headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"]},
+        headers={"x-goog-api-key": google_key()},
         json={
             "model": "gemini-decision-1",
             "input": text,

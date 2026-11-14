@@ -136,7 +136,7 @@ def main():
                 print(f"warning: expected article not in DB: {q['expected_fi_title']}")
             q["wikidata_id"], q["page_id"] = row or (None, None)
         if "chunk" in modes or "fusion" in modes:
-            cur.execute("SELECT (SELECT COUNT(DISTINCT page_id) FROM chunk), "
+            cur.execute("SELECT (SELECT COUNT(DISTINCT page_id) FROM ask_chunk), "
                         "(SELECT COUNT(*) FROM article WHERE lang = 'fi')")
             chunked, fi = cur.fetchone()
             note = "" if chunked >= fi else "  (NOT finished: chunk-first is incomplete)"
