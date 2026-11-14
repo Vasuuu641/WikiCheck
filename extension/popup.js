@@ -286,15 +286,15 @@ function renderAsk() {
   const title = pageTitle();
   content.innerHTML = `
     <form id="askForm" class="ask-form">
-      <textarea id="askQ" rows="2" aria-label="Question" placeholder="Ask in English, Finnish or Swedish">${
-        title ? esc(`What does Wikipedia say about ${title}?`) : ""}</textarea>
+      <textarea id="askQ" rows="2" aria-label="Question" placeholder="Ask a question to find cited sources (English, Finnish, or Swedish)">${
+        title ? esc(`What do Wikipedia sources say about ${title}?`) : ""}</textarea>
       <div class="ask-row">
-        <label title="Answer from the articles as they stood on this date. Works for Finnish articles whose history is loaded.">As Wikipedia stood on
+        <label title="Check sources as they stood on this date. Works for Finnish articles whose history is loaded.">As Wikipedia stood on
           <input id="askAsOf" type="date" min="2003-01-01"></label>
-        <button type="submit" class="primary">Ask</button>
+        <button type="submit" class="primary">Find sources</button>
       </div>
     </form>
-    <div id="askOut"><div class="state">The answer is written only from passages MariaDB finds, and cites each one.</div></div>`;
+    <div id="askOut"><div class="state">Ask about any topic or claim to get cited passages, neutrality flags, and sources that disagree.</div></div>`;
   const form = document.getElementById("askForm");
   form.addEventListener("submit", e => {
     e.preventDefault();
@@ -364,10 +364,10 @@ function renderDrift() {
     <form id="driftForm" class="field-row">
       <input id="driftQ" type="text" value="${esc(title)}" aria-label="Article or question"
              placeholder="An article, or a question such as Who started the Winter War?">
-      <button type="submit">Trace</button>
+      <button type="submit">Trace versions</button>
     </form>
     <div id="driftOut"><div class="state">
-      Follow how the Finnish articles changed their position on the same claims, down to the edit that changed it.
+      Track how an article's claims changed across versions, down to the exact edit.
       <div class="demo-links"><a href="${API_BASE}/drift?fixture=1" target="_blank">Watch a recorded run on the full page</a></div>
     </div></div>`;
   document.getElementById("driftForm").addEventListener("submit", e => {
