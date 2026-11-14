@@ -26,6 +26,7 @@ from dotenv import load_dotenv  # noqa: E402
 load_dotenv(ROOT / ".env")
 
 from api.search import connect, search  # noqa: E402
+from api.rewrite import rewrite
 
 DEFAULT_TSV = Path(__file__).resolve().parent / "test-questions.tsv"
 TOP_K = 10
@@ -74,6 +75,7 @@ def main():
     ap.add_argument("--label", default="run")
     ap.add_argument("--questions", default=str(DEFAULT_TSV))
     ap.add_argument("--misses", action="store_true", help="list every question not found at rank 1")
+    ap.add_argument("--rewrite", action="store_true", help="expand each question with an LLM guess first")
     args = ap.parse_args()
 
     rows = load_questions(args.questions)
@@ -87,7 +89,8 @@ def main():
                 continue
             wd, pid = exp
             t0 = time.time()
-            hits, _sql = search(row["question"], TOP_K)
+            q = rewrite(row["question"]) if args.rewrite else row["question"]
+            hits, _sql = search(q, TOP_K)
             ms = (time.time() - t0) * 1000
             rank = next((i + 1 for i, h in enumerate(hits) if is_hit(h, wd, pid)), None)
             results.append({

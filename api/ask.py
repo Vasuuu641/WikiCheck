@@ -7,7 +7,7 @@ from openai import OpenAI
 
 from api.search import search
 
-TOP_K = 5
+TOP_K = 8
 CHARS_PER_SOURCE = 1500   # only the start of each article for now; chunks will improve this
 
 PROMPT = """You answer questions about the history of Finland using ONLY the numbered sources below.
