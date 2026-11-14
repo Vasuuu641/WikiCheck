@@ -4,7 +4,7 @@ function parseWikiUrl(url) {
   if (!url) return null;
   try {
     const u = new URL(url);
-    const m = u.hostname.match(/^(en|fi|sv)\.wikipedia\.org$/);
+    const m = u.hostname.match(/^([a-z]{2})\.wikipedia\.org$/);
     if (!m || !u.pathname.startsWith("/wiki/")) return null;
     const rawTitle = decodeURIComponent(u.pathname.slice(6));
     if (!rawTitle || rawTitle.includes(":")) return null;

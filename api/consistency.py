@@ -21,6 +21,8 @@ from api.search import connect
 GAP_THRESH = 0.48
 MIN_CHARS = 200
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+REF_LANGS = ["en", "fi", "sv", "de", "fr", "es", "ru", "ja", "it", "pt", "nl", "pl", "uk", "ar", "zh"]
+MAX_SIBLINGS = 3
 
 GAP_FILTER_PROMPT = """You are a Wikipedia editor comparing two language editions of the same topic.
 Below are candidate paragraphs from {src_lang}:{src_title} that had low embedding similarity
@@ -178,7 +180,47 @@ def _ensure_passage_vectors(cur, art: dict) -> tuple[list[str], np.ndarray]:
     return paras, emb
 
 
-def analyze_entity(wikidata_id: str, force: bool = False) -> dict:
+def _load_or_embed_articles(cur, arts: list[dict]) -> None:
+    """Load cached passage_vector rows; embed any uncached articles in parallel."""
+    missing = []
+    for a in arts:
+        cur.execute(
+            "SELECT para_idx, text, VEC_ToText(embedding) FROM passage_vector "
+            "WHERE lang=%s AND page_id=%s ORDER BY para_idx",
+            (a["lang"], a["page_id"]),
+        )
+        rows = cur.fetchall()
+        if rows:
+            a["paras"] = [r[1] for r in rows]
+            emb = np.array([json.loads(r[2]) for r in rows], dtype="float32")
+            norms = np.linalg.norm(emb, axis=1, keepdims=True)
+            a["emb"] = emb / np.maximum(norms, 1e-12)
+        else:
+            a["paras"] = split_paragraphs(a["text"])
+            missing.append(a)
+
+    if missing:
+        with ThreadPoolExecutor(min(4, len(missing))) as ex:
+            embs = list(ex.map(lambda x: embed_texts(x["paras"]), missing))
+        for a, emb in zip(missing, embs):
+            a["emb"] = emb
+            for idx, (p, vec) in enumerate(zip(a["paras"], emb)):
+                vec_txt = "[" + ",".join(f"{float(x):.6f}" for x in vec) + "]"
+                cur.execute(
+                    "INSERT IGNORE INTO passage_vector (lang, page_id, para_idx, wikidata_id, text, embedding) "
+                    "VALUES (%s, %s, %s, %s, %s, VEC_FromText(%s))",
+                    (a["lang"], a["page_id"], idx, a["wikidata_id"], p, vec_txt),
+                )
+
+
+def _pick_top_siblings(arts: list[dict], focus_art: dict) -> list[dict]:
+    """Pick up to MAX_SIBLINGS richest sibling editions (prioritizing en + longest text)."""
+    sibs = [a for a in arts if a is not focus_art]
+    sibs.sort(key=lambda a: (0 if a["lang"] == "en" else 1, -len(a.get("text") or "")))
+    return sibs[:MAX_SIBLINGS]
+
+
+def analyze_entity(wikidata_id: str, force: bool = False, focus_lang: str | None = None) -> dict:
     """Compute and cache cross-language conflicts + filtered gaps for one Wikidata entity."""
     t0 = time.time()
     with connect() as con, con.cursor() as cur:
@@ -198,16 +240,22 @@ def analyze_entity(wikidata_id: str, force: bool = False) -> dict:
             cur.execute("REPLACE INTO consistency_status (wikidata_id) VALUES (%s)", (wikidata_id,))
             return {"wikidata_id": wikidata_id, "articles": len(arts), "conflicts": 0, "gaps": 0}
 
-        for a in arts:
-            a["paras"], a["emb"] = _ensure_passage_vectors(cur, a)
+        _load_or_embed_articles(cur, arts)
 
         if force:
             cur.execute("DELETE FROM article_conflict WHERE wikidata_id=%s", (wikidata_id,))
             cur.execute("DELETE FROM article_gap WHERE wikidata_id=%s", (wikidata_id,))
 
-    # Run LLM checks outside the DB transaction so we don't hold connections open
-    unordered = [(arts[i], arts[j]) for i in range(len(arts)) for j in range(i + 1, len(arts))]
-    directed = [(x, y) for x in arts for y in arts if x["lang"] != y["lang"]]
+    # Hub-and-spoke O(1) pair selection when focus_lang is given (or > 4 editions exist)
+    focus_art = next((a for a in arts if a["lang"] == focus_lang), None) if focus_lang else None
+    if focus_art and len(arts) > 4:
+        sibs = _pick_top_siblings(arts, focus_art)
+        unordered = [(focus_art, s) for s in sibs]
+        directed = [(s, focus_art) for s in sibs]
+    else:
+        capped = arts[:MAX_SIBLINGS + 1]
+        unordered = [(capped[i], capped[j]) for i in range(len(capped)) for j in range(i + 1, len(capped))]
+        directed = [(x, y) for x in capped for y in capped if x["lang"] != y["lang"]]
 
     def check_conflicts(pair):
         a, b = pair
@@ -307,7 +355,7 @@ ORDER BY FIELD(importance, 'high', 'medium', 'low'), sim ASC, id ASC
 
 
 def _fetch_wiki_page(lang: str, title: str) -> dict | None:
-    """Fetch plain text, Wikidata ID, and en/fi/sv langlinks from live Wikipedia API."""
+    """Fetch plain text, Wikidata ID, and 2-letter langlinks from live Wikipedia API."""
     r = requests.get(
         f"https://{lang}.wikipedia.org/w/api.php",
         headers={"User-Agent": "Aikakone/0.1 (cross-language consistency)"},
@@ -340,25 +388,33 @@ def _fetch_wiki_page(lang: str, title: str) -> dict | None:
         "langlinks": {
             ll["lang"]: ll["*"]
             for ll in page.get("langlinks", [])
-            if ll.get("lang") in ("en", "fi", "sv")
+            if len(ll.get("lang", "")) == 2 and ll["lang"] != lang
         },
     }
 
 
+def _select_ref_langs(langlinks: dict[str, str]) -> list[tuple[str, str]]:
+    """Pick up to MAX_SIBLINGS reference editions ordered by REF_LANGS priority."""
+    order = {l: i for i, l in enumerate(REF_LANGS)}
+    ranked = sorted(langlinks.items(), key=lambda kv: (order.get(kv[0], 999), kv[0]))
+    return ranked[:MAX_SIBLINGS]
+
+
 def _ingest_live_entity(lang: str, title: str) -> dict | None:
-    """Fetch a live Wikipedia article + its en/fi/sv siblings and store them in MariaDB `article`."""
+    """Fetch a live Wikipedia article + top reference siblings in parallel and store in MariaDB."""
     main = _fetch_wiki_page(lang, title)
     if not main:
         return None
+    chosen = _select_ref_langs(main["langlinks"])
     pages = [main]
-    for sib_lang, sib_title in main["langlinks"].items():
-        if sib_lang == lang:
-            continue
-        sib = _fetch_wiki_page(sib_lang, sib_title)
-        if sib:
-            if not sib["wikidata_id"]:
-                sib["wikidata_id"] = main["wikidata_id"]
-            pages.append(sib)
+    if chosen:
+        with ThreadPoolExecutor(min(MAX_SIBLINGS, len(chosen))) as ex:
+            sibs = list(ex.map(lambda kv: _fetch_wiki_page(kv[0], kv[1]), chosen))
+        for sib in sibs:
+            if sib:
+                if not sib["wikidata_id"]:
+                    sib["wikidata_id"] = main["wikidata_id"]
+                pages.append(sib)
 
     with connect() as con, con.cursor() as cur:
         for p in pages:
@@ -371,6 +427,22 @@ def _ingest_live_entity(lang: str, title: str) -> dict | None:
                 (p["lang"], p["page_id"], p["rev_id"], p["wikidata_id"], p["title"], p["url"], p["text"]),
             )
     return {k: main[k] for k in ("lang", "page_id", "wikidata_id", "title", "url")}
+
+
+def invalidate_entity(wikidata_id: str | None = None, lang: str | None = None, title: str | None = None) -> int:
+    """Drop cached status + passage vectors so the next request recomputes fresh data."""
+    with connect() as con, con.cursor() as cur:
+        if not wikidata_id and lang and title:
+            cur.execute("SELECT wikidata_id FROM article WHERE lang=%s AND title=%s LIMIT 1",
+                        (lang.lower().strip(), title.replace("_", " ").strip()))
+            row = cur.fetchone()
+            wikidata_id = row[0] if row else None
+        if not wikidata_id:
+            return 0
+        cur.execute("DELETE FROM consistency_status WHERE wikidata_id=%s", (wikidata_id,))
+        n = cur.rowcount
+        cur.execute("DELETE FROM passage_vector WHERE wikidata_id=%s", (wikidata_id,))
+        return n
 
 
 def get_consistency(
@@ -403,7 +475,7 @@ def get_consistency(
         if row:
             art = dict(zip(["lang", "page_id", "wikidata_id", "title", "url"], row))
 
-    if not art and title and compute_if_missing and lang in ("en", "fi", "sv"):
+    if not art and title and compute_if_missing and re.fullmatch(r"[a-z]{2}", lang):
         art = _ingest_live_entity(lang, title)
 
     if not art:
@@ -425,7 +497,7 @@ def get_consistency(
         is_cached = cur.fetchone() is not None
 
     if (not is_cached and compute_if_missing) or refresh:
-        analyze_entity(art["wikidata_id"], force=refresh)
+        analyze_entity(art["wikidata_id"], force=refresh, focus_lang=art["lang"])
         cached_hit = False
     else:
         cached_hit = is_cached

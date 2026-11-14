@@ -108,3 +108,15 @@ def consistency_search(q: str, limit: int = 8):
 def consistency_analyze(body: AnalyzeBody):
     from api.consistency import analyze_entity
     return analyze_entity(body.wikidata_id, force=body.force)
+
+
+class InvalidateBody(BaseModel):
+    wikidata_id: str | None = None
+    lang: str | None = None
+    title: str | None = None
+
+
+@app.post("/api/consistency/invalidate")
+def consistency_invalidate(body: InvalidateBody):
+    from api.consistency import invalidate_entity
+    return {"invalidated": invalidate_entity(body.wikidata_id, body.lang, body.title)}

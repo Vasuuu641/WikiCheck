@@ -41,7 +41,7 @@ function parseWikiUrl(url) {
   if (!url) return null;
   try {
     const u = new URL(url);
-    const m = u.hostname.match(/^(en|fi|sv)\.wikipedia\.org$/);
+    const m = u.hostname.match(/^([a-z]{2})\.wikipedia\.org$/);
     if (!m || !u.pathname.startsWith("/wiki/")) return null;
     const rawTitle = decodeURIComponent(u.pathname.slice(6));
     if (!rawTitle || rawTitle.includes(":")) return null;
@@ -55,7 +55,7 @@ function renderNotWiki() {
   refreshBtn.hidden = true;
   content.innerHTML = `
     <div class="state">
-      Open an article on <strong>en / fi / sv Wikipedia</strong> to check cross-language conflicts and missing content.
+      Open an article on <strong>Wikipedia</strong> (any 2-letter language edition) to check cross-language conflicts and missing content.
       <div class="demo-links">
         <a href="https://sv.wikipedia.org/wiki/Regeringen_Aura_II" target="_blank">sv: Regeringen Aura II (conflicts demo)</a>
         <a href="https://en.wikipedia.org/wiki/Hauho" target="_blank">en: Hauho (missing content demo)</a>

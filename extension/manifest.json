@@ -14,9 +14,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://en.wikipedia.org/wiki/*",
-        "https://fi.wikipedia.org/wiki/*",
-        "https://sv.wikipedia.org/wiki/*"
+        "https://*.wikipedia.org/wiki/*"
       ],
       "js": ["content.js"]
     }
