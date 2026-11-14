@@ -1,21 +1,25 @@
-"""Evaluate search quality on MariaDB's 37 test questions (data/test-questions.tsv).
+"""Search quality on MariaDB's test questions, as in their evaluate.py: hit@1, hit@5, hit@10, MRR.
 
-Run from the repo root:
-    .venv/bin/python eval/run_eval.py --label baseline
+    python eval/run_eval.py                          # article-first (MariaDB's default search)
+    python eval/run_eval.py --modes article,chunk    # both, side by side, and what changed
+    python eval/run_eval.py --runs 3 --misses        # latency over 3 runs; list the misses
 
-A question is a HIT at rank r when the r-th result is ANY language version of the expected
-article (same wikidata_id as the expected Finnish title). Ranks are raw result positions, like
-MariaDB's own evaluate.py, so the numbers are comparable with theirs.
+Modes:
+  article  one vector per article (article_vector), api/search.py search(): MariaDB's setup.
+  chunk    one vector per paragraph (chunk_vector, eval/build_chunks.py): the 40 nearest
+           paragraphs, an article ranks where its best paragraph ranks.
 
-Test questions: MariaDB's mariadb-vector-wikipedia-rag repo (data/test-questions.tsv). Credit them.
-Saves results to eval/results/<label>.json so you can compare versions (baseline vs chunks, ...).
+A hit is the expected article in ANY language: the fi, sv or en version of the same topic
+(same wikidata_id) all count, as in MariaDB's evaluate.py. MRR: 1 for first place, 1/2 for
+second, ... 0 if not in the top 10. The questions file has 37 rows: the first 32 are MariaDB's
+original set, the last 5 are the president questions they added.
 """
 import argparse
 import csv
-import json
 import statistics
 import sys
 import time
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -25,107 +29,168 @@ from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv(ROOT / ".env")
 
-from api.search import connect, search  # noqa: E402
-from api.rewrite import rewrite
+from api.search import (articles_from_chunks, connect, embed_question, embed_texts,  # noqa: E402
+                        fused_search, search, search_chunks)
 
-DEFAULT_TSV = Path(__file__).resolve().parent / "test-questions.tsv"
-TOP_K = 10
+QUESTIONS_URL = ("https://raw.githubusercontent.com/MariaDB/mariadb-vector-wikipedia-rag/"
+                 "HEAD/data/test-questions.tsv")
+CHUNK_CANDIDATES = 40
+MODE_NAMES = {"article": "article-first", "chunk": "chunk-first", "fusion": "fusion (RRF)",
+              "rewrite": "article + rewrite"}
+REWRITE_MS: list = []   # the rewrite call per question (first run only: later runs hit its cache)
 
 
-def load_questions(path):
+def load_questions(path: Path) -> list[dict]:
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        print(f"downloading {QUESTIONS_URL} -> {path}")
+        urllib.request.urlretrieve(QUESTIONS_URL, path)
     with open(path, encoding="utf-8", newline="") as f:
-        # QUOTE_NONE: questions can contain quote characters
-        return list(csv.DictReader(f, delimiter="\t", quoting=csv.QUOTE_NONE))
+        return list(csv.DictReader(f, delimiter="\t"))
 
 
-def expected_article(cur, fi_title):
-    cur.execute("SELECT wikidata_id, page_id FROM article WHERE lang='fi' AND title=%s", (fi_title,))
-    return cur.fetchone()  # (wikidata_id, page_id) or None
+def rank_of_answer(q: dict, rows: list[dict]) -> int | None:
+    for i, r in enumerate(rows, 1):
+        if (q["wikidata_id"] and r["wikidata_id"] == q["wikidata_id"]) or \
+           (r["lang"] == "fi" and r["page_id"] == q["page_id"]):
+            return i
+    return None
 
 
-def is_hit(hit, wikidata_id, fi_page_id):
-    if wikidata_id:
-        return hit.get("wikidata_id") == wikidata_id
-    return hit["lang"] == "fi" and hit["page_id"] == fi_page_id
+def top10(mode: str, question: str, vector: list[float]) -> list[dict]:
+    if mode == "article":
+        return search(question, limit=10, vector=vector)[0]
+    if mode == "fusion":
+        return fused_search(vector, limit=10)[0]
+    if mode == "rewrite":  # QUERY_REWRITE=1 with article-first: the API's own search_articles
+        from api.ask import search_articles
+        from api.rewrite import rewrite_queries
+        rw = rewrite_queries(question)
+        if not rw["cached"]:
+            REWRITE_MS.append(rw["ms"])
+        query_vecs = embed_texts(rw["queries"]) if rw["queries"] else []
+        return search_articles(question, vector, query_vecs, "article", limit=10)[0]
+    return articles_from_chunks(search_chunks(vector, limit=CHUNK_CANDIDATES)[0])[:10]
 
 
-def summarize(results):
-    n = len(results)
-    if n == 0:
-        return None
-    ranks = [r["rank"] for r in results]
-    return {
-        "n": n,
-        "hit@1": sum(1 for x in ranks if x == 1) / n,
-        "hit@5": sum(1 for x in ranks if x is not None and x <= 5) / n,
-        "hit@10": sum(1 for x in ranks if x is not None and x <= 10) / n,
-        "mrr": sum(1 / x for x in ranks if x) / n,
-    }
+def groups(questions):
+    yield "all 37" if len(questions) == 37 else f"all {len(questions)}", questions
+    for lang, name in (("en", "English"), ("sv", "Swedish"), ("fi", "Finnish")):
+        yield f"in {name}", [q for q in questions if q["lang"] == lang]
+    yield "answer only in Finnish", [q for q in questions if q["article_exists_in"] == "fi"]
+    if len(questions) == 37:
+        yield "the first 32 (no presidents)", questions[:32]
+        yield "the 5 president questions", questions[32:]
 
 
-def fmt(name, s):
-    if not s:
-        return f"{name:<34} (no questions)"
-    return (f"{name:<34} n={s['n']:<3} hit@1 {s['hit@1']:>4.0%}  hit@5 {s['hit@5']:>4.0%}  "
-            f"hit@10 {s['hit@10']:>4.0%}  MRR {s['mrr']:.2f}")
+def scores(ranks: list) -> tuple:
+    hit = lambda k: sum(1 for r in ranks if r and r <= k) / len(ranks)
+    return hit(1), hit(5), hit(10), sum(1 / r for r in ranks if r) / len(ranks)
+
+
+def run(mode: str, questions: list[dict], vectors: list, runs: int) -> dict:
+    """{question index: rank}, plus the search latencies in ms."""
+    ranks, ms = {}, []
+    for i, q in enumerate(questions):
+        for _ in range(runs):
+            t = time.perf_counter()
+            rows = top10(mode, q["question"], vectors[i])
+            ms.append((time.perf_counter() - t) * 1000)
+        ranks[i] = (rank_of_answer(q, rows), rows[0]["title"] if rows else "-")
+    return {"ranks": ranks, "ms": ms}
+
+
+def table(questions, results: dict):
+    modes = list(results)
+    head = "| Questions | n | " + " | ".join(
+        f"{MODE_NAMES[m] if len(modes) > 1 else ''} hit@1 | hit@5 | hit@10 | MRR".strip() for m in modes) + " |"
+    print(head)
+    print("|---|---|" + "---|---|---|---|" * len(modes))
+    for label, group in groups(questions):
+        if not group:
+            continue
+        idx = [questions.index(q) for q in group]
+        cells = []
+        for m in modes:
+            h1, h5, h10, mrr = scores([results[m]["ranks"][i][0] for i in idx])
+            cells.append(f"{h1:.0%} | {h5:.0%} | {h10:.0%} | {mrr:.2f}")
+        print(f"| {label} | {len(group)} | " + " | ".join(cells) + " |")
 
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--label", default="run")
-    ap.add_argument("--questions", default=str(DEFAULT_TSV))
-    ap.add_argument("--misses", action="store_true", help="list every question not found at rank 1")
-    ap.add_argument("--rewrite", action="store_true", help="expand each question with an LLM guess first")
-    args = ap.parse_args()
+    p = argparse.ArgumentParser()
+    p.add_argument("--questions", type=Path, default=ROOT / "eval" / "test-questions.tsv")
+    p.add_argument("--modes", default="article", help="comma-separated: article, chunk, fusion")
+    p.add_argument("--runs", type=int, default=1, help="runs per question, for the latency")
+    p.add_argument("--misses", action="store_true", help="list questions not in the top 5")
+    args = p.parse_args()
+    modes = args.modes.split(",")
 
-    rows = load_questions(args.questions)
-    con = connect()
-    results = []
-    with con.cursor() as cur:
-        for row in rows:
-            exp = expected_article(cur, row["expected_fi_title"])
-            if exp is None:
-                print(f"WARNING: expected article not in database: {row['expected_fi_title']!r}")
-                continue
-            wd, pid = exp
-            t0 = time.time()
-            q = rewrite(row["question"]) if args.rewrite else row["question"]
-            hits, _sql = search(q, TOP_K)
-            ms = (time.time() - t0) * 1000
-            rank = next((i + 1 for i, h in enumerate(hits) if is_hit(h, wd, pid)), None)
-            results.append({
-                "lang": row["lang"],
-                "question": row["question"],
-                "expected": row["expected_fi_title"],
-                "only_in_fi": row["article_exists_in"].strip() == "fi",
-                "rank": rank,
-                "top3": [h["title"] for h in hits[:3]],
-                "ms": round(ms),
-            })
+    questions = load_questions(args.questions)
+    with connect() as con, con.cursor() as cur:
+        for q in questions:
+            cur.execute("SELECT wikidata_id, page_id FROM article WHERE lang = 'fi' AND title = %s",
+                        (q["expected_fi_title"],))
+            row = cur.fetchone()
+            if not row:
+                print(f"warning: expected article not in DB: {q['expected_fi_title']}")
+            q["wikidata_id"], q["page_id"] = row or (None, None)
+        if "chunk" in modes or "fusion" in modes:
+            cur.execute("SELECT (SELECT COUNT(DISTINCT page_id) FROM chunk), "
+                        "(SELECT COUNT(*) FROM article WHERE lang = 'fi')")
+            chunked, fi = cur.fetchone()
+            note = "" if chunked >= fi else "  (NOT finished: chunk-first is incomplete)"
+            print(f"chunked: {chunked} of {fi} Finnish articles{note}")
 
-    print(f"\n== {args.label}: {len(results)} questions ==")
-    print(fmt("all", summarize(results)))
-    for lang in ("en", "sv", "fi"):
-        print(fmt(f"question in {lang}", summarize([r for r in results if r["lang"] == lang])))
-    print(fmt("answer exists only in Finnish", summarize([r for r in results if r["only_in_fi"]])))
-    # ASSUMPTION: the 5 president questions are the last 5 rows, as in MariaDB's notes.
-    print(fmt("first 32 (assumed: no presidents)", summarize(results[:32])))
-    if results:
-        print(f"median time per question: {statistics.median(r['ms'] for r in results)} ms")
+    # The question vector is the same for both modes: embed once per run, time it separately.
+    embed_ms, vectors = [], []
+    for q in questions:
+        for _ in range(args.runs):
+            t = time.perf_counter()
+            v = embed_question(q["question"])
+            embed_ms.append((time.perf_counter() - t) * 1000)
+        vectors.append(v)
 
-    missed = [r for r in results if r["rank"] is None or r["rank"] > (1 if args.misses else 5)]
-    if missed:
-        print("\nNot found" + (" at rank 1" if args.misses else " in the top 5") + ":")
-        for r in missed:
-            print(f"  [{r['lang']}] rank={r['rank']}  expected={r['expected']}  | {r['question'][:70]}")
-            print(f"         got: {', '.join(r['top3'])}")
+    results = {m: run(m, questions, vectors, args.runs) for m in modes}
 
-    out = Path(__file__).resolve().parent / "results"
-    out.mkdir(exist_ok=True)
-    (out / f"{args.label}.json").write_text(
-        json.dumps({"label": args.label, "summary": summarize(results), "results": results},
-                   ensure_ascii=False, indent=2))
-    print(f"\nsaved eval/results/{args.label}.json")
+    print(f"\n{len(questions)} questions, {args.runs} run(s) each\n")
+    table(questions, results)
+    print(f"\nLatency, median (slowest): embedding the question {statistics.median(embed_ms):.0f} ms "
+          f"({max(embed_ms):.0f})")
+    for m in modes:
+        ms = results[m]["ms"]
+        print(f"  {MODE_NAMES[m]} search (SQL + Python): {statistics.median(ms):.1f} ms ({max(ms):.1f})")
+    if REWRITE_MS:
+        print(f"  of which the rewrite call (first run, not cached): median {statistics.median(REWRITE_MS):.0f} ms "
+              f"({max(REWRITE_MS):.0f}); runs 2-5 use its cache")
+
+    for other in modes[1:]:   # each mode against the first one
+        a, b = results[modes[0]]["ranks"], results[other]["ranks"]
+        print(f"\nChanged at top 5 ({MODE_NAMES[modes[0]]} -> {MODE_NAMES[other]}):")
+        changed = 0
+        for i, q in enumerate(questions):
+            ra, rb = a[i][0], b[i][0]
+            hit_a, hit_b = bool(ra and ra <= 5), bool(rb and rb <= 5)
+            if hit_a != hit_b:
+                changed += 1
+                print(f"- {'miss -> HIT ' if hit_b else 'hit -> MISS '} [{q['lang']}] {q['question']} "
+                      f"(expected {q['expected_fi_title']}): rank {ra or '>10'} -> {rb or '>10'}")
+        if not changed:
+            print("- none")
+        print(f"\nOther rank changes, {MODE_NAMES[other]} (still hit or still miss at top 5):")
+        for i, q in enumerate(questions):
+            ra, rb = a[i][0], b[i][0]
+            if ra != rb and bool(ra and ra <= 5) == bool(rb and rb <= 5):
+                print(f"- [{q['lang']}] {q['question']}: rank {ra or '>10'} -> {rb or '>10'}")
+
+    if args.misses:
+        for m in modes:
+            print(f"\nNot in the top 5 ({MODE_NAMES[m]}):")
+            for i, q in enumerate(questions):
+                rank, top = results[m]["ranks"][i]
+                if not rank or rank > 5:
+                    print(f"- [{q['lang']}] {q['question']} -> expected {q['expected_fi_title']}, "
+                          f"rank {rank or '>10'}, top: {top}")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,1220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aikakone Ask</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%233366cc' stroke-width='3'/%3E%3Cpath d='M16 8v8l5 4' stroke='%233366cc' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  /* Colours and fonts are unchanged from the previous version of this page. */
+  :root {
+    --bg: #ffffff; --page: #f8f9fa; --ink: #202122; --muted: #54595d; --faint: #72777d;
+    --line: #a2a9b1; --line-soft: #dadde3; --link: #3366cc; --link-visited: #795cb2;
+    --accent: #eaf3ff; --accent-line: #6485d1; --mark: #fef6e7; --mark-line: #fc3;
+    --ok: #14866d; --warn: #ac6600; --code: #f8f9fa; --btn: #3366cc; --btn-ink: #fff;
+    --serif: "Linux Libertine", "Georgia", "Times", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Lato", Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101418; --page: #1b1e22; --ink: #eaecf0; --muted: #a2a9b1; --faint: #8f959c;
+      --line: #54595d; --line-soft: #2e3238; --link: #88a3e8; --link-visited: #a799cd;
+      --accent: #1f2a3d; --accent-line: #88a3e8; --mark: #3a3220; --mark-line: #c9a227;
+      --ok: #3ecf9e; --warn: #e6a23c; --code: #15181c; --btn: #4b6fd6; --btn-ink: #fff;
+    }
+  }
+  /* Appearance: Dark chosen by hand (same dark colours as above). */
+  :root[data-theme="dark"] {
+    --bg: #101418; --page: #1b1e22; --ink: #eaecf0; --muted: #a2a9b1; --faint: #8f959c;
+    --line: #54595d; --line-soft: #2e3238; --link: #88a3e8; --link-visited: #a799cd;
+    --accent: #1f2a3d; --accent-line: #88a3e8; --mark: #3a3220; --mark-line: #c9a227;
+    --ok: #3ecf9e; --warn: #e6a23c; --code: #15181c; --btn: #4b6fd6; --btn-ink: #fff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.6 var(--sans); }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button, select, textarea { font: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--link); outline-offset: -1px; }
+  [hidden] { display: none !important; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* ---------- header: name, search, interface language ---------- */
+  header { border-bottom: 1px solid var(--line-soft); }
+  .head-in {
+    max-width: 1440px; margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: center; gap: 24px;
+  }
+  .brand { font: 400 1.6rem/1 var(--serif); letter-spacing: .02em; color: var(--ink); white-space: nowrap; }
+  .brand:hover { text-decoration: none; }
+  form#f { flex: 1; display: flex; min-width: 0; max-width: 680px; }
+  form#f input, form#f button { height: 36px; border: 1px solid var(--line); color: var(--ink); background: var(--bg); }
+  #q { flex: 1; min-width: 0; font: inherit; font-size: 15px; padding: 0 10px; border-right: 0; border-radius: 2px 0 0 2px; }
+  #go { padding: 0 18px; font-weight: 700; color: var(--btn-ink) !important; background: var(--btn) !important; border-color: var(--btn) !important; border-radius: 0 2px 2px 0; }
+  #go:disabled { opacity: .6; cursor: progress; }
+  .ui-lang { margin-left: auto; display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .85rem; white-space: nowrap; }
+  select.plain { padding: 3px 6px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 2px; }
+
+  /* ---------- three columns: contents | article | info box ---------- */
+  .layout {
+    max-width: 1440px; margin: 0 auto; padding: 20px 24px 64px;
+    display: grid; grid-template-columns: 190px minmax(0, 1fr) 300px; gap: 32px; align-items: start;
+  }
+  #toc { grid-column: 1; } #main { grid-column: 2; } #rail { grid-column: 3; }   /* fixed slots, even while #toc is hidden */
+  .toc, .rail { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+    #toc, #main, #rail { grid-column: 1; }
+    #main { order: -1; }          /* the answer first, then contents and the info box */
+    .toc, .rail { position: static; max-height: none; }
+  }
+  @media (max-width: 700px) {
+    .head-in { flex-wrap: wrap; gap: 10px; padding: 10px 16px; }
+    form#f { flex-basis: 100%; order: 3; max-width: none; }
+    .layout { padding: 16px 16px 48px; }
+  }
+
+  /* contents */
+  .toc h2, .panel h2 { font: 700 .8rem var(--sans); margin: 0 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--line-soft); color: var(--muted); }
+  .toc ul { list-style: none; margin: 0; padding: 0; }
+  .toc li { padding: 3px 0; font-size: .9rem; }
+
+  /* ---------- article ---------- */
+  .title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .title-row h1 { font: 400 1.9rem/1.25 var(--serif); margin: 0; padding-bottom: 4px; overflow-wrap: anywhere; flex: 1 1 320px; min-width: 0; }
+  .langs { position: relative; padding-bottom: 6px; }
+  .lang-btn { display: inline-flex; align-items: center; gap: 6px; background: none; border: 1px solid transparent; border-radius: 2px; color: var(--link); font-weight: 600; padding: 3px 8px; }
+  .lang-btn:hover, .lang-btn[aria-expanded="true"] { border-color: var(--line); }
+  .lang-btn .ico { font: 700 .72rem var(--sans); border: 1px solid currentColor; border-radius: 2px; padding: 0 3px; }
+  .lang-pop { position: absolute; right: 0; top: 100%; z-index: 5; min-width: 260px; background: var(--bg); border: 1px solid var(--line); border-radius: 2px; box-shadow: 0 2px 6px rgba(0,0,0,.15); padding: 8px 0; }
+  .lang-pop h3 { margin: 0; padding: 0 12px 6px; font: 700 .75rem var(--sans); color: var(--muted); }
+  .lang-pop ul { list-style: none; margin: 0; padding: 0; }
+  .lang-pop li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 0 12px; }
+  .lang-pop li button { background: none; border: 0; padding: 4px 0; color: var(--link); text-align: left; }
+  .lang-pop li button[aria-current="true"] { color: var(--ink); font-weight: 700; }
+  .lang-pop li a { font-size: .8rem; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tagline { color: var(--muted); font-size: .85rem; margin: 6px 0 0; }
+  .tagline .when { font-weight: 600; color: var(--ink); }
+
+  /* tab row: "Answer" on the left; Read / Edit / View history on the right */
+  .tabs { display: flex; justify-content: space-between; gap: 12px; margin: 10px 0 16px; border-bottom: 1px solid var(--line-soft); flex-wrap: wrap; }
+  .tabs .grp { display: flex; gap: 2px; flex-wrap: wrap; }
+  .tab { background: none; border: 0; border-bottom: 2px solid transparent; padding: 6px 10px; color: var(--link); font-size: .9rem; margin-bottom: -1px; }
+  .tab[aria-current="page"], .tab.static { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
+  .tab.static { cursor: default; }
+  .hist-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--page); border: 1px solid var(--line-soft); padding: 8px 12px; margin: 0 0 16px; font-size: .9rem; }
+  .hist-bar .note { color: var(--faint); font-size: .8rem; flex-basis: 100%; }
+
+  /* notice boxes, like Wikipedia's maintenance boxes: coloured bar on the left, icon, short text */
+  .ambox { display: flex; gap: 10px; align-items: flex-start; background: var(--page); border: 1px solid var(--line); border-left: 8px solid var(--accent-line); padding: 8px 12px; margin: 0 0 12px; font-size: .88rem; }
+  .ambox.style { border-left-color: var(--mark-line); }
+  .ambox.content { border-left-color: var(--warn); }
+  .ambox svg { flex: none; width: 26px; height: 26px; margin-top: 1px; }
+  .ambox.style svg { color: var(--mark-line); }
+  .ambox.content svg { color: var(--warn); }
+  .ambox.info svg { color: var(--accent-line); }
+  .ambox .body { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .cf-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-top: 8px; }
+  @media (max-width: 600px) { .cf-grid { grid-template-columns: minmax(0, 1fr); } }
+  .cf-side { background: var(--bg); border: 1px solid var(--line-soft); padding: 6px 8px; }
+  .cf-side q { display: block; margin-top: 4px; font-style: italic; }
+
+  .answer { font-size: 1.1rem; line-height: 1.7; }
+  .answer p { margin: 0 0 .9em; }
+  .answer sup { line-height: 0; }
+  .answer sup a { font-size: .75rem; padding: 0 1px; }
+  .answer sup a.hl { background: var(--accent); outline: 1px solid var(--accent-line); }
+  h2.sec { font: 400 1.45rem/1.3 var(--serif); margin: 28px 0 10px; padding-bottom: 3px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .start p { font-size: 1rem; color: var(--muted); margin: 0 0 14px; }
+  .start ul { list-style: none; margin: 0; padding: 0; }
+  .start li { padding: 7px 0; border-bottom: 1px solid var(--line-soft); font-size: 1rem; }
+  .start li a { cursor: pointer; }
+  .loading { color: var(--muted); display: flex; align-items: center; gap: 10px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--link); animation: pulse 1s infinite ease-in-out; }
+  @keyframes pulse { 50% { opacity: .2; } }
+  /* answer loader */
+  .loader { margin: 18px 0 8px; }
+  .loader-head { display: flex; align-items: center; gap: 12px; font: 400 1rem var(--sans); color: var(--ink); }
+  .spin { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line-soft); border-top-color: var(--link); animation: spin .8s linear infinite; flex: none; }
+  .spin.sm { width: 12px; height: 12px; border-width: 2px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader-time { margin-left: auto; color: var(--faint); font: 400 .82rem var(--sans); font-variant-numeric: tabular-nums; }
+  .lbar { height: 3px; background: var(--line-soft); border-radius: 2px; overflow: hidden; margin: 10px 0 14px; position: relative; }
+  .lbar::after { content: ""; position: absolute; inset: 0; width: 35%; background: var(--link); border-radius: 2px; animation: slide 1.4s ease-in-out infinite; }
+  @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(290%); } }
+  .lsteps { list-style: none; margin: 0 0 18px; padding: 0; font: 400 .9rem var(--sans); }
+  .lsteps li { display: flex; align-items: center; gap: 10px; padding: 4px 0; color: var(--faint); }
+  .lsteps li .ic { width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .lsteps li .ring { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--line); }
+  .lsteps li.done { color: var(--muted); }
+  .lsteps li.done .ic { color: var(--link); }
+  .lsteps li.active { color: var(--ink); font-weight: 600; }
+  .skel { display: grid; gap: 9px; }
+  .skel span { display: block; height: 12px; border-radius: 3px; background: linear-gradient(90deg, var(--line-soft) 0%, var(--page) 50%, var(--line-soft) 100%); background-size: 200% 100%; animation: shimmer 1.6s ease-in-out infinite; }
+  @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    .dot, .spin, .lbar::after, .skel span { animation: none; }
+    .lbar::after { width: 100%; opacity: .35; }
+  }
+  .error { color: #d33; }
+  .muted { color: var(--faint); }
+  .licence { margin-top: 28px; color: var(--faint); font-size: .75rem; }
+
+  /* sources */
+  .tr-ctl { display: flex; gap: 6px; align-items: center; font: 400 .78rem var(--sans); color: var(--muted); }
+  .tr-ctl select, .link-btn { font-size: .78rem; }
+  .tr-ctl select { padding: 2px 4px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 2px; }
+  .link-btn { background: none; border: 0; padding: 0; color: var(--link); }
+  .link-btn:hover { text-decoration: underline; }
+  .link-btn:disabled { color: var(--faint); cursor: progress; text-decoration: none; }
+  ol.refs { list-style: none; margin: 0; padding: 0; }
+  ol.refs > li { padding: 10px 10px 12px; margin: 0 -10px; border-bottom: 1px solid var(--line-soft); font-size: .92rem; transition: background .15s; }
+  ol.refs > li.hl { background: var(--accent); }
+  .ref-n { font-weight: 700; color: var(--link); margin-right: 4px; }
+  .ref-title { font-weight: 600; }
+  .ref-meta { color: var(--faint); font-size: .76rem; margin: 1px 0 5px; }
+  .ref-note { color: var(--warn); font-size: .8rem; margin: 0 0 4px; }
+  .ref-text { overflow-wrap: anywhere; }
+  .ref-text.clamp { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .ref-text mark { background: var(--mark); color: inherit; border-bottom: 2px solid var(--mark-line); padding: 0 1px; }
+  .suggest { margin-top: 6px; padding: 6px 8px; border: 1px dashed var(--line); border-radius: 2px; }
+  .suggest .lbl, .ref-tr .lbl { display: block; font-size: .72rem; color: var(--faint); }
+  .ref-tr { margin-top: 6px; padding: 6px 8px; background: var(--page); border-radius: 2px; overflow-wrap: anywhere; }
+  h3.sub-h { font: 700 .9rem var(--sans); margin: 18px 0 4px; color: var(--muted); }
+  .trace-row { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; font: 400 .8rem var(--sans); }
+  .trace-row:empty { display: none; }
+  .trace-panel { margin-top: 8px; padding: 10px 12px; background: var(--page); border: 1px solid var(--line-soft); border-radius: 2px; font: 400 .84rem/1.5 var(--sans); color: var(--ink); }
+  .trace-panel h5 { margin: 0 0 4px; font-size: .86rem; }
+  .trace-panel .tl { position: relative; height: 12px; background: var(--line-soft); border-radius: 2px; margin: 8px 0 2px; overflow: hidden; }
+  .trace-panel .tl span { position: absolute; top: 0; bottom: 0; background: var(--link); min-width: 2px; }
+  .trace-panel .tl-years { display: flex; justify-content: space-between; color: var(--faint); font-size: .74rem; }
+  .trace-panel ol { margin: 6px 0 0; padding-left: 18px; }
+  .trace-panel li { margin-bottom: 4px; }
+  .trace-panel .cmt { color: var(--muted); }
+  .ref-actions { display: flex; gap: 14px; margin-top: 6px; flex-wrap: wrap; }
+
+  /* draft check */
+  .check textarea { width: 100%; min-height: 70px; padding: 8px 10px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 2px; resize: vertical; }
+  .check .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 6px 0 10px; flex-wrap: wrap; }
+  .check button.primary { padding: 6px 16px; font-weight: 700; color: var(--btn-ink); background: var(--btn); border: 1px solid var(--btn); border-radius: 2px; }
+  .check button.primary:disabled { opacity: .6; cursor: progress; }
+  .check h4 { margin: 12px 0 4px; font-size: .9rem; }
+  .check ul { margin: 0; padding-left: 18px; font-size: .88rem; }
+  .check li { margin-bottom: 6px; overflow-wrap: anywhere; }
+
+  /* "How this answer was made": closed until someone wants it */
+  details.how { margin-top: 28px; border-top: 1px solid var(--line-soft); padding-top: 10px; font-size: .85rem; }
+  details.how > summary { cursor: pointer; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; list-style: none; }
+  details.how > summary::-webkit-details-marker { display: none; }
+  details.how > summary span:first-child::before { content: "▸ "; }
+  details.how[open] > summary span:first-child::before { content: "▾ "; }
+  details.how > summary:hover span:first-child { color: var(--link); }
+  .how-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; margin-top: 14px; }
+  @media (max-width: 900px) { .how-body { grid-template-columns: minmax(0, 1fr); } }
+  .how-body h4 { margin: 0 0 8px; font: 700 .75rem var(--sans); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--code); border: 1px solid var(--line-soft); padding: 10px 12px; font: .76rem/1.5 ui-monospace, Menlo, Consolas, monospace; margin: 0; }
+  ol.steps { list-style: none; margin: 0; padding: 0; }
+  ol.steps > li { padding: 0 0 10px; margin-bottom: 10px; border-bottom: 1px solid var(--line-soft); }
+  ol.steps > li:last-child { border-bottom: 0; }
+  .st-head { display: flex; justify-content: space-between; gap: 8px; font-weight: 600; }
+  ol.steps > li.skip .st-head { color: var(--faint); }
+  .ms { font: 600 .76rem ui-monospace, Menlo, Consolas, monospace; color: var(--muted); white-space: nowrap; }
+  .st-sub { color: var(--faint); font-size: .8rem; }
+  .mini { list-style: none; margin: 5px 0 0; padding: 0; }
+  .mini li { display: flex; gap: 6px; align-items: baseline; font-size: .8rem; padding: 1px 0; min-width: 0; }
+  .mini .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mini li.on .t { font-weight: 600; }
+  .mini li.off { color: var(--faint); }
+  .lang { flex: none; font: 700 .62rem/1 var(--sans); text-transform: uppercase; padding: 2px 3px; border: 1px solid var(--line); border-radius: 2px; color: var(--muted); }
+  .bar { flex: none; width: 46px; height: 6px; background: var(--line-soft); border-radius: 3px; overflow: hidden; align-self: center; }
+  .bar i { display: block; height: 100%; background: var(--accent-line); }
+  .mini li.cited .bar i { background: var(--ok); }
+  .num { flex: none; font: .72rem ui-monospace, Menlo, Consolas, monospace; color: var(--faint); }
+  .skip-r { color: var(--warn); font-size: .76rem; }
+
+  /* ---------- right column: info box, appearance ---------- */
+  .infobox { border: 1px solid var(--line); background: var(--page); padding: 8px; font-size: .85rem; margin-bottom: 20px; }
+  .infobox .cap { text-align: center; font-weight: 700; font-size: 1rem; padding: 2px 0 8px; overflow-wrap: anywhere; }
+  .infobox .sub { text-align: center; color: var(--faint); font-size: .75rem; margin-top: -6px; padding-bottom: 6px; }
+  .infobox table { width: 100%; border-collapse: collapse; }
+  .infobox th, .infobox td { text-align: left; vertical-align: top; padding: 4px 4px; border-top: 1px solid var(--line-soft); }
+  .infobox th { width: 38%; font-weight: 600; }
+  .infobox td { overflow-wrap: anywhere; }
+  .infobox ul { margin: 0; padding: 0; list-style: none; }
+  .panel { margin-bottom: 20px; }
+  .panel fieldset { border: 0; margin: 0; padding: 0; }
+  .panel label { display: flex; align-items: center; gap: 6px; padding: 2px 0; font-size: .9rem; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<header><div class="head-in">
+  <a class="brand" href="./">Aikakone</a>
+  <form id="f" role="search">
+    <label class="sr" for="q" data-t="placeholder"></label>
+    <input type="search" id="q" autocomplete="off" required>
+    <button id="go" data-t="ask"></button>
+  </form>
+  <label class="ui-lang"><span data-t="ui_lang"></span>
+    <select id="uilang" class="plain">
+      <option value="en">English</option><option value="fi">Suomi</option><option value="sv">Svenska</option>
+    </select>
+  </label>
+</div></header>
+
+<div class="layout" id="layout">
+  <nav class="toc" id="toc" aria-labelledby="toc-h" hidden>
+    <h2 id="toc-h" data-t="contents"></h2>
+    <ul id="toc-list"></ul>
+  </nav>
+
+  <main id="main"></main>
+
+  <aside class="rail" id="rail">
+    <div id="infobox"></div>
+    <div class="panel">
+      <h2 id="app-h" data-t="appearance"></h2>
+      <fieldset aria-labelledby="app-h">
+        <label><input type="radio" name="theme" value="auto"> <span data-t="auto"></span></label>
+        <label><input type="radio" name="theme" value="light"> <span data-t="light"></span></label>
+        <label><input type="radio" name="theme" value="dark"> <span data-t="dark"></span></label>
+      </fieldset>
+    </div>
+  </aside>
+</div>
+
+<script>
+// ---------- all fixed page text, per interface language ----------
+const I18N = {
+  en: {
+    placeholder: "Ask about the history of Finland", ask: "Ask", ui_lang: "Language",
+    title_start: "Ask Finnish Wikipedia",
+    tagline_start: "Answers are written only from Wikipedia passages, with numbered sources.",
+    start_p: "Ask in English, Finnish or Swedish. On an answer, View history reads Wikipedia as it stood in an earlier year, and Edit shows the editor review.",
+    contents: "Contents", sec_answer: "Answer", sec_sources: "Sources", sec_conflicts: "Possible conflicts",
+    sec_how: "How this answer was made", sec_check: "Check a draft sentence",
+    tab_answer: "Answer", tab_read: "Read", tab_edit: "Edit", tab_history: "View history", views: "Page views",
+    tagline: "From Aikakone, written only from Wikipedia passages", when_now: "current Wikipedia",
+    when_asof: "Wikipedia as it stood on {date}", editor_view: "editor review",
+    loading: "Searching and writing an answer…",
+    load_search: "Searching Wikipedia passages", load_pick: "Picking the best sources",
+    load_write: "Writing the answer", load_review: "Reviewing the wording", load_past: "Reading Wikipedia as it stood on {date}",
+    error: "Error: {msg}",
+    hist_label: "Read Wikipedia as it stood at the start of", hist_pick: "choose a year",
+    hist_note: "The full edit history is loaded for a few showcase articles only; other articles are skipped.",
+    skipped: "Read as of {date}: {titles}. Other matching articles skipped: {n}.",
+    langs_n: "{n} languages", langs_1: "1 language", langs_head: "Answer in", langs_auto: "the question's language",
+    translate: "Translate", translate_all: "Translate all", translate_into: "Translate into",
+    translating: "Translating…", mt: "{lang} · machine translation", tr_failed: "Translation failed: {msg}",
+    show_all: "Show all", show_less: "Show less", revision: "revision {rev}",
+    current_version: "current version", version_of: "version of {date}",
+    ref_note: "May not be neutral: {reason}", ambox_neutral: "This passage may not be neutral: {reason}",
+    no_reason: "no reason given", suggestion: "Suggestion, check before use", edit_on_wp: "Edit on Wikipedia",
+    trace: "Trace", trace_phrase: "Trace “{phrase}”", trace_loading: "Tracing the edit history…",
+    trace_first: "First appeared {date}", trace_count: "Present in {n} of {m} versions",
+    trace_intro: "The claim was first written {date}, worded differently", trace_intro_same: "written in this wording",
+    trace_runs: "When it was in the article", trace_now: "still in the current version",
+    trace_removed: "removed {date}", trace_none: "This phrase is not in any stored version of the article.",
+    trace_anon: "anonymous edit", trace_reg: "registered account", trace_rev: "revision {rev}",
+    trace_comment: "comment", trace_close: "Close", trace_versions: "{n} versions",
+    review_none: "The neutrality review is not available for this passage.", review_ok: "No wording problems found.",
+    conflict: "Possible conflict: {about}", conflict_about: "the passages disagree",
+    conflict_none: "No conflicting passages were found among the sources.",
+    conflict_unavailable: "The conflict check did not finish. Ask again to retry.",
+    check_intro: "Paste a sentence you plan to add. It is checked for neutral wording and against Wikipedia passages.",
+    check_btn: "Check", checking: "Checking…", check_ok: "Wording: neutral, no problems found.",
+    facts_bad: "Possible factual errors", facts_ok: "Facts: every date and number matches the source passages.",
+    fact_unconfirmed: "Not confirmed by the sources: {nums}. None of the passages found mention it; check it against a source.",
+    fact_source: "Source",
+    fact_fix: "Corrected, check before use",
+    check_flag: "This sentence may not be neutral: {reason}",
+    supports: "Supports it", contradicts: "Contradicts it",
+    check_nothing: "No passage clearly supports or contradicts it.",
+    sources_n: "sources: {n}", no_sources: "No sources were cited.",
+    flagged_more: "Other flagged passages (retrieved, not cited in the answer)",
+    licence: "Text from Wikipedia contributors, CC BY-SA 4.0. Each source links to the exact revision used.",
+    info_cap: "Main source", info_sub: "cited most in this answer", info_article: "Article",
+    info_languages: "Languages", info_categories: "Categories", info_revision: "Revision",
+    info_wikidata: "Wikidata", info_history: "History", info_versions: "versions: {n}",
+    info_first: "first edit {date}", info_reverts: "reverts: {n}", info_length: "Length",
+    info_chars: "{n} characters", info_none: "none", info_failed: "Could not load the article details.",
+    appearance: "Appearance", auto: "Automatic", light: "Light", dark: "Dark",
+    steps: "Steps", sql: "SQL that MariaDB ran",
+    s_embed: "Embed the question", s_embed_sub: "bge-m3 turns the question into a vector.",
+    s_search: "Vector search in MariaDB", s_search_a: "The closest articles; the ones in bold were used.",
+    s_search_c: "The 40 closest paragraphs, grouped by article; the ones in bold were used.",
+    s_hist: "Read history as of {date}", s_hist_sub: "The version of each article that was live that day.",
+    s_paras: "Pick the best paragraphs", s_paras_sub: "{n} paragraphs compared with the question. Green = cited in the answer.",
+    s_llm: "Write the answer", s_llm_sub: "{model}, using only those passages.",
+    s_review: "Neutrality review", s_review_sub: "{model}, run in parallel with the answer. Flagged passages: {n}.",
+  },
+  fi: {
+    placeholder: "Kysy Suomen historiasta", ask: "Kysy", ui_lang: "Kieli",
+    title_start: "Kysy suomenkieliseltä Wikipedialta",
+    tagline_start: "Vastaukset kirjoitetaan vain Wikipedian tekstikohdista, numeroiduin lähtein.",
+    start_p: "Kysy englanniksi, suomeksi tai ruotsiksi. Vastauksen Näytä historia lukee Wikipediaa sellaisena kuin se oli aiempana vuonna, ja Muokkaa näyttää muokkaajan tarkistuksen.",
+    contents: "Sisällys", sec_answer: "Vastaus", sec_sources: "Lähteet", sec_conflicts: "Mahdolliset ristiriidat",
+    sec_how: "Miten vastaus tehtiin", sec_check: "Tarkista luonnoslause",
+    tab_answer: "Vastaus", tab_read: "Lue", tab_edit: "Muokkaa", tab_history: "Näytä historia", views: "Sivun näkymät",
+    tagline: "Aikakoneesta, kirjoitettu vain Wikipedian tekstikohdista", when_now: "nykyinen Wikipedia",
+    when_asof: "Wikipedia sellaisena kuin se oli {date}", editor_view: "muokkaajan tarkistus",
+    loading: "Haetaan ja kirjoitetaan vastausta…",
+    load_search: "Haetaan Wikipedian kappaleita", load_pick: "Valitaan parhaat lähteet",
+    load_write: "Kirjoitetaan vastausta", load_review: "Tarkistetaan sanamuotoja", load_past: "Luetaan Wikipediaa sellaisena kuin se oli {date}",
+    error: "Virhe: {msg}",
+    hist_label: "Lue Wikipediaa sellaisena kuin se oli vuoden alussa:", hist_pick: "valitse vuosi",
+    hist_note: "Koko muokkaushistoria on ladattu vain muutamalle esittelyartikkelille; muut artikkelit ohitetaan.",
+    skipped: "Luettu ajalta {date}: {titles}. Muita osuvia artikkeleita ohitettiin: {n}.",
+    langs_n: "{n} kieltä", langs_1: "1 kieli", langs_head: "Vastaa kielellä", langs_auto: "kysymyksen kieli",
+    translate: "Käännä", translate_all: "Käännä kaikki", translate_into: "Käännä kielelle",
+    translating: "Käännetään…", mt: "{lang} · konekäännös", tr_failed: "Käännös epäonnistui: {msg}",
+    show_all: "Näytä kaikki", show_less: "Näytä vähemmän", revision: "versio {rev}",
+    current_version: "nykyinen versio", version_of: "versio ajalta {date}",
+    ref_note: "Ei ehkä neutraali: {reason}", ambox_neutral: "Tämä tekstikohta ei ehkä ole neutraali: {reason}",
+    no_reason: "syytä ei annettu", suggestion: "Ehdotus, tarkista ennen käyttöä", edit_on_wp: "Muokkaa Wikipediassa",
+    trace: "Jäljitä", trace_phrase: "Jäljitä “{phrase}”", trace_loading: "Jäljitetään muokkaushistoriaa…",
+    trace_first: "Ilmestyi ensimmäisen kerran {date}", trace_count: "Mukana {n} versiossa {m}:stä",
+    trace_intro: "Väite kirjoitettiin ensin {date}, eri sanoin", trace_intro_same: "kirjoitettiin tässä muodossa",
+    trace_runs: "Milloin se oli artikkelissa", trace_now: "yhä nykyisessä versiossa",
+    trace_removed: "poistettiin {date}", trace_none: "Tätä ilmausta ei ole missään artikkelin tallennetussa versiossa.",
+    trace_anon: "anonyymi muokkaus", trace_reg: "rekisteröitynyt käyttäjä", trace_rev: "versio {rev}",
+    trace_comment: "kommentti", trace_close: "Sulje", trace_versions: "{n} versiota",
+    review_none: "Neutraaliustarkistus ei ole saatavilla tälle tekstikohdalle.", review_ok: "Sanamuodossa ei löytynyt ongelmia.",
+    conflict: "Mahdollinen ristiriita: {about}", conflict_about: "tekstikohdat ovat eri mieltä",
+    conflict_none: "Lähteistä ei löytynyt ristiriitaisia tekstikohtia.",
+    conflict_unavailable: "Ristiriitojen tarkistus ei valmistunut. Kysy uudelleen.",
+    check_intro: "Liitä lause, jonka aiot lisätä. Sen sanamuodon neutraalius tarkistetaan ja sitä verrataan Wikipedian tekstikohtiin.",
+    check_btn: "Tarkista", checking: "Tarkistetaan…", check_ok: "Sanamuoto: neutraali, ei ongelmia.",
+    facts_bad: "Mahdollisia asiavirheitä", facts_ok: "Tosiasiat: kaikki päivämäärät ja luvut vastaavat lähdekohtia.",
+    fact_unconfirmed: "Lähteet eivät vahvista: {nums}. Mikään löydetyistä kohdista ei mainitse sitä; tarkista se lähteestä.",
+    fact_source: "Lähde",
+    fact_fix: "Korjattu, tarkista ennen käyttöä",
+    check_flag: "Tämä lause ei ehkä ole neutraali: {reason}",
+    supports: "Tukee sitä", contradicts: "On ristiriidassa sen kanssa",
+    check_nothing: "Mikään tekstikohta ei selvästi tue sitä tai ole sen kanssa ristiriidassa.",
+    sources_n: "lähteitä: {n}", no_sources: "Lähteitä ei viitattu.",
+    flagged_more: "Muut merkityt tekstikohdat (haettu, ei viitattu vastauksessa)",
+    licence: "Teksti Wikipedian kirjoittajilta, CC BY-SA 4.0. Jokainen lähde linkittää käytettyyn versioon.",
+    info_cap: "Päälähde", info_sub: "eniten viitattu tässä vastauksessa", info_article: "Artikkeli",
+    info_languages: "Kielet", info_categories: "Luokat", info_revision: "Versio",
+    info_wikidata: "Wikidata", info_history: "Historia", info_versions: "versioita: {n}",
+    info_first: "ensimmäinen muokkaus {date}", info_reverts: "palautuksia: {n}", info_length: "Pituus",
+    info_chars: "{n} merkkiä", info_none: "ei yhtään", info_failed: "Artikkelin tietoja ei voitu ladata.",
+    appearance: "Ulkoasu", auto: "Automaattinen", light: "Vaalea", dark: "Tumma",
+    steps: "Vaiheet", sql: "MariaDB:n ajama SQL",
+    s_embed: "Kysymys vektoriksi", s_embed_sub: "bge-m3 muuttaa kysymyksen vektoriksi.",
+    s_search: "Vektorihaku MariaDB:ssä", s_search_a: "Lähimmät artikkelit; lihavoidut käytettiin.",
+    s_search_c: "40 lähintä kappaletta artikkeleittain; lihavoidut käytettiin.",
+    s_hist: "Historia ajalta {date}", s_hist_sub: "Kunkin artikkelin sinä päivänä voimassa ollut versio.",
+    s_paras: "Parhaat kappaleet", s_paras_sub: "{n} kappaletta verrattiin kysymykseen. Vihreä = viitattu vastauksessa.",
+    s_llm: "Vastauksen kirjoitus", s_llm_sub: "{model}, vain näiden tekstikohtien pohjalta.",
+    s_review: "Neutraaliustarkistus", s_review_sub: "{model}, samaan aikaan vastauksen kanssa. Merkittyjä tekstikohtia: {n}.",
+  },
+  sv: {
+    placeholder: "Fråga om Finlands historia", ask: "Fråga", ui_lang: "Språk",
+    title_start: "Fråga finskspråkiga Wikipedia",
+    tagline_start: "Svaren skrivs enbart utifrån textavsnitt ur Wikipedia, med numrerade källor.",
+    start_p: "Fråga på engelska, finska eller svenska. På ett svar läser Visa historik Wikipedia som den såg ut ett tidigare år, och Redigera visar redaktörsgranskningen.",
+    contents: "Innehåll", sec_answer: "Svar", sec_sources: "Källor", sec_conflicts: "Möjliga motsägelser",
+    sec_how: "Hur svaret togs fram", sec_check: "Granska en utkastmening",
+    tab_answer: "Svar", tab_read: "Läs", tab_edit: "Redigera", tab_history: "Visa historik", views: "Sidvyer",
+    tagline: "Från Aikakone, skrivet enbart utifrån textavsnitt ur Wikipedia", when_now: "dagens Wikipedia",
+    when_asof: "Wikipedia som den såg ut {date}", editor_view: "redaktörsgranskning",
+    loading: "Söker och skriver ett svar…",
+    load_search: "Söker stycken i Wikipedia", load_pick: "Väljer de bästa källorna",
+    load_write: "Skriver svaret", load_review: "Granskar ordvalen", load_past: "Läser Wikipedia som den såg ut {date}",
+    error: "Fel: {msg}",
+    hist_label: "Läs Wikipedia som den såg ut i början av", hist_pick: "välj ett år",
+    hist_note: "Hela redigeringshistoriken finns bara för några utvalda artiklar; andra artiklar hoppas över.",
+    skipped: "Läst per {date}: {titles}. Andra matchande artiklar som hoppades över: {n}.",
+    langs_n: "{n} språk", langs_1: "1 språk", langs_head: "Svara på", langs_auto: "frågans språk",
+    translate: "Översätt", translate_all: "Översätt alla", translate_into: "Översätt till",
+    translating: "Översätter…", mt: "{lang} · maskinöversättning", tr_failed: "Översättningen misslyckades: {msg}",
+    show_all: "Visa allt", show_less: "Visa mindre", revision: "version {rev}",
+    current_version: "nuvarande version", version_of: "version från {date}",
+    ref_note: "Kanske inte neutralt: {reason}", ambox_neutral: "Detta avsnitt är kanske inte neutralt: {reason}",
+    no_reason: "ingen orsak angiven", suggestion: "Förslag, kontrollera före användning", edit_on_wp: "Redigera på Wikipedia",
+    trace: "Spåra", trace_phrase: "Spåra ”{phrase}”", trace_loading: "Spårar redigeringshistoriken…",
+    trace_first: "Dök upp första gången {date}", trace_count: "Finns i {n} av {m} versioner",
+    trace_intro: "Påståendet skrevs först {date}, med andra ord", trace_intro_same: "skrevs med denna formulering",
+    trace_runs: "När det fanns i artikeln", trace_now: "finns kvar i den nuvarande versionen",
+    trace_removed: "togs bort {date}", trace_none: "Frasen finns inte i någon sparad version av artikeln.",
+    trace_anon: "anonym redigering", trace_reg: "registrerat konto", trace_rev: "version {rev}",
+    trace_comment: "kommentar", trace_close: "Stäng", trace_versions: "{n} versioner",
+    review_none: "Neutralitetsgranskningen är inte tillgänglig för detta avsnitt.", review_ok: "Inga problem med ordvalet hittades.",
+    conflict: "Möjlig motsägelse: {about}", conflict_about: "avsnitten säger olika saker",
+    conflict_none: "Inga motstridiga avsnitt hittades bland källorna.",
+    conflict_unavailable: "Kontrollen av motsägelser blev inte klar. Fråga igen.",
+    check_intro: "Klistra in en mening du tänker lägga till. Den granskas för neutralt ordval och mot textavsnitt ur Wikipedia.",
+    check_btn: "Granska", checking: "Granskar…", check_ok: "Ordval: neutralt, inga problem.",
+    facts_bad: "Möjliga sakfel", facts_ok: "Fakta: alla datum och tal stämmer med källavsnitten.",
+    fact_unconfirmed: "Bekräftas inte av källorna: {nums}. Inget av de hittade avsnitten nämner det; kontrollera det mot en källa.",
+    fact_source: "Källa",
+    fact_fix: "Rättad, kontrollera före användning",
+    check_flag: "Den här meningen är kanske inte neutral: {reason}",
+    supports: "Stöder den", contradicts: "Motsäger den",
+    check_nothing: "Inget avsnitt stöder eller motsäger den tydligt.",
+    sources_n: "källor: {n}", no_sources: "Inga källor citerades.",
+    flagged_more: "Andra flaggade avsnitt (hämtade, inte citerade i svaret)",
+    licence: "Text från Wikipedias skribenter, CC BY-SA 4.0. Varje källa länkar till den version som användes.",
+    info_cap: "Huvudkälla", info_sub: "mest citerad i detta svar", info_article: "Artikel",
+    info_languages: "Språk", info_categories: "Kategorier", info_revision: "Version",
+    info_wikidata: "Wikidata", info_history: "Historik", info_versions: "versioner: {n}",
+    info_first: "första redigering {date}", info_reverts: "återställningar: {n}", info_length: "Längd",
+    info_chars: "{n} tecken", info_none: "inga", info_failed: "Artikelns uppgifter kunde inte hämtas.",
+    appearance: "Utseende", auto: "Automatiskt", light: "Ljust", dark: "Mörkt",
+    steps: "Steg", sql: "SQL som MariaDB körde",
+    s_embed: "Frågan blir en vektor", s_embed_sub: "bge-m3 gör om frågan till en vektor.",
+    s_search: "Vektorsökning i MariaDB", s_search_a: "De närmaste artiklarna; de i fetstil användes.",
+    s_search_c: "De 40 närmaste styckena, per artikel; de i fetstil användes.",
+    s_hist: "Historik per {date}", s_hist_sub: "Den version av varje artikel som gällde den dagen.",
+    s_paras: "De bästa styckena", s_paras_sub: "{n} stycken jämfördes med frågan. Grönt = citerat i svaret.",
+    s_llm: "Svaret skrivs", s_llm_sub: "{model}, enbart utifrån de avsnitten.",
+    s_review: "Neutralitetsgranskning", s_review_sub: "{model}, samtidigt med svaret. Flaggade avsnitt: {n}.",
+  },
+};
+const LANG_NAMES = {fi: "Suomi", sv: "Svenska", en: "English"};
+const EXAMPLES = [
+  "Which peace treaty ended the Winter War?",
+  "Kuka oli Suomen presidentti talvisodan aikana?",
+  "När förklarade Finland sig självständigt?",
+];
+
+// ---------- helpers ----------
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const safeUrl = (u) => /^https?:\/\//i.test(String(u ?? "")) ? esc(u) : "#";
+const fmtMs = (ms) => ms == null ? "" : ms >= 1000 ? (ms / 1000).toFixed(1) + " s" : ms + " ms";
+const day = (s) => s ? String(s).slice(0, 10) : "";
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode etc.: just not remembered */ } },
+};
+let ui = "en";
+function t(key, vars = {}) {
+  const s = (I18N[ui] && I18N[ui][key]) ?? I18N.en[key] ?? key;
+  return s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
+}
+// t() output is fixed text; values that come from the API go in through tx(), escaped.
+const tx = (key, vars = {}) => t(key, Object.fromEntries(Object.entries(vars).map(([k, v]) => [k, esc(v)])));
+
+const ICON = {
+  style: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 21h20L12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v5M12 17.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+  content: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M5 7h14M5 7l-3 7a3 3 0 0 0 6 0L5 7zm14 0-3 7a3 3 0 0 0 6 0l-3-7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>`,
+  info: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+};
+const ambox = (kind, html) => `<div class="ambox ${kind}" role="note">${ICON[kind]}<div class="body">${html}</div></div>`;
+
+// ---------- state ----------
+// view: read (reader mode, today) | edit (editor mode, today) | history (reader mode, as of a year)
+const FIRST_YEAR = 2003, THIS_YEAR = new Date().getFullYear();
+const state = {question: "", view: "read", year: "", lang: null};
+let current = null, info = null, busy = false, reqId = 0, busySince = 0, loaderTimer = null;
+
+// ---------- loader ----------
+// /api/ask answers in one response, so the steps advance on typical timings, not on server events.
+function loaderSteps() {
+  const steps = [];
+  if (asOf()) steps.push({key: "load_past", at: 0, args: {date: asOf()}});
+  else steps.push({key: "load_search", at: 0});
+  steps.push({key: "load_pick", at: 2.5}, {key: "load_write", at: 5});
+  if (modeOf() === "editor") steps.push({key: "load_review", at: 12});
+  return steps;
+}
+const CHECK = `<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+function loaderHtml() {
+  const widths = [96, 88, 92, 60, 0, 94, 80, 70];
+  return `<div class="loader" role="status" aria-live="polite" aria-label="${esc(t("loading"))}">
+    <div class="loader-head"><span class="spin"></span><span id="loader-label"></span><span class="loader-time" id="loader-time">0 s</span></div>
+    <div class="lbar"></div>
+    <ol class="lsteps" id="loader-steps"></ol>
+    <div class="skel" aria-hidden="true">${widths.map((w) => w ? `<span style="width:${w}%"></span>` : `<span style="height:4px;background:none;animation:none"></span>`).join("")}</div>
+  </div>`;
+}
+function tickLoader() {
+  const list = document.getElementById("loader-steps");
+  if (!list) return;
+  const s = (performance.now() - busySince) / 1000, steps = loaderSteps();
+  let active = 0;
+  steps.forEach((st, i) => { if (s >= st.at) active = i; });
+  list.innerHTML = steps.map((st, i) => {
+    const cls = i < active ? "done" : i === active ? "active" : "";
+    const ic = i < active ? CHECK : i === active ? `<span class="spin sm"></span>` : `<span class="ring"></span>`;
+    return `<li class="${cls}"><span class="ic">${ic}</span>${tx(st.key, st.args || {})}</li>`;
+  }).join("");
+  $("loader-label").textContent = t(steps[active].key, steps[active].args || {}) + "…";
+  $("loader-time").textContent = `${Math.floor(s)} s`;
+}
+function startLoader() {
+  busySince = performance.now();
+  clearInterval(loaderTimer);
+  loaderTimer = setInterval(tickLoader, 250);
+}
+function stopLoader() { clearInterval(loaderTimer); loaderTimer = null; }
+const modeOf = () => state.view === "edit" ? "editor" : "reader";
+const asOf = () => state.view === "history" && state.year ? `${state.year}-01-01` : null;
+
+// ---------- ask ----------
+async function ask() {
+  const question = $("q").value.trim();
+  if (!question) return;
+  state.question = question;
+  const id = ++reqId;
+  busy = true; $("go").disabled = true; startLoader();
+  current = null; info = null;
+  renderAll();
+  if (state.view === "history" && !state.year) { busy = false; stopLoader(); $("go").disabled = false; renderAll(); return; }
+  const as_of = asOf(), mode = modeOf(), lang = state.lang;
+  try {
+    const body = {question, as_of, mode};
+    if (lang) body.lang = lang;
+    const res = await fetch("/api/ask?debug=1", {
+      method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body),
+    });
+    const r = await res.json().catch(() => ({}));
+    if (!res.ok || r.error) throw new Error(r.error || r.detail || `HTTP ${res.status}`);
+    if (id !== reqId) return;
+    current = {...r, question, as_of, mode, lang, citations: Array.isArray(r.citations) ? r.citations : []};
+    loadInfo(current, id);
+    loadTraceLinks(current, id);
+  } catch (e) {
+    if (id !== reqId) return;
+    current = {error: e.message, question};
+  } finally {
+    if (id === reqId) { busy = false; stopLoader(); $("go").disabled = false; renderAll(); saveUrl(); }
+  }
+}
+
+function saveUrl() {
+  const url = new URL(location);
+  const set = (k, v) => v ? url.searchParams.set(k, v) : url.searchParams.delete(k);
+  set("q", state.question);
+  set("view", state.view === "read" ? "" : state.view);
+  set("as_of", state.view === "history" && state.year ? `${state.year}-01-01` : "");
+  set("lang", state.lang || "");
+  history.replaceState(null, "", url);
+}
+
+// The main source: the article whose [n] markers occur most often in the answer text (ties: the
+// one cited first in the answer), not the first search result.
+function mainArticle(r) {
+  const byN = new Map((r.citations || []).filter((c) => c.page_id != null).map((c) => [c.n, c]));
+  const count = new Map();
+  let pos = 0;
+  for (const m of String(r.answer || "").matchAll(/\[(\d+)\]/g)) {
+    const c = byN.get(Number(m[1])); if (!c) continue;
+    const e = count.get(c.page_id) || {n: 0, first: pos++, c}; e.n++; count.set(c.page_id, e);
+  }
+  if (!count.size) {  // no markers found: fall back to the citation list
+    for (const c of byN.values()) {
+      const e = count.get(c.page_id) || {n: 0, first: c.n, c}; e.n++; count.set(c.page_id, e);
+    }
+  }
+  const best = [...count.values()].sort((a, b) => b.n - a.n || a.first - b.first)[0];
+  if (!best) return null;
+  const arts = (r.process && r.process.articles) || [];
+  const lang = (arts.find((a) => a.page_id === best.c.page_id) || {}).lang || "fi";
+  return {page_id: best.c.page_id, lang};
+}
+
+async function loadInfo(r, id) {
+  const m = mainArticle(r);
+  if (!m) return;
+  try {
+    const res = await fetch(`/api/article/${encodeURIComponent(m.page_id)}/info?lang=${encodeURIComponent(m.lang)}`);
+    const d = await res.json().catch(() => ({}));
+    if (id !== reqId) return;
+    info = res.ok && !d.error ? d : {error: d.error || `HTTP ${res.status}`};
+  } catch (e) {
+    if (id !== reqId) return;
+    info = {error: e.message};
+  }
+  renderTitleRow(); renderInfo();
+}
+
+// ---------- rendering ----------
+function renderAll() {
+  applyStaticText();
+  renderMain();
+  renderToc();
+  renderInfo();
+}
+
+function applyStaticText() {
+  document.documentElement.lang = ui;
+  document.querySelectorAll("[data-t]").forEach((el) => { el.textContent = t(el.dataset.t); });
+  $("q").placeholder = t("placeholder");
+}
+
+function renderMain() {
+  if (!state.question) {
+    $("main").innerHTML = `<div class="title-row"><h1>${esc(t("title_start"))}</h1></div>
+      <div class="tagline">${esc(t("tagline_start"))}</div>
+      <div class="start" style="margin-top:18px"><p>${esc(t("start_p"))}</p>
+        <ul>${EXAMPLES.map((q) => `<li><a href="#" data-q="${esc(q)}">${esc(q)}</a></li>`).join("")}</ul></div>`;
+    return;
+  }
+  const r = current;
+  let body;
+  if (busy) body = loaderHtml();
+  else if (!r) body = "";   // View history with no year chosen yet
+  else if (r.error) body = `<p class="error">${tx("error", {msg: r.error})}</p>`;
+  else body = resultHtml(r);
+
+  $("main").innerHTML = `
+    <div class="title-row" id="title-row"></div>
+    <div class="tagline" id="sec-answer-top">${taglineHtml()}</div>
+    ${tabsHtml()}
+    ${state.view === "history" ? historyBarHtml() : ""}
+    ${body}`;
+  renderTitleRow();
+  wireMain();
+  if (busy) tickLoader();
+}
+
+function taglineHtml() {
+  const when = state.view === "history" && state.year
+    ? tx("when_asof", {date: `${state.year}-01-01`}) : esc(t("when_now"));
+  return `${esc(t("tagline"))} · <span class="when">${when}</span>${state.view === "edit" ? " · " + esc(t("editor_view")) : ""}`;
+}
+
+function tabsHtml() {
+  const tab = (view, key) => `<button type="button" class="tab" data-view="${view}" ${state.view === view ? 'aria-current="page"' : ""}>${esc(t(key))}</button>`;
+  return `<nav class="tabs" aria-label="${esc(t("views"))}">
+    <div class="grp"><span class="tab static">${esc(t("tab_answer"))}</span></div>
+    <div class="grp">${tab("read", "tab_read")}${tab("edit", "tab_edit")}${tab("history", "tab_history")}</div>
+  </nav>`;
+}
+
+function historyBarHtml() {
+  const years = Array.from({length: THIS_YEAR - FIRST_YEAR + 1}, (_, i) => THIS_YEAR - i);
+  return `<div class="hist-bar">
+    <label for="year">${esc(t("hist_label"))}</label>
+    <select id="year" class="plain"><option value="">${esc(t("hist_pick"))}</option>
+      ${years.map((y) => `<option value="${y}" ${String(y) === String(state.year) ? "selected" : ""}>${y}</option>`).join("")}</select>
+    <span class="note">${esc(t("hist_note"))}</span></div>`;
+}
+
+function renderTitleRow() {
+  const row = $("title-row");
+  if (!row) return;
+  const langs = info && Array.isArray(info.languages) ? info.languages : [];
+  let btn = "";
+  if (langs.length) {
+    const label = langs.length === 1 ? t("langs_1") : t("langs_n", {n: langs.length});
+    const item = (code, name, art) => `<li><button type="button" data-lang="${esc(code)}" ${(state.lang || "") === code ? 'aria-current="true"' : ""}>${esc(name)}</button>
+        ${art ? `<a href="${safeUrl(art.url)}" target="_blank" rel="noopener" lang="${esc(art.lang)}" title="${esc(art.title)}">${esc(art.title)}</a>` : ""}</li>`;
+    btn = `<div class="langs">
+      <button type="button" class="lang-btn" id="lang-btn" aria-expanded="false" aria-controls="lang-pop"><span class="ico" aria-hidden="true">A文</span>${esc(label)}</button>
+      <div class="lang-pop" id="lang-pop" hidden>
+        <h3>${esc(t("langs_head"))}</h3>
+        <ul>${item("", t("langs_auto"), null)}
+          ${langs.map((a) => item(a.lang, LANG_NAMES[a.lang] || a.lang, a)).join("")}</ul>
+      </div></div>`;
+  }
+  row.innerHTML = `<h1>${esc(state.question)}</h1>${btn}`;
+  const b = $("lang-btn");
+  if (!b) return;
+  const pop = $("lang-pop");
+  const close = () => { pop.hidden = true; b.setAttribute("aria-expanded", "false"); };
+  b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    pop.hidden = !pop.hidden; b.setAttribute("aria-expanded", String(!pop.hidden));
+    if (!pop.hidden) pop.querySelector("button")?.focus();
+  });
+  pop.addEventListener("keydown", (e) => { if (e.key === "Escape") { close(); b.focus(); } });
+  pop.querySelectorAll("button[data-lang]").forEach((x) => x.addEventListener("click", () => {
+    state.lang = x.dataset.lang || null; close(); ask();
+  }));
+}
+document.addEventListener("click", (e) => {
+  const pop = $("lang-pop");
+  if (pop && !pop.hidden && !e.target.closest(".langs")) { pop.hidden = true; $("lang-btn")?.setAttribute("aria-expanded", "false"); }
+});
+
+function resultHtml(r) {
+  const editor = r.mode === "editor";
+  const cites = r.citations;
+  const p = r.process || {};
+  const skipped = Array.isArray(p.skipped) ? p.skipped : [];
+  const notice = r.as_of && skipped.length && cites.length
+    ? ambox("info", tx("skipped", {date: r.as_of, titles: (p.articles || []).map((a) => a.title).join(", "), n: skipped.length})) : "";
+
+  const citedNs = new Set(cites.map((c) => c.n));
+  const answerHtml = esc(r.answer)
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/\s*\[(\d+)\]/g, (m, n) => citedNs.has(+n)
+      ? `<sup><a href="#ref-${n}" data-n="${n}">[${n}]</a></sup>` : `<sup>[${n}]</sup>`)
+    .split(/\n{2,}/).map((x) => `<p>${x.replace(/\n/g, "<br>")}</p>`).join("");
+
+  const conflicts = editor ? conflictsHtml(r) : "";
+  const more = Array.isArray(r.flagged_passages) ? r.flagged_passages : [];
+  const check = editor ? `<section id="sec-check" class="check">
+      <h2 class="sec">${esc(t("sec_check"))}</h2>
+      <p class="muted">${esc(t("check_intro"))}</p>
+      <label class="sr" for="draft">${esc(t("sec_check"))}</label>
+      <textarea id="draft" maxlength="2000"></textarea>
+      <div class="row"><span></span><button type="button" class="primary" id="check-btn">${esc(t("check_btn"))}</button></div>
+      <div id="check-out" aria-live="polite"></div></section>` : "";
+
+  return `${notice}
+    <section id="sec-answer"><div class="answer">${answerHtml}</div></section>
+    <section id="sec-sources">
+      <h2 class="sec">${esc(t("sec_sources"))}
+        <span class="tr-ctl">
+          <label class="sr" for="target">${esc(t("translate_into"))}</label>
+          <select id="target">${Object.entries(LANG_NAMES).map(([k, v]) =>
+            `<option value="${k}" ${k === (ui === "fi" ? "en" : ui) ? "selected" : ""}>${v}</option>`).join("")}</select>
+          <button type="button" class="link-btn" id="trall" ${cites.length ? "" : "disabled"}>${esc(t("translate_all"))}</button>
+        </span></h2>
+      ${cites.length ? `<ol class="refs" id="refs">${cites.map((c) => refHtml(c, r)).join("")}</ol>` : `<p class="muted">${esc(t("no_sources"))}</p>`}
+      ${editor && more.length ? `<h3 class="sub-h">${esc(t("flagged_more"))}</h3>
+        <ol class="refs" id="refs-more">${more.map((c) => refHtml(c, r)).join("")}</ol>` : ""}
+    </section>
+    ${conflicts}
+    ${check}
+    <details class="how" id="sec-how">
+      <summary><span>${esc(t("sec_how"))}</span><span>${esc(t("sources_n", {n: cites.length}))} · ${esc(fmtMs(r.took_ms))}</span></summary>
+      <div class="how-body">
+        <div><h4>${esc(t("steps"))}</h4>${processHtml(r)}</div>
+        <div><h4>${esc(t("sql"))}</h4><pre>${esc(r.sql)}</pre></div>
+      </div>
+    </details>
+    <div class="licence">${esc(t("licence"))}</div>`;
+}
+
+// The passage with the flagged phrases marked. Ranges are found in the raw text, then each piece
+// is escaped, so a phrase can never inject markup.
+function markPhrases(text, phrases) {
+  text = String(text ?? "");
+  const ranges = [];
+  for (const ph of Array.isArray(phrases) ? phrases : []) {
+    if (typeof ph !== "string" || !ph) continue;
+    const i = text.indexOf(ph);
+    if (i >= 0) ranges.push([i, i + ph.length]);
+  }
+  ranges.sort((a, b) => a[0] - b[0]);
+  const merged = [];
+  for (const r of ranges) {
+    const last = merged[merged.length - 1];
+    if (last && r[0] <= last[1]) last[1] = Math.max(last[1], r[1]); else merged.push([...r]);
+  }
+  let out = "", pos = 0;
+  for (const [a, b] of merged) { out += esc(text.slice(pos, a)) + `<mark>${esc(text.slice(a, b))}</mark>`; pos = b; }
+  return out + esc(text.slice(pos));
+}
+
+function refHtml(c, r) {
+  const editor = r.mode === "editor";
+  const arts = Object.fromEntries(((r.process || {}).articles || []).map((a) => [a.rev_id, a]));
+  const a = arts[c.rev_id];
+  const when = a && a.version_from ? tx("version_of", {date: day(a.version_from)}) : esc(t("current_version"));
+  const nz = c.neutrality && typeof c.neutrality === "object" ? c.neutrality : null;
+  const flagged = nz && nz.level === "flagged";
+  const reason = nz && nz.reason ? nz.reason : t("no_reason");
+  let review = "", text, clamp = true, traces = "";
+  if (editor) {
+    if (flagged) {
+      review = ambox("style", tx("ambox_neutral", {reason}));
+      clamp = false;   // show the whole passage so every marked phrase is visible
+    } else if (!nz) {
+      review = `<div class="ref-meta">${esc(t("review_none"))}</div>`;
+    }
+    text = flagged ? markPhrases(c.passage, nz.phrases) : esc(c.passage);
+    if (flagged && Array.isArray(nz.phrases))
+      traces = traceRow(c.page_id, nz.phrases.filter((ph) => typeof ph === "string" && ph), true);
+  } else {
+    if (flagged) review = `<div class="ref-note">⚠ ${tx("ref_note", {reason})}</div>`;
+    text = esc(c.passage);
+  }
+  const suggestion = editor && flagged && nz.suggestion
+    ? `<div class="suggest"><span class="lbl">${esc(t("suggestion"))}</span>${esc(nz.suggestion)}</div>` : "";
+  const edit = editor && c.edit_url
+    ? `<a href="${safeUrl(c.edit_url)}" target="_blank" rel="noopener">${esc(t("edit_on_wp"))}</a>` : "";
+  return `<li id="ref-${esc(c.n)}" data-n="${esc(c.n)}">
+    <div><span class="ref-n">[${esc(c.n)}]</span>
+      <a class="ref-title" href="${safeUrl(c.url)}" target="_blank" rel="noopener">${esc(c.title)}</a></div>
+    <div class="ref-meta">${tx("revision", {rev: c.rev_id})} · ${when}</div>
+    ${review}
+    <div class="ref-text ${clamp ? "clamp" : ""}">${text}</div>
+    ${traces}
+    ${suggestion}
+    <div class="ref-tr" hidden></div>
+    <div class="ref-actions">
+      ${clamp ? `<button type="button" class="link-btn more">${esc(t("show_all"))}</button>` : ""}
+      <button type="button" class="link-btn tr">${esc(t("translate"))}</button>
+      ${edit}
+    </div></li>`;
+}
+
+// A row of Trace buttons (hidden until /api/trace/available says the article has history).
+function traceRow(pageId, phrases, named) {
+  if (pageId == null || !phrases.length) return "";
+  return `<div class="trace-row" data-page="${esc(pageId)}">${phrases.map((ph) =>
+    `<button type="button" class="link-btn trace-btn" hidden data-page="${esc(pageId)}" data-phrase="${esc(ph)}">${
+      named ? tx("trace_phrase", {phrase: ph.length > 40 ? ph.slice(0, 40) + "…" : ph}) : esc(t("trace"))}</button>`).join("")}</div>`;
+}
+
+let historyPages = new Set();
+async function loadTraceLinks(r, id) {
+  if (r.mode !== "editor") return;
+  const langOf = new Map(((r.process || {}).articles || []).map((a) => [a.page_id, a.lang]));
+  const ids = new Set();
+  for (const c of Array.isArray(r.conflicts) ? r.conflicts : []) for (const s of [c.a, c.b]) if (s && s.page_id != null) ids.add(s.page_id);
+  for (const c of [...(r.citations || []), ...(Array.isArray(r.flagged_passages) ? r.flagged_passages : [])])
+    if (c.page_id != null && ((c.neutrality || {}).level === "flagged")) ids.add(c.page_id);
+  const fi = [...ids].filter((p) => (langOf.get(p) || "fi") === "fi");   // history exists for Finnish articles only
+  if (!fi.length) return;
+  try {
+    const res = await fetch(`/api/trace/available?page_ids=${fi.map(encodeURIComponent).join(",")}`);
+    const d = await res.json().catch(() => ({}));
+    if (id !== reqId || !res.ok) return;
+    historyPages = new Set((Array.isArray(d.page_ids) ? d.page_ids : []).map(Number));
+    showTraceLinks();
+  } catch (e) { /* no links then */ }
+}
+function showTraceLinks() {
+  document.querySelectorAll(".trace-btn").forEach((b) => {
+    b.hidden = !historyPages.has(Number(b.dataset.page));
+    if (!b.dataset.wired) { b.dataset.wired = "1"; b.addEventListener("click", () => openTrace(b)); }
+  });
+}
+
+const traceCache = new Map();   // "page|phrase" -> response
+async function openTrace(btn) {
+  const row = btn.closest(".trace-row");
+  const key = `${btn.dataset.page}|${btn.dataset.phrase}`;
+  let panel = row.nextElementSibling && row.nextElementSibling.classList.contains("trace-panel") ? row.nextElementSibling : null;
+  if (panel && panel.dataset.key === key) { panel.remove(); btn.setAttribute("aria-expanded", "false"); return; }
+  if (panel) panel.remove();
+  row.querySelectorAll(".trace-btn").forEach((b) => b.setAttribute("aria-expanded", "false"));
+  btn.setAttribute("aria-expanded", "true");
+  panel = document.createElement("div");
+  panel.className = "trace-panel"; panel.dataset.key = key; panel.setAttribute("role", "region");
+  panel.innerHTML = `<span class="loading"><span class="dot"></span>${esc(t("trace_loading"))}</span>`;
+  row.after(panel);
+  try {
+    let d = traceCache.get(key);
+    if (!d) {
+      const res = await fetch("/api/trace", {method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({page_id: Number(btn.dataset.page), phrase: btn.dataset.phrase})});
+      d = await res.json().catch(() => ({}));
+      if (!res.ok || d.error) throw new Error(d.error || `HTTP ${res.status}`);
+      traceCache.set(key, d);
+    }
+    panel.innerHTML = traceHtml(d);
+  } catch (e) {
+    panel.innerHTML = `<p class="error">${tx("error", {msg: e.message})}</p>`;
+  }
+}
+
+function traceHtml(d) {
+  if (!d || d.available === false) return `<p class="muted">${esc(t("trace_none"))}</p>`;
+  if (!d.first) return `<p class="muted">${esc(t("trace_none"))}</p>`;
+  const revLink = (v) => v && v.url ? `<a href="${safeUrl(v.url)}" target="_blank" rel="noopener">${tx("trace_rev", {rev: v.rev_id})}</a>` : "";
+  const who = (v) => esc(t(v.anonymous ? "trace_anon" : "trace_reg"));
+  const cmt = (v) => v.comment ? ` · <span class="cmt">${esc(t("trace_comment"))}: “${esc(v.comment)}”</span>` : "";
+  const t0 = Date.parse(d.history_from), t1 = Date.parse(d.history_to), span = Math.max(1, t1 - t0);
+  const pct = (iso) => Math.min(100, Math.max(0, (Date.parse(iso) - t0) / span * 100));
+  const runs = Array.isArray(d.runs) ? d.runs : [];
+  const bars = runs.map((r) => {
+    const end = r.removed_by ? r.removed_by.date : d.history_to;
+    return `<span style="left:${pct(r.start.date).toFixed(2)}%;width:${Math.max(0.4, pct(end) - pct(r.start.date)).toFixed(2)}%"
+      title="${esc(day(r.start.date))} – ${esc(r.removed_by ? day(r.removed_by.date) : t("trace_now"))}"></span>`;
+  }).join("");
+  const intro = d.introduced && !d.introduced.same_as_first
+    ? `<div>${tx("trace_intro", {date: day(d.introduced.date)})}: ${revLink(d.introduced)} (${who(d.introduced)})${cmt(d.introduced)}</div>` : "";
+  return `<h5>${tx("trace_first", {date: day(d.first.date)})}: ${revLink(d.first)} (${who(d.first)})${cmt(d.first)}</h5>
+    ${intro}
+    <div>${tx("trace_count", {n: d.versions_with_phrase, m: d.versions_total})}</div>
+    <div class="tl" role="img" aria-label="${esc(t("trace_runs"))}">${bars}</div>
+    <div class="tl-years"><span>${esc(day(d.history_from).slice(0, 4))}</span><span>${esc(day(d.history_to).slice(0, 4))}</span></div>
+    <div style="margin-top:6px"><b>${esc(t("trace_runs"))}</b></div>
+    <ol>${runs.map((r) => `<li>${esc(day(r.start.date))} – ${r.removed_by ? esc(day(r.end.date)) : esc(t("trace_now"))}
+        · ${tx("trace_versions", {n: r.versions})} · ${revLink(r.start)}${cmt(r.start)}
+        ${r.removed_by ? `<br>${tx("trace_removed", {date: day(r.removed_by.date)})}: ${revLink(r.removed_by)} (${who(r.removed_by)})${cmt(r.removed_by)}` : ""}</li>`).join("")}</ol>`;
+}
+
+function conflictsHtml(r) {
+  const list = r.conflicts;
+  let inner;
+  if (!Array.isArray(list)) inner = `<p class="muted">${esc(t("conflict_unavailable"))}</p>`;
+  else if (!list.length) inner = `<p class="muted">${esc(t("conflict_none"))}</p>`;
+  else inner = list.map((c) => {
+    const side = (s) => s && typeof s === "object" ? `<div class="cf-side">
+        <a href="${safeUrl(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a>${s.n != null ? ` <span class="muted">[${esc(s.n)}]</span>` : ""}
+        <q>${esc(s.phrase)}</q>${s.phrase ? traceRow(s.page_id, [s.phrase], false) : ""}</div>` : "";
+    return ambox("content", `<b>${tx("conflict", {about: c.about || t("conflict_about")})}</b>
+      <div class="cf-grid">${side(c.a)}${side(c.b)}</div>`);
+  }).join("");
+  return `<section id="sec-conflicts"><h2 class="sec">${esc(t("sec_conflicts"))}</h2>${inner}</section>`;
+}
+
+function processHtml(r) {
+  const p = r.process || {}, tm = p.timings_ms || {};
+  const byChunk = p.retrieval === "chunk";
+  const hits = (byChunk ? p.chunk_hits : p.search_hits) || [];
+  const chosen = new Set((p.articles || []).map((a) => a.page_id));
+  const steps = [];
+  let k = 1;
+  steps.push(step(`${k++}. ${esc(t("s_embed"))}`, tm.embed_question, esc(t("s_embed_sub"))));
+  steps.push(step(`${k++}. ${esc(t("s_search"))}`, (tm.search_sql || 0) + (tm.chunk_search || 0),
+    esc(t(byChunk ? "s_search_c" : "s_search_a")),
+    `<ul class="mini">${hits.map((h) => `<li class="${chosen.has(h.page_id) ? "on" : ""}">
+       <span class="lang">${esc(h.lang)}</span><span class="t" title="${esc(h.title)}">${esc(h.title)}</span>
+       <span class="num">${esc(Number(h.distance).toFixed(3))}</span></li>`).join("")}</ul>`));
+  if (r.as_of) {
+    const arts = p.articles || [], sk = p.skipped || [];
+    steps.push(step(`${k++}. ${tx("s_hist", {date: r.as_of})}`, tm.history_sql, esc(t("s_hist_sub")),
+      `<ul class="mini">${arts.map((a) => `<li class="on"><span class="t" title="${esc(a.title)}">${esc(a.title)}</span>
+          <span class="num">rev ${esc(a.rev_id)} · ${esc(day(a.version_from))}</span></li>`).join("")}
+        ${sk.map((s) => `<li class="off"><span class="t" title="${esc(s.title)}">${esc(s.title)}</span>
+          <span class="skip-r">${esc(s.reason)}</span></li>`).join("")}</ul>`, arts.length ? "done" : "skip"));
+  }
+  if (tm.paragraphs != null) {
+    const ps = p.passages || [];
+    const max = Math.max(...ps.map((x) => x.score), 0.0001), min = Math.min(...ps.map((x) => x.score), 0);
+    steps.push(step(`${k++}. ${esc(t("s_paras"))}`,
+      (tm.embed_paragraphs || 0) + (tm.cache_read || 0) + (tm.rank_paragraphs || 0) + (tm.clean_split || 0),
+      tx("s_paras_sub", {n: tm.paragraphs}),
+      `<ul class="mini">${ps.map((x) => `<li class="${x.cited ? "cited on" : ""}">
+         <span class="num">[${esc(x.n)}]</span><span class="t" title="${esc(x.title)}">${esc(x.title)}</span>
+         <span class="bar"><i style="width:${Math.round(20 + 80 * (x.score - min) / ((max - min) || 1))}%"></i></span>
+         <span class="num">${esc(Number(x.score).toFixed(3))}</span></li>`).join("")}</ul>`));
+  }
+  if (tm.llm != null) steps.push(step(`${k++}. ${esc(t("s_llm"))}`, tm.llm, tx("s_llm_sub", {model: p.model || "LLM"})));
+  if (p.review) {
+    const n = Array.isArray(p.review.flagged) ? p.review.flagged.length : 0;
+    steps.push(step(`${k++}. ${esc(t("s_review"))}`, tm.review,
+      tx("s_review_sub", {model: p.review_model || "LLM", n}) + (p.review.error ? ` <span class="skip-r">${esc(p.review.error)}</span>` : ""),
+      "", p.review.error ? "skip" : "done"));
+  }
+  return `<ol class="steps">${steps.join("")}</ol>`;
+}
+
+function step(title, ms, sub, extra = "", cls = "done") {
+  return `<li class="${cls}"><div class="st-head"><span>${title}</span><span class="ms">${esc(fmtMs(ms))}</span></div>
+    <div class="st-sub">${sub}</div>${extra}</li>`;
+}
+
+function renderToc() {
+  const r = current;
+  const show = !!(state.question && r && !r.error && !busy);
+  $("toc").hidden = !show;
+  if (!show) return;
+  const items = [["sec-answer", "sec_answer"], ["sec-sources", "sec_sources"]];
+  if (r.mode === "editor") items.push(["sec-conflicts", "sec_conflicts"]);
+  items.push(["sec-how", "sec_how"]);
+  $("toc-list").innerHTML = items.map(([id, key]) => `<li><a href="#${id}" data-sec="${id}">${esc(t(key))}</a></li>`).join("");
+}
+$("toc-list").addEventListener("click", (e) => {
+  const a = e.target.closest("a[data-sec]");
+  if (!a) return;
+  e.preventDefault();
+  const el = $(a.dataset.sec);
+  if (!el) return;
+  if (el.tagName === "DETAILS") el.open = true;
+  el.scrollIntoView({behavior: "smooth", block: "start"});
+});
+
+function renderInfo() {
+  const box = $("infobox");
+  if (!current || current.error || busy || !info) { box.innerHTML = ""; return; }
+  if (info.error) { box.innerHTML = `<div class="infobox"><p class="muted">${esc(t("info_failed"))}</p></div>`; return; }
+  const row = (key, html) => `<tr><th scope="row">${esc(t(key))}</th><td>${html}</td></tr>`;
+  const langs = Array.isArray(info.languages) ? info.languages : [];
+  const cats = Array.isArray(info.categories) ? info.categories : [];
+  const h = info.history && typeof info.history === "object" ? info.history : null;
+  const oldid = info.rev_id != null && info.lang
+    ? `https://${encodeURIComponent(info.lang)}.wikipedia.org/?oldid=${encodeURIComponent(info.rev_id)}` : "";
+  box.innerHTML = `<div class="infobox">
+    <div class="cap">${esc(t("info_cap"))}</div><div class="sub">${esc(t("info_sub"))}</div>
+    <table>
+      ${row("info_article", `<a href="${safeUrl(info.url)}" target="_blank" rel="noopener">${esc(info.title)}</a>`)}
+      ${row("info_languages", langs.length ? `<ul>${langs.map((a) => `<li><span class="lang">${esc(a.lang)}</span>
+          <a href="${safeUrl(a.url)}" target="_blank" rel="noopener" lang="${esc(a.lang)}">${esc(a.title)}</a></li>`).join("")}</ul>` : esc(t("info_none")))}
+      ${row("info_categories", cats.length ? `<ul>${cats.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : esc(t("info_none")))}
+      ${row("info_revision", `${oldid ? `<a href="${safeUrl(oldid)}" target="_blank" rel="noopener">${esc(info.rev_id)}</a>` : esc(info.rev_id ?? "")}
+          ${info.date_modified ? `<br><span class="muted">${esc(day(info.date_modified))}</span>` : ""}`)}
+      ${info.text_length != null ? row("info_length", tx("info_chars", {n: Number(info.text_length).toLocaleString(ui)})) : ""}
+      ${row("info_wikidata", info.wikidata_id && /^Q\d+$/.test(info.wikidata_id)
+          ? `<a href="${safeUrl("https://www.wikidata.org/wiki/" + info.wikidata_id)}" target="_blank" rel="noopener">${esc(info.wikidata_id)}</a>` : esc(t("info_none")))}
+      ${h ? row("info_history", `${tx("info_versions", {n: Number(h.versions).toLocaleString(ui)})}<br>
+          ${tx("info_first", {date: day(h.first_edit)})}<br>${tx("info_reverts", {n: h.reverts})}`) : ""}
+    </table></div>`;
+}
+
+// ---------- events inside the article ----------
+function wireMain() {
+  const main = $("main");
+  main.querySelectorAll(".tab[data-view]").forEach((b) => b.addEventListener("click", () => {
+    const v = b.dataset.view;
+    if (v === state.view && v !== "history") return;
+    state.view = v;
+    if (v === "history") { renderAll(); saveUrl(); $("year")?.focus(); if (state.year) ask(); return; }
+    ask();
+  }));
+  $("year")?.addEventListener("change", (e) => { state.year = e.target.value; if (state.year) ask(); else { current = null; renderAll(); saveUrl(); } });
+  main.querySelectorAll(".answer sup a").forEach((a) => {
+    const n = a.dataset.n;
+    a.addEventListener("mouseenter", () => highlight(n, true));
+    a.addEventListener("mouseleave", () => highlight(n, false));
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      $("ref-" + n)?.scrollIntoView({behavior: "smooth", block: "nearest"});
+      flash(n);
+    });
+  });
+  main.querySelectorAll("#refs > li[data-n], #refs-more > li[data-n]").forEach((li) => {
+    const n = li.dataset.n;
+    li.addEventListener("mouseenter", () => highlight(n, true));
+    li.addEventListener("mouseleave", () => highlight(n, false));
+    li.querySelector(".tr")?.addEventListener("click", () => translateRef(li));
+    const more = li.querySelector(".more"), text = li.querySelector(".ref-text");
+    more?.addEventListener("click", () => {
+      const clamped = text.classList.toggle("clamp");
+      more.textContent = t(clamped ? "show_all" : "show_less");
+    });
+  });
+  $("trall")?.addEventListener("click", async () => {
+    $("trall").disabled = true;
+    await Promise.all([...main.querySelectorAll("#refs > li[data-n], #refs-more > li[data-n]")].map(translateRef));
+    $("trall").disabled = false;
+  });
+  $("check-btn")?.addEventListener("click", checkDraft);
+  showTraceLinks();
+}
+
+function highlight(n, on) {
+  $("ref-" + n)?.classList.toggle("hl", on);
+  document.querySelectorAll(`.answer sup a[data-n="${CSS.escape(String(n))}"]`).forEach((a) => a.classList.toggle("hl", on));
+}
+function flash(n) { highlight(n, true); setTimeout(() => highlight(n, false), 1400); }
+
+const trCache = new Map();   // "passage|target" -> translation
+async function translateRef(li) {
+  const n = +li.dataset.n, target = $("target").value;
+  const c = current && [...current.citations, ...(Array.isArray(current.flagged_passages) ? current.flagged_passages : [])]
+    .find((x) => x.n === n);
+  if (!c) return;
+  const box = li.querySelector(".ref-tr"), btn = li.querySelector(".tr");
+  const label = t("mt", {lang: LANG_NAMES[target] || target});
+  const key = `${c.passage}|${target}`;
+  box.hidden = false;
+  if (trCache.has(key)) { box.innerHTML = `<span class="lbl">${esc(label)}</span>${esc(trCache.get(key))}`; return; }
+  btn.disabled = true;
+  box.innerHTML = `<span class="loading"><span class="dot"></span>${esc(t("translating"))}</span>`;
+  try {
+    const res = await fetch("/api/translate", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({text: c.passage, target}),
+    });
+    const r = await res.json().catch(() => ({}));
+    if (!res.ok || r.error) throw new Error(r.error || `HTTP ${res.status}`);
+    trCache.set(key, r.translation);
+    box.innerHTML = `<span class="lbl">${esc(label)}</span>${esc(r.translation)}`;
+  } catch (e) {
+    box.innerHTML = `<span class="error">${tx("tr_failed", {msg: e.message})}</span>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function checkDraft() {
+  const text = $("draft").value.trim(), out = $("check-out"), btn = $("check-btn");
+  if (!text) { $("draft").focus(); return; }
+  btn.disabled = true;
+  out.innerHTML = `<div class="loading"><span class="dot"></span>${esc(t("checking"))}</div>`;
+  try {
+    const res = await fetch("/api/check", {
+      method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({text, lang: ui}),
+    });
+    const r = await res.json().catch(() => ({}));
+    if (!res.ok || r.error) throw new Error(r.error || `HTTP ${res.status}`);
+    const nz = r.neutrality && typeof r.neutrality === "object" ? r.neutrality : null;
+    const allIssues = (Array.isArray(r.fact_issues) ? r.fact_issues : []).filter((i) => i && i.draft_phrase);
+    const issues = allIssues.filter((i) => i.kind !== "number_not_found");
+    const unconfirmed = allIssues.filter((i) => i.kind === "number_not_found").map((i) => i.draft_phrase);
+    const sup = Array.isArray(r.supporting) ? r.supporting : [], con = Array.isArray(r.contradicting) ? r.contradicting : [];
+    let html = "";
+    // 1. facts: what the draft gets wrong, before anything about wording
+    if (issues.length) {
+      const items = issues.map((i) => {
+        const src = i.source && typeof i.source === "object" ? i.source : null;
+        const problem = esc(i.problem || "");
+        return `<li><q>${esc(i.draft_phrase)}</q>: ${problem}
+          ${src ? `<div class="muted">${esc(t("fact_source"))}: <a href="${safeUrl(src.url)}" target="_blank" rel="noopener">${esc(src.title)}</a>${src.phrase ? `: <q>${esc(src.phrase)}</q>` : ""}</div>` : ""}
+          ${i.fix ? `<div class="suggest"><span class="lbl">${esc(t("fact_fix"))}</span>${esc(i.fix)}</div>` : ""}</li>`;
+      }).join("");
+      html += ambox("content", `<b>${esc(t("facts_bad"))}</b>
+        <div class="ref-text" style="margin-top:6px">${markPhrases(text, issues.map((i) => i.draft_phrase))}</div>
+        <ul style="margin:6px 0 0">${items}</ul>`);
+    } else if (sup.length && !con.length && !unconfirmed.length) {
+      html += `<p>${esc(t("facts_ok"))}</p>`;
+    }
+    if (unconfirmed.length) html += ambox("info", tx("fact_unconfirmed", {nums: unconfirmed.join(", ")}));
+    // 2. wording
+    if (nz && nz.level === "flagged") {
+      html += ambox("style", `${tx("check_flag", {reason: nz.reason || t("no_reason")})}
+        <div class="ref-text" style="margin-top:6px">${markPhrases(text, nz.phrases)}</div>
+        ${nz.suggestion ? `<div class="suggest"><span class="lbl">${esc(t("suggestion"))}</span>${esc(nz.suggestion)}</div>` : ""}`);
+    } else if (nz) {
+      html += `<p>${esc(t("check_ok"))}</p>`;
+    } else {
+      html += `<p class="muted">${esc(t("review_none"))}</p>`;
+    }
+    const list = (items) => `<ul>${items.map((c) => `<li><a href="${safeUrl(c.url)}" target="_blank" rel="noopener">${esc(c.title)}</a>
+        ${c.phrase ? `: <q>${esc(c.phrase)}</q>` : ""}
+        ${c.edit_url ? ` · <a href="${safeUrl(c.edit_url)}" target="_blank" rel="noopener">${esc(t("edit_on_wp"))}</a>` : ""}</li>`).join("")}</ul>`;
+    if (sup.length) html += `<h4>${esc(t("supports"))}</h4>${list(sup)}`;
+    if (con.length) html += `<h4>${esc(t("contradicts"))}</h4>${list(con)}`;
+    if (!sup.length && !con.length) html += `<p class="muted">${esc(t("check_nothing"))}</p>`;
+    out.innerHTML = html;
+  } catch (e) {
+    out.innerHTML = `<p class="error">${tx("error", {msg: e.message})}</p>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ---------- appearance ----------
+function applyTheme(v) {
+  if (v === "light" || v === "dark") document.documentElement.dataset.theme = v;
+  else delete document.documentElement.dataset.theme;
+  document.querySelectorAll('input[name="theme"]').forEach((r) => { r.checked = r.value === (v || "auto"); });
+}
+document.querySelectorAll('input[name="theme"]').forEach((r) => r.addEventListener("change", () => {
+  applyTheme(r.value); store.set("aikakone-theme", r.value);
+}));
+
+// ---------- interface language ----------
+$("uilang").addEventListener("change", (e) => {
+  ui = I18N[e.target.value] ? e.target.value : "en";
+  store.set("aikakone-ui", ui);
+  renderAll();
+});
+
+// ---------- start ----------
+$("f").addEventListener("submit", (e) => { e.preventDefault(); ask(); });
+$("main").addEventListener("click", (e) => {
+  const a = e.target.closest("a[data-q]");
+  if (a) { e.preventDefault(); $("q").value = a.dataset.q; ask(); }
+});
+
+applyTheme(store.get("aikakone-theme") || "auto");
+const savedUi = store.get("aikakone-ui");
+const navUi = (navigator.language || "").slice(0, 2);
+ui = I18N[savedUi] ? savedUi : I18N[navUi] ? navUi : "en";
+$("uilang").value = ui;
+
+const params = new URLSearchParams(location.search);
+const pv = params.get("view"), py = (params.get("as_of") || "").slice(0, 4), pl = params.get("lang");
+if (pv === "edit" || pv === "history") state.view = pv;
+if (py >= FIRST_YEAR && py <= THIS_YEAR) { state.year = py; state.view = "history"; }
+if (LANG_NAMES[pl]) state.lang = pl;
+renderAll();
+if (params.get("q")) { $("q").value = params.get("q"); ask(); } else { $("q").focus(); }
+</script>
+</body>
+</html>

@@ -5,3 +5,5 @@ python-dotenv
 requests
 openai
 numpy
+mwparserfromhell
+pyarrow
