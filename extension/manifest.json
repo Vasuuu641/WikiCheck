@@ -11,6 +11,16 @@
   "background": {
     "service_worker": "background.js"
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://en.wikipedia.org/wiki/*",
+        "https://fi.wikipedia.org/wiki/*",
+        "https://sv.wikipedia.org/wiki/*"
+      ],
+      "js": ["content.js"]
+    }
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_title": "Aikakone Consistency Check"

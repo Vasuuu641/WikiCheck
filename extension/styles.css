@@ -30,6 +30,27 @@ header {
 }
 .icon-btn:hover { background: #334155; }
 
+.search-bar {
+  display: flex; gap: 6px; padding: 8px 14px;
+  background: #fff; border-bottom: 1px solid #e2e8f0;
+}
+.search-bar input {
+  flex: 1; padding: 6px 9px; border: 1px solid #cbd5e1; border-radius: 6px;
+  font-size: 12.5px; outline: none;
+}
+.search-bar input:focus { border-color: #0f172a; }
+.search-bar button {
+  padding: 6px 12px; background: #0f172a; color: #fff; border: none;
+  border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.search-bar button:hover { background: #1e293b; }
+.section-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 10px 0 6px; }
+.check-btn {
+  background: #0f172a; color: #fff; border: none; border-radius: 5px;
+  padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer;
+}
+.check-btn:hover { background: #334155; }
+
 main { padding: 12px 14px; overflow-y: auto; max-height: 525px; }
 .state { text-align: center; padding: 28px 12px; color: #475569; line-height: 1.5; }
 .spinner {
@@ -79,7 +100,15 @@ a.pill:hover { background: #cbd5e1; }
   background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
   padding: 6px 8px; font-size: 11.5px;
 }
-.quote-label { font-weight: 600; font-size: 10.5px; color: #475569; margin-bottom: 3px; }
+.quote-label {
+  display: flex; justify-content: space-between; align-items: center; gap: 4px;
+  font-weight: 600; font-size: 10.5px; color: #475569; margin-bottom: 3px;
+}
+.hl-btn {
+  background: #fef08a; color: #854d0e; border: 1px solid #facc15;
+  border-radius: 4px; padding: 1px 5px; font-size: 10px; font-weight: 600; cursor: pointer;
+}
+.hl-btn:hover { background: #fde047; }
 .quote-label a { color: #2563eb; text-decoration: none; }
 .quote-label a:hover { text-decoration: underline; }
 .quote-text { color: #334155; font-style: italic; word-break: break-word; }

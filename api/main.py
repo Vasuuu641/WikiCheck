@@ -98,6 +98,12 @@ class AnalyzeBody(BaseModel):
     force: bool = False
 
 
+@app.get("/api/consistency/search")
+def consistency_search(q: str, limit: int = 8):
+    from api.consistency import search_consistency
+    return search_consistency(q=q, limit=limit)
+
+
 @app.post("/api/consistency/analyze")
 def consistency_analyze(body: AnalyzeBody):
     from api.consistency import analyze_entity

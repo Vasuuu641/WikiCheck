@@ -10,6 +10,7 @@ import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
+from urllib.parse import quote
 
 import numpy as np
 import requests
@@ -19,7 +20,7 @@ from api.search import connect
 
 GAP_THRESH = 0.48
 MIN_CHARS = 200
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
 GAP_FILTER_PROMPT = """You are a Wikipedia editor comparing two language editions of the same topic.
 Below are candidate paragraphs from {src_lang}:{src_title} that had low embedding similarity
@@ -70,39 +71,86 @@ def embed_texts(texts: list[str]) -> np.ndarray:
 
 
 def _filter_gaps_llm(src: dict, candidates: list[tuple[float, str]], dst: dict, top_k: int = 3) -> list[dict]:
+    """Score candidate missing paragraphs in one Gemini Decisions API pass, then summarize winners."""
     cands = sorted(candidates, key=lambda x: x[0])[:12]
     if not cands:
         return []
     cand_block = "\n\n".join(f"[{i}] (sim={s:.2f}) {p[:1200]}" for i, (s, p) in enumerate(cands))
-    prompt = GAP_FILTER_PROMPT.format(
-        src_lang=src["lang"], src_title=src["title"],
-        dst_lang=dst["lang"], dst_title=dst["title"],
-        candidates=cand_block, dst_text=dst["text"][:8000],
+    shared_input = (
+        f"=== CANDIDATE PARAGRAPHS FROM {src['lang']}:{src['title']} ===\n{cand_block}\n\n"
+        f"=== TARGET ARTICLE {dst['lang']}:{dst['title']} ===\n{dst['text'][:8000]}"
     )
-    r = requests.post(
+    questions = {}
+    for i in range(len(cands)):
+        questions[f"missing_{i}"] = {
+            "type": "noul",
+            "instructions": (
+                f"Is the core factual content of Candidate [{i}] genuinely ABSENT from "
+                f"{dst['lang']}:{dst['title']} (not already covered even briefly or in different words, "
+                "and not just boilerplate, a list, or trivia)?"
+            ),
+        }
+        questions[f"important_{i}"] = {
+            "type": "noul",
+            "instructions": (
+                f"Is Candidate [{i}] encyclopedic information worth adding to {dst['lang']}:{dst['title']} "
+                "(history, geography, notable events, economy, or demographics) rather than trivial detail?"
+            ),
+        }
+
+    dr = requests.post(
+        "https://generativelanguage.googleapis.com/v1beta/decisions",
+        headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"]},
+        json={"model": "gemini-decision-1", "input": shared_input, "questions": questions},
+        timeout=60,
+    )
+    dr.raise_for_status()
+    answers = dr.json().get("answers", {})
+
+    winners = []
+    for i, (sim, para) in enumerate(cands):
+        p_miss = float(answers.get(f"missing_{i}", {}).get("noul", 0.0))
+        p_imp = float(answers.get(f"important_{i}", {}).get("noul", 0.0))
+        if p_miss < 0.65:
+            continue
+        imp = "high" if p_imp >= 0.65 else ("medium" if p_imp >= 0.35 else "low")
+        if imp == "low":
+            continue
+        winners.append((0 if imp == "high" else 1, -(p_miss + p_imp), i, sim, imp, para))
+
+    winners.sort()
+    winners = winners[:top_k]
+    if not winners:
+        return []
+
+    # Summarize only the <= top_k winning paragraphs
+    win_block = "\n\n".join(f"[{idx}] {para[:1200]}" for _, _, idx, _, _, para in winners)
+    sum_prompt = (
+        f"Write a concise 1-sentence English summary of what each paragraph below adds that is missing "
+        f"from {dst['lang']}:{dst['title']}.\n"
+        f"Return ONLY JSON: {{\"summaries\":{{\"0\":\"...\"}}}}\n\n{win_block}"
+    )
+    sr = requests.post(
         f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
         headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"]},
-        json={"contents": [{"parts": [{"text": prompt}]}],
+        json={"contents": [{"parts": [{"text": sum_prompt}]}],
               "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}},
-        timeout=120,
+        timeout=30,
     )
-    r.raise_for_status()
-    txt = r.json()["candidates"][0]["content"]["parts"][0]["text"]
+    sr.raise_for_status()
+    txt = sr.json()["candidates"][0]["content"]["parts"][0]["text"]
     m = re.search(r"\{.*\}", txt or "", re.S)
-    items = json.loads(m.group(0)).get("items", []) if m else []
-    rank = {"high": 0, "medium": 1, "low": 2}
-    kept = []
-    for it in items:
-        idx = it.get("idx")
-        imp = it.get("importance", "low")
-        if not it.get("truly_missing") or imp not in ("high", "medium"):
-            continue
-        if isinstance(idx, int) and 0 <= idx < len(cands):
-            sim, para = cands[idx]
-            kept.append({"sim": round(sim, 3), "importance": imp,
-                         "summary": it.get("summary", ""), "paragraph": para})
-    kept.sort(key=lambda x: (rank.get(x["importance"], 2), x["sim"]))
-    return kept[:top_k]
+    sums = json.loads(m.group(0)).get("summaries", {}) if m else {}
+
+    return [
+        {
+            "sim": round(sim, 3),
+            "importance": imp,
+            "summary": sums.get(str(idx)) or para[:180],
+            "paragraph": para,
+        }
+        for _, _, idx, sim, imp, para in winners
+    ]
 
 
 def _ensure_passage_vectors(cur, art: dict) -> tuple[list[str], np.ndarray]:
@@ -164,7 +212,7 @@ def analyze_entity(wikidata_id: str, force: bool = False) -> dict:
     def check_conflicts(pair):
         a, b = pair
         try:
-            return a, b, [c for c in examine(a, b) if c.get("confirmed")]
+            return a, b, [c for c in examine(a, b, fast=True) if c.get("confirmed")]
         except Exception:
             return a, b, []
 
@@ -181,7 +229,7 @@ def analyze_entity(wikidata_id: str, force: bool = False) -> dict:
         except Exception:
             return src, dst, []
 
-    with ThreadPoolExecutor(max(1, min(6, len(unordered) + len(directed)))) as ex:
+    with ThreadPoolExecutor(max(1, min(9, len(unordered) + len(directed)))) as ex:
         conf_futs = [ex.submit(check_conflicts, p) for p in unordered]
         gap_futs = [ex.submit(check_gaps, p) for p in directed]
         conf_res = [f.result() for f in conf_futs]
@@ -258,6 +306,73 @@ ORDER BY FIELD(importance, 'high', 'medium', 'low'), sim ASC, id ASC
 """
 
 
+def _fetch_wiki_page(lang: str, title: str) -> dict | None:
+    """Fetch plain text, Wikidata ID, and en/fi/sv langlinks from live Wikipedia API."""
+    r = requests.get(
+        f"https://{lang}.wikipedia.org/w/api.php",
+        headers={"User-Agent": "Aikakone/0.1 (cross-language consistency)"},
+        params={
+            "action": "query",
+            "titles": title.replace("_", " "),
+            "redirects": 1,
+            "prop": "pageprops|langlinks|extracts|info",
+            "explaintext": 1,
+            "lllimit": 500,
+            "inprop": "url",
+            "format": "json",
+        },
+        timeout=15,
+    )
+    if not r.ok:
+        return None
+    pages = r.json().get("query", {}).get("pages", {})
+    page = next(iter(pages.values()), None)
+    if not page or "missing" in page:
+        return None
+    return {
+        "lang": lang,
+        "page_id": page["pageid"],
+        "rev_id": page.get("lastrevid", 0),
+        "wikidata_id": page.get("pageprops", {}).get("wikibase_item"),
+        "title": page["title"],
+        "url": page.get("fullurl") or f"https://{lang}.wikipedia.org/wiki/{quote(page['title'].replace(' ', '_'))}",
+        "text": page.get("extract", ""),
+        "langlinks": {
+            ll["lang"]: ll["*"]
+            for ll in page.get("langlinks", [])
+            if ll.get("lang") in ("en", "fi", "sv")
+        },
+    }
+
+
+def _ingest_live_entity(lang: str, title: str) -> dict | None:
+    """Fetch a live Wikipedia article + its en/fi/sv siblings and store them in MariaDB `article`."""
+    main = _fetch_wiki_page(lang, title)
+    if not main:
+        return None
+    pages = [main]
+    for sib_lang, sib_title in main["langlinks"].items():
+        if sib_lang == lang:
+            continue
+        sib = _fetch_wiki_page(sib_lang, sib_title)
+        if sib:
+            if not sib["wikidata_id"]:
+                sib["wikidata_id"] = main["wikidata_id"]
+            pages.append(sib)
+
+    with connect() as con, con.cursor() as cur:
+        for p in pages:
+            cur.execute(
+                """INSERT INTO article (lang, page_id, rev_id, wikidata_id, title, url, text)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)
+                   ON DUPLICATE KEY UPDATE
+                     rev_id=VALUES(rev_id), wikidata_id=COALESCE(VALUES(wikidata_id), wikidata_id),
+                     title=VALUES(title), url=VALUES(url), text=VALUES(text)""",
+                (p["lang"], p["page_id"], p["rev_id"], p["wikidata_id"], p["title"], p["url"], p["text"]),
+            )
+    return {k: main[k] for k in ("lang", "page_id", "wikidata_id", "title", "url")}
+
+
 def get_consistency(
     lang: str,
     title: str | None = None,
@@ -268,6 +383,7 @@ def get_consistency(
     """Return cached (or freshly computed) conflicts and missing-content gaps for an article."""
     t0 = time.time()
     lang = lang.lower().strip()
+    art = None
     with connect() as con, con.cursor() as cur:
         if page_id is not None:
             cur.execute(
@@ -284,10 +400,17 @@ def get_consistency(
         else:
             return {"found": False, "error": "Provide title or page_id"}
         row = cur.fetchone()
-        if not row:
-            return {"found": False, "lang": lang, "title": title, "page_id": page_id,
-                    "conflicts": [], "gaps": []}
-        art = dict(zip(["lang", "page_id", "wikidata_id", "title", "url"], row))
+        if row:
+            art = dict(zip(["lang", "page_id", "wikidata_id", "title", "url"], row))
+
+    if not art and title and compute_if_missing and lang in ("en", "fi", "sv"):
+        art = _ingest_live_entity(lang, title)
+
+    if not art:
+        return {"found": False, "lang": lang, "title": title, "page_id": page_id,
+                "conflicts": [], "gaps": []}
+
+    with connect() as con, con.cursor() as cur:
         if not art["wikidata_id"]:
             return {"found": True, "article": art, "cached": True, "siblings": [],
                     "conflicts": [], "gaps": [], "note": "No Wikidata ID linked for cross-language check"}
@@ -352,6 +475,81 @@ def get_consistency(
         "conflicts": conflicts,
         "gaps": gaps,
         "sql": {"conflicts": CONFLICT_SQL.strip(), "gaps": GAP_SQL.strip()},
+        "took_ms": int((time.time() - t0) * 1000),
+    }
+
+
+SEMANTIC_ARTICLES_SQL = """
+SELECT a.lang, a.page_id, a.wikidata_id, a.title, a.url, v.distance
+FROM (SELECT lang, page_id, VEC_DISTANCE_COSINE(embedding, VEC_FromText(%s)) AS distance
+      FROM article_vector ORDER BY distance LIMIT %s) v
+JOIN article a USING (lang, page_id)
+ORDER BY v.distance
+"""
+
+
+def search_consistency(q: str, limit: int = 8) -> dict:
+    """Semantic + keyword search across articles, cached conflicts, and cached gaps."""
+    t0 = time.time()
+    q = (q or "").strip()
+    if not q:
+        return {"query": q, "articles": [], "conflicts": [], "gaps": [], "took_ms": 0}
+
+    vec = embed_texts([q])[0]
+    vec_txt = "[" + ",".join(f"{float(x):.6f}" for x in vec) + "]"
+    like = f"%{q}%"
+
+    with connect() as con, con.cursor() as cur:
+        cur.execute("SET mhnsw_ef_search = 80")
+        cur.execute(SEMANTIC_ARTICLES_SQL, (vec_txt, limit))
+        a_cols = [c[0] for c in cur.description]
+        articles = [dict(zip(a_cols, r)) for r in cur.fetchall()]
+        for a in articles:
+            a["distance"] = round(float(a["distance"]), 4)
+            if a["wikidata_id"]:
+                cur.execute(
+                    "SELECT (SELECT COUNT(*) FROM article_conflict WHERE wikidata_id=%s),"
+                    "       (SELECT COUNT(*) FROM article_gap WHERE wikidata_id=%s),"
+                    "       EXISTS(SELECT 1 FROM consistency_status WHERE wikidata_id=%s)",
+                    (a["wikidata_id"], a["wikidata_id"], a["wikidata_id"]),
+                )
+                nc, ng, analyzed = cur.fetchone()
+                a["conflicts_count"] = nc
+                a["gaps_count"] = ng
+                a["analyzed"] = bool(analyzed)
+            else:
+                a["conflicts_count"] = a["gaps_count"] = 0
+                a["analyzed"] = False
+
+        cur.execute(
+            """SELECT id, conflict_type, explanation, confidence,
+                      lang_a, title_a, url_a, quote_a,
+                      lang_b, title_b, url_b, quote_b
+               FROM article_conflict
+               WHERE explanation LIKE %s OR claim_a LIKE %s OR claim_b LIKE %s OR title_a LIKE %s OR title_b LIKE %s
+               ORDER BY confidence DESC LIMIT %s""",
+            (like, like, like, like, like, limit),
+        )
+        c_cols = [c[0] for c in cur.description]
+        conflicts = [dict(zip(c_cols, r)) for r in cur.fetchall()]
+
+        cur.execute(
+            """SELECT id, importance, summary, paragraph,
+                      src_lang, src_title, src_url, dst_lang, dst_title, dst_url
+               FROM article_gap
+               WHERE summary LIKE %s OR paragraph LIKE %s OR src_title LIKE %s OR dst_title LIKE %s
+               ORDER BY FIELD(importance, 'high', 'medium', 'low'), sim ASC LIMIT %s""",
+            (like, like, like, like, limit),
+        )
+        g_cols = [c[0] for c in cur.description]
+        gaps = [dict(zip(g_cols, r)) for r in cur.fetchall()]
+
+    return {
+        "query": q,
+        "articles": articles,
+        "conflicts": conflicts,
+        "gaps": gaps,
+        "sql": SEMANTIC_ARTICLES_SQL.strip(),
         "took_ms": int((time.time() - t0) * 1000),
     }
 

@@ -19,7 +19,7 @@ from openai import OpenAI
 from api.search import connect
 
 CHARS = 7000
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 TYPES = ["number", "date", "chronology", "causal_framing", "naming", "scope_omission",
          "neutrality", "other"]
 
@@ -94,7 +94,43 @@ def verda_verify(a: dict, b: dict, c: dict) -> dict:
         return {"verdict": "unclear", "reason": "unparseable"}
 
 
-def examine(a: dict, b: dict) -> list[dict]:
+def decide_verify(a: dict, b: dict, c: dict) -> dict:
+    """Verify a conflict using the Gemini Decisions API (gemini-decision-1, 0 output tokens)."""
+    text = (
+        f"Passage A ({a['lang']}:{a['title']}): \"{c.get('quote_a', '')}\"\n"
+        f"Passage B ({b['lang']}:{b['title']}): \"{c.get('quote_b', '')}\"\n"
+        f"Claimed conflict: {c.get('explanation', '')}"
+    )
+    r = requests.post(
+        "https://generativelanguage.googleapis.com/v1beta/decisions",
+        headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"]},
+        json={
+            "model": "gemini-decision-1",
+            "input": text,
+            "questions": {
+                "is_conflict": {
+                    "type": "noul",
+                    "instructions": (
+                        "Do Passage A and Passage B genuinely CONFLICT about the same fact "
+                        "(cannot both be true as written), rather than differing in scope, "
+                        "detail, wording, or referring to different things?"
+                    ),
+                }
+            },
+        },
+        timeout=30,
+    )
+    r.raise_for_status()
+    ans = r.json().get("answers", {}).get("is_conflict", {})
+    p = float(ans.get("noul", 0.0))
+    return {
+        "verdict": "conflict" if p >= 0.65 else "not_conflict",
+        "reason": f"gemini-decision-1 P(conflict)={p:.2f}",
+        "p_conflict": round(p, 3),
+    }
+
+
+def examine(a: dict, b: dict, fast: bool = False) -> list[dict]:
     import time
     from concurrent.futures import ThreadPoolExecutor
     t0 = time.time()
@@ -103,8 +139,9 @@ def examine(a: dict, b: dict) -> list[dict]:
     for c in cs:
         c["quotes_found"] = quote_in(c.get("quote_a", ""), a["text"]) and \
             quote_in(c.get("quote_b", ""), b["text"])
+    verify_fn = decide_verify if fast else verda_verify
     with ThreadPoolExecutor(max(1, len(cs))) as ex:  # verify all conflicts in parallel
-        vs = list(ex.map(lambda c: verda_verify(a, b, c) if c["quotes_found"]
+        vs = list(ex.map(lambda c: verify_fn(a, b, c) if c["quotes_found"]
                          else {"verdict": "skipped"}, cs))
     for c, v in zip(cs, vs):
         c["verifier"] = v
