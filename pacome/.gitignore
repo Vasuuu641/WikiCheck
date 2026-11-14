@@ -12,9 +12,9 @@ id_ed25519*
 __pycache__/
 *.pyc
 
-# Ollama binary, bge-m3 model (~3.5 GB) and downloaded datasets. Re-created by scripts/setup.sh
+# Ollama binary, bge-m3 model (~3.5 GB) and downloaded datasets. Re-created by make setup
 data/
-# Clone of MariaDB's starter repo with its own data (~500 MB). Re-created by scripts/setup.sh
+# Clone of MariaDB's starter repo with its own data (~500 MB). Re-created by make setup
 reference/
 
 # Logs and OS noise

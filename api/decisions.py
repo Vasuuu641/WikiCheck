@@ -4,8 +4,8 @@
   ask(text, questions)  raw call, returns the API's "answers" dict
   score_many(jobs)      [(text, claims), ...] in a thread pool, results in order
 
-  python decisions.py probe      one real request, prints the raw response
-  python decisions.py validate   agreement on a small hand-labelled Finnish set
+  python -m api.decisions probe      one real request, prints the raw response
+  python -m api.decisions validate   agreement on a small hand-labelled Finnish set
 
 Request shape confirmed against the live API on 2026-11-14:
   POST /v1beta/decisions  {"model", "input", "questions": {key: {"type", "instructions", "criteria"}}}
@@ -19,10 +19,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
-import rag
+from .llm import DECISIONS_MODEL as MODEL, GEMINI_URL, google_key
 
-URL = "https://generativelanguage.googleapis.com/v1beta/decisions"
-MODEL = "gemini-decision-1"
+URL = f"{GEMINI_URL}/decisions"
 TOKENS_PER_MIN = 800_000        # tier 1 allows 1,000,000
 POOL = 32
 MAX_QUESTIONS = 1000
@@ -83,7 +82,7 @@ def ask(text, questions):
     last = ""
     for attempt in range(5):
         try:
-            r = requests.post(URL, headers={"x-goog-api-key": rag._key()}, json=body, timeout=90)
+            r = requests.post(URL, headers={"x-goog-api-key": google_key()}, json=body, timeout=90)
         except requests.RequestException as e:
             last = f"{type(e).__name__}"
             time.sleep(1.5 * (attempt + 1))
@@ -131,14 +130,15 @@ def probabilities(text, claims):
     tsha = _sha(text)
     shas = {c["id"]: _claim_sha(c["text"]) for c in claims}
     out = {}
-    conn = rag.connect()
-    conn.autocommit = True      # no snapshot held across the API call: parallel workers write the same table
+    from .drift import store
+    conn = store.connect()
+    conn.autocommit(True)      # no snapshot held across the API call: parallel workers write the same table
     try:
         cur = conn.cursor()
         _ensure_table(cur)
         if claims:
-            marks = ",".join("?" * len(claims))
-            cur.execute(f"SELECT claim_sha, p0, p1, p2, p3, p4 FROM stance_cache WHERE text_sha = ? AND claim_sha IN ({marks})",
+            marks = ",".join(["%s"] * len(claims))
+            cur.execute(f"SELECT claim_sha, p0, p1, p2, p3, p4 FROM stance_cache WHERE text_sha = %s AND claim_sha IN ({marks})",
                         [tsha] + list(shas.values()))
             hit = {r[0]: list(r[1:]) for r in cur.fetchall()}
             for cid, s in shas.items():
@@ -157,7 +157,7 @@ def probabilities(text, claims):
                 p = [float(pr.get(str(i), 0.0)) for i in range(5)]
                 out[c["id"]] = p
                 rows.append((tsha, shas[c["id"]], *p))
-            cur.executemany("INSERT IGNORE INTO stance_cache VALUES (?,?,?,?,?,?,?)", rows)
+            cur.executemany("INSERT IGNORE INTO stance_cache VALUES (%s,%s,%s,%s,%s,%s,%s)", rows)
     finally:
         conn.close()
     return out
@@ -221,7 +221,8 @@ VALIDATE = [
 
 
 def validate():
-    conn = rag.connect()
+    from .drift import store
+    conn = store.connect()
     cur = conn.cursor()
     by_title = {}
     for title, claim, level in VALIDATE:
@@ -229,7 +230,7 @@ def validate():
     ok3 = ok5 = n = 0
     t0 = time.perf_counter()
     for title, items in by_title.items():
-        cur.execute("SELECT text FROM article WHERE lang = 'fi' AND title = ?", (title,))
+        cur.execute("SELECT text FROM article WHERE lang = 'fi' AND title = %s", (title,))
         row = cur.fetchone()
         if not row:
             print(f"missing article: {title}")
@@ -253,7 +254,7 @@ if __name__ == "__main__":
     import sys
     if sys.argv[1:] == ["probe"]:
         t0 = time.perf_counter()
-        r = requests.post(URL, headers={"x-goog-api-key": rag._key()}, timeout=60, json={
+        r = requests.post(URL, headers={"x-goog-api-key": google_key()}, timeout=60, json={
             "model": MODEL, "input": "Talvisota alkoi, kun Neuvostoliitto hyökkäsi Suomeen 30. marraskuuta 1939.",
             "questions": {"attack": {"type": "noul", "instructions": "Does the text say the Soviet Union attacked Finland?"},
                           "claim": {"type": "score", "instructions": INSTRUCTIONS.format(claim="Finland started the war."), "criteria": LEVELS}}})

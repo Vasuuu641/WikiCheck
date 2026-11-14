@@ -7,3 +7,4 @@ openai
 numpy
 mwparserfromhell
 pyarrow
+jinja2

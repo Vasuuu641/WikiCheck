@@ -9,9 +9,7 @@
   ],
   "host_permissions": [
     "http://127.0.0.1:8020/*",
-    "http://localhost:8020/*",
-    "http://127.0.0.1:8001/*",
-    "http://localhost:8001/*"
+    "http://localhost:8020/*"
   ],
   "background": {
     "service_worker": "background.js"

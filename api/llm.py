@@ -79,3 +79,26 @@ def google_key() -> str:
     if not key:
         raise RuntimeError("GEMINI_API_KEY (or GOOGLE_API_KEY) must be set in .env")
     return key
+
+
+# --- Gemini, called directly (generateContent and the Decisions API). Every model name lives here.
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta"
+CHECK_MODEL = os.getenv("CHECK_MODEL", "gemini-3.5-flash-lite")   # cross-language checks: run per page, must be fast
+WRITE_MODEL = os.getenv("WRITE_MODEL", "gemini-3.8-flash")        # drift: writes the claims and the summary
+THINKING = os.getenv("GEMINI_THINKING", "low")                    # minimal | low | medium | high, for WRITE_MODEL
+DECISIONS_MODEL = "gemini-decision-1"                             # yes/no and scale questions (api/decisions.py)
+
+
+def gemini(prompt: str, model: str, *, system: str | None = None, config: dict | None = None,
+           timeout: int = 120) -> str:
+    """One generateContent call; returns the text of the first candidate."""
+    import requests
+
+    body = {"contents": [{"role": "user", "parts": [{"text": prompt}]}], "generationConfig": config or {}}
+    if system:
+        body["systemInstruction"] = {"parts": [{"text": system}]}
+    r = requests.post(f"{GEMINI_URL}/models/{model}:generateContent", headers={"x-goog-api-key": google_key()},
+                      json=body, timeout=timeout)
+    if r.status_code != 200:
+        raise RuntimeError(f"Gemini returned {r.status_code}: {r.text[:300]}")
+    return "".join(p.get("text", "") for p in r.json()["candidates"][0]["content"]["parts"])

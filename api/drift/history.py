@@ -1,8 +1,8 @@
 """Edit history of the Finnish articles (dataset M), kept in a MariaDB system-versioned table.
 
 One row per article in `article_version`; every earlier version is a history row whose [row_start, row_end)
-is the time that version was live on Wikipedia. Articles are loaded on first use from data/m/*.parquet
-(scripts/load_m.py downloads them).
+is the time that version was live on Wikipedia. Articles are loaded on first use from dataset M's parquet
+files in HISTORY_DIR (default pacome/data/m; pacome/scripts/load_m.py downloads them).
 
   resolve_fi(article)            Finnish page_id of a search result's topic, or None
   ensure_loaded(page_id)         idempotent load of one article's versions
@@ -22,9 +22,10 @@ import os
 import re
 import threading
 
-import rag
+from . import store
 
-M_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "m")
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+M_DIR = os.getenv("HISTORY_DIR") or os.path.join(ROOT, "pacome", "data", "m")
 MAX_CHARS = 16000
 BATCH_BYTES = 6_000_000
 
@@ -50,13 +51,13 @@ CREATE TABLE IF NOT EXISTS article_version (
 
 AS_OF_SQL = """\
 SELECT rev_id, row_start, text
-FROM article_version FOR SYSTEM_TIME AS OF TIMESTAMP ?
-WHERE page_id = ?"""
+FROM article_version FOR SYSTEM_TIME AS OF TIMESTAMP %s
+WHERE page_id = %s"""
 
 VERSIONS_SQL = """\
 SELECT rev_id, row_start, user, anonymous, comment, len, sha1
 FROM article_version FOR SYSTEM_TIME ALL
-WHERE page_id = ?
+WHERE page_id = %s
 ORDER BY row_start"""
 
 _load_lock = threading.Lock()
@@ -64,7 +65,7 @@ _index = None
 
 
 def _conn():
-    conn = rag.connect()
+    conn = store.connect()
     conn.cursor().execute("SET time_zone = '+00:00'")
     return conn
 
@@ -76,7 +77,7 @@ def _m_index():
         import pyarrow.parquet as pq
         path = os.path.join(M_DIR, "index.parquet")
         if not os.path.exists(path):
-            raise RuntimeError("data/m/index.parquet is missing: run scripts/load_m.py")
+            raise RuntimeError(f"{M_DIR}/index.parquet is missing: run pacome/scripts/load_m.py")
         t = pq.read_table(path, columns=["page_id", "file"])
         idx = {}
         for pid, f in zip(t.column(0).to_pylist(), t.column(1).to_pylist()):
@@ -86,15 +87,15 @@ def _m_index():
 
 
 def resolve_fi(article):
-    """Finnish page_id for a rag.search() result (same topic by wikidata_id), or None if M has no history for it."""
+    """Finnish page_id for a store.search() result (same topic by wikidata_id), or None if M has no history for it."""
     pid = None
     if article.get("lang") == "fi":
         pid = article.get("page_id")
     elif article.get("wikidata_id"):
-        conn = rag.connect()
+        conn = store.connect()
         try:
             cur = conn.cursor()
-            cur.execute("SELECT page_id FROM article WHERE lang = 'fi' AND wikidata_id = ?", (article["wikidata_id"],))
+            cur.execute("SELECT page_id FROM article WHERE lang = 'fi' AND wikidata_id = %s", (article["wikidata_id"],))
             row = cur.fetchone()
             pid = row[0] if row else None
         finally:
@@ -109,7 +110,7 @@ def ensure_loaded(page_id):
         try:
             cur = conn.cursor()
             cur.execute(SCHEMA)
-            cur.execute("SELECT 1 FROM article_version WHERE page_id = ?", (page_id,))
+            cur.execute("SELECT 1 FROM article_version WHERE page_id = %s", (page_id,))
             if cur.fetchone():
                 return 0
             import pyarrow.parquet as pq
@@ -131,7 +132,7 @@ def ensure_loaded(page_id):
             fmt = lambda ts: ts.strftime("%Y-%m-%d %H:%M:%S.%f")
             cur.execute("SET system_versioning_insert_history = 1")
             hist_sql = ("INSERT INTO article_version (page_id, title, rev_id, user, anonymous, comment, minor, sha1, len, text, "
-                        "row_start, row_end) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
+                        "row_start, row_end) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)")
             batch, size = [], 0
             for i, r in enumerate(rows[:-1]):
                 text = r["text"] or ""
@@ -145,7 +146,7 @@ def ensure_loaded(page_id):
                 cur.executemany(hist_sql, batch)
             r = rows[-1]
             cur.execute("INSERT INTO article_version (page_id, title, rev_id, user, anonymous, comment, minor, sha1, len, text, "
-                        "row_start) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        "row_start) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                         (page_id, r["title"], r["rev_id"], r["user"], bool(r["anonymous"]), r["comment"], bool(r["minor"]),
                          r["sha1"], r["bytes"], r["text"] or "", fmt(starts[-1])))
             conn.commit()
@@ -273,7 +274,7 @@ def _clean_rev(page_id, rev_id):
     conn = _conn()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT text FROM article_version FOR SYSTEM_TIME ALL WHERE page_id = ? AND rev_id = ?", (page_id, rev_id))
+        cur.execute("SELECT text FROM article_version FOR SYSTEM_TIME ALL WHERE page_id = %s AND rev_id = %s", (page_id, rev_id))
         row = cur.fetchone()
     finally:
         conn.close()
@@ -306,7 +307,7 @@ def text_asof(page_id, iso):
         row = cur.fetchone()
     finally:
         conn.close()
-    sql = AS_OF_SQL.replace("TIMESTAMP ?", f"TIMESTAMP '{moment}'").replace("page_id = ?", f"page_id = {int(page_id)}")
+    sql = AS_OF_SQL.replace("TIMESTAMP %s", f"TIMESTAMP '{moment}'").replace("page_id = %s", f"page_id = {int(page_id)}")
     if not row:
         return None, "", sql
     return row[0], text(page_id, row[0]), sql
@@ -324,16 +325,3 @@ def hunks(page_id, rev_a, rev_b):
             out["add"].extend(p for p in b[j1:j2] if p.strip())
     return out
 
-
-if __name__ == "__main__":
-    import sys, time
-    for title in sys.argv[1:] or ["Talvisota", "Suomen sisällissota"]:
-        c = rag.connect(); cur = c.cursor()
-        cur.execute("SELECT page_id FROM article WHERE lang = 'fi' AND title = ?", (title,))
-        pid = cur.fetchone()[0]; c.close()
-        t0 = time.perf_counter(); n = ensure_loaded(pid); t1 = time.perf_counter()
-        revs = revisions(pid)
-        print(f"{title} (page {pid}): loaded {n} in {t1 - t0:.1f}s; {len(revs)} versions, "
-              f"{sum(r['is_revert'] for r in revs)} reverts, {sum(r['reverted'] for r in revs)} reverted, wars {len(wars(pid))}")
-        rid, txt, sql = text_asof(pid, "2015-06-01")
-        print(f"as of 2015-06-01: rev {rid}, {len(txt)} chars\n{txt[:500]}\n")

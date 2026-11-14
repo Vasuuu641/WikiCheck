@@ -1,5 +1,6 @@
-"""Aikakone API: everything the browser extension and the drift page call.
+"""Aikakone: the one server behind the browser extension and the drift page.
 
+  GET  /drift, /api/drift/...                       opinion drift (api/drift/routes.py)
   GET  /api/consistency, /api/consistency/search   conflicts and missing content across language editions
   POST /api/ask                                     cited answer from MariaDB passages, today or as of a date
   GET  /api/search                                  nearest articles to a query (debugging)
@@ -8,13 +9,21 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
 
 load_dotenv()
 
+from .drift.routes import router as drift_router  # noqa: E402  (reads .env at import)
+
 app = FastAPI(title="Aikakone")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.include_router(drift_router)
+
+
+@app.get("/", include_in_schema=False)
+def home():
+    return RedirectResponse("/drift")
 
 
 @app.get("/api/health")

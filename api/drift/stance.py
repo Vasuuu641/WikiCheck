@@ -12,12 +12,11 @@ import hashlib
 import json
 import time
 
-import requests
-
-import decisions
-import history
-import rag
-import tb
+from .. import decisions
+from ..llm import THINKING, WRITE_MODEL, gemini
+from ..search import embed_question
+from . import history, store
+from .pairs import pair_check
 
 RELEVANT = ("The question is: \"{b}\"\n\nThe text is the opening of a Wikipedia article. Is this article about the subject that the question "
             "asks about (the same events, people, places or relations), so that it is a sensible place to look for the answer, even if the "
@@ -75,13 +74,13 @@ def _trim(paragraphs, n=3, chars=700):
 
 
 def retrieve_stable(question, tries=3, sources=12):
-    """rag.retrieve, but the nearest articles of several fresh connections are merged. With the graph cache of MariaDB's vector
+    """store.search, but the nearest articles of several fresh connections are merged. With the graph cache of MariaDB's vector
     index smaller than the index (mhnsw_max_cache_size, 16 MB), each connection reads a slightly different graph and the very
     nearest article is sometimes missing; the best distance then decides whether the question is on topic, so it must not flicker."""
-    vector, t_embed = rag.timed_embed(question)
+    vector, t_embed = store.timed_embed(question)
     merged, sql, t_search = {}, "", 0.0
     for _ in range(tries):
-        arts, ms, sql = rag.search(vector, None, sources)
+        arts, ms, sql = store.search(vector, None, sources)
         t_search += ms
         for a in arts:
             k = a.get("wikidata_id") or (a["lang"], a["title"])
@@ -93,12 +92,12 @@ def retrieve_stable(question, tries=3, sources=12):
 
 def exact_nearest(question, sources=12):
     """The nearest articles by an exact scan of article_vector (no index): slow but not subject to the graph-cache effect."""
-    vector = rag.embed(question)
-    sql = rag.SEARCH_SQL.format(where="").replace("FROM article_vector", "FROM article_vector IGNORE INDEX (embedding)")
-    conn = rag.connect()
+    vector = embed_question(question)
+    sql = store.SEARCH_SQL.format(where="").replace("FROM article_vector", "FROM article_vector IGNORE INDEX (embedding)")
+    conn = store.connect()
     try:
         cur = conn.cursor()
-        cur.execute(sql, [str(vector), rag.CANDIDATES])
+        cur.execute(sql, [str(vector), store.CANDIDATES])
         rows = cur.fetchall()
     finally:
         conn.close()
@@ -130,7 +129,7 @@ def pick_articles(question, want=5):
     timings["dropped_far"] = len(found) - len(near)
     near = near[:10]
     try:        # a yes/no check per candidate (cached): distance alone keeps articles that only share the country or the period
-        ps = tb.pair_check("relevant", RELEVANT, [(a["text"][:1500], question) for a in near])
+        ps = pair_check("relevant", RELEVANT, [(a["text"][:1500], question) for a in near])
         kept = [a for a, p in zip(near, ps) if p >= RELEVANT_MIN]
         for a, p in zip(near, ps):
             a["p_relevant"] = round(p, 3)
@@ -155,7 +154,7 @@ def pick_articles(question, want=5):
     return out, timings, sql
 
 
-TITLE_SQL = ("SELECT lang, page_id, wikidata_id, title, url FROM article WHERE title = ? {lang}"
+TITLE_SQL = ("SELECT lang, page_id, wikidata_id, title, url FROM article WHERE title = %s {lang}"
              "ORDER BY FIELD(lang, 'fi', 'sv', 'en') LIMIT 1")
 
 
@@ -163,9 +162,9 @@ def exact_article(q, lang=None):
     """When q is the exact title of a stored article (what the browser extension sends for the page in the tab), drift is run on
     that one article instead of searching: a bare title is too short to be close to any article vector.
     Returns (articles, timings, sql) like pick_articles, or None when q is not a title."""
-    sql = TITLE_SQL.format(lang="AND lang = ? " if lang else "")
+    sql = TITLE_SQL.format(lang="AND lang = %s " if lang else "")
     t0 = time.perf_counter()
-    conn = rag.connect()
+    conn = store.connect()
     try:
         cur = conn.cursor()
         cur.execute(sql, (q, lang) if lang else (q,))
@@ -210,7 +209,7 @@ _claims_ready = False
 def cached_claims(question, arts):
     """make_claims keyed by the exact question in MariaDB, so a repeated question is fully cached."""
     global _claims_ready
-    conn = rag.connect()
+    conn = store.connect()
     try:
         cur = conn.cursor()
         if not _claims_ready:
@@ -218,12 +217,12 @@ def cached_claims(question, arts):
                         "question TEXT NOT NULL, claims JSON NOT NULL, updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)")
             _claims_ready = True
         sha = hashlib.sha1(question.strip().lower().encode()).hexdigest()
-        cur.execute("SELECT claims FROM drift_claims WHERE question_sha = ?", (sha,))
+        cur.execute("SELECT claims FROM drift_claims WHERE question_sha = %s", (sha,))
         row = cur.fetchone()
         if row:
             return json.loads(row[0] if isinstance(row[0], str) else json.dumps(row[0]))
         claims = make_claims(question, arts)
-        cur.execute("REPLACE drift_claims (question_sha, question, claims) VALUES (?,?,?)",
+        cur.execute("REPLACE drift_claims (question_sha, question, claims) VALUES (%s,%s,%s)",
                     (sha, question.strip().lower(), json.dumps(claims, ensure_ascii=False)))
         conn.commit()
         return claims
@@ -250,15 +249,9 @@ def make_claims(question, arts):
         if fights:
             block.append("PASSAGES EDITORS FOUGHT OVER\n" + "\n".join(fights))
         parts.append("\n\n".join(block))
-    body = {"systemInstruction": {"parts": [{"text": CLAIMS_SYSTEM}]},
-            "contents": [{"role": "user", "parts": [{"text": "\n\n=====\n\n".join(parts)}]}],
-            "generationConfig": {"temperature": 0.3, "maxOutputTokens": 4000, "responseMimeType": "application/json",
-                                 "thinkingConfig": {"thinkingLevel": rag.THINKING}}}
-    r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/{rag.GEMINI_MODEL}:generateContent",
-                      headers={"x-goog-api-key": rag._key()}, json=body, timeout=120)
-    if r.status_code != 200:
-        raise RuntimeError(f"Gemini returned {r.status_code}: {r.text[:300]}")
-    raw = "".join(p.get("text", "") for p in r.json()["candidates"][0]["content"]["parts"])
+    raw = gemini("\n\n=====\n\n".join(parts), WRITE_MODEL, system=CLAIMS_SYSTEM, timeout=120,
+                 config={"temperature": 0.3, "maxOutputTokens": 4000, "responseMimeType": "application/json",
+                         "thinkingConfig": {"thinkingLevel": THINKING}})
     data = json.loads(raw)
     claims, seen = [], set()
     for i, c in enumerate(data.get("claims", data if isinstance(data, list) else [])):
@@ -304,14 +297,8 @@ def summarize(question, arts, claims, values, changes):
     parts.append("CURRENT POSITIONS ON CLAIMS\n" + ("\n".join(lines) or "(no article takes a position on any claim)"))
     ch = [f"- {c['t'][:10]} [{arts[c['a']]['i'] + 1}] {c['headline']}; edit by {c['user']}: {c['comment'][:100]}" for c in changes[:12]]
     parts.append("CHANGE POINTS FOUND (" + str(len(changes)) + ")\n" + ("\n".join(ch) or "(none)"))
-    body = {"systemInstruction": {"parts": [{"text": SUMMARY_SYSTEM}]},
-            "contents": [{"role": "user", "parts": [{"text": "\n\n".join(parts)}]}],
-            "generationConfig": {"temperature": 0.2, "maxOutputTokens": 700, "thinkingConfig": {"thinkingLevel": rag.THINKING}}}
-    r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/{rag.GEMINI_MODEL}:generateContent",
-                      headers={"x-goog-api-key": rag._key()}, json=body, timeout=90)
-    if r.status_code != 200:
-        raise RuntimeError(f"Gemini returned {r.status_code}: {r.text[:200]}")
-    return "".join(p.get("text", "") for p in r.json()["candidates"][0]["content"]["parts"]).strip()
+    return gemini("\n\n".join(parts), WRITE_MODEL, system=SUMMARY_SYSTEM, timeout=90,
+                  config={"temperature": 0.2, "maxOutputTokens": 700, "thinkingConfig": {"thinkingLevel": THINKING}}).strip()
 
 
 def run(question, lang=None):
@@ -333,10 +320,10 @@ def run(question, lang=None):
     if not arts:
         raise RuntimeError("the closest articles have too little edit history")
     for a in arts:      # Finnish title of the topic, from the history table
-        conn = rag.connect()
+        conn = store.connect()
         try:
             cur = conn.cursor()
-            cur.execute("SELECT title FROM article_version WHERE page_id = ?", (a["page_id"],))
+            cur.execute("SELECT title FROM article_version WHERE page_id = %s", (a["page_id"],))
             row = cur.fetchone()
             a["title"] = row[0] if row else a["found"]["title"]
         finally:
@@ -458,20 +445,3 @@ def evidence(page_id, rev_id, claim):
     return dict(paragraph="\n".join(leaves[best]), others=["\n".join(leaves[lo]) for lo, hi in spans[1:] if hi - lo == 1],
                 path=path, questions=asked)
 
-
-if __name__ == "__main__":
-    import sys
-    q = " ".join(sys.argv[1:]) or "Why did the Finnish Civil War start in 1918?"
-    for event, data in run(q):
-        if event == "sources":
-            for a in data["articles"]:
-                print(f"[{a['i']}] {a['title']}  ({a['n_revs']} versions, {a['first'][:10]} to {a['last'][:10]}, wars {len(a['wars'])})")
-        elif event == "claims":
-            for c in data["claims"]:
-                print(f"  {c['id']:4} {c['label']:40} {c['text']}")
-        elif event == "probes":
-            print(f"round {data['round']}: {len(data['items'])} probes, {sum(len(i['s']) for i in data['items'])} answers")
-        elif event == "change":
-            print(f"  CHANGE [{data['a']}] {data['headline']}  (rev {data['rev_after']} by {data['user']}: {data['comment'][:60]})")
-        else:
-            print(event, data)

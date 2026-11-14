@@ -511,7 +511,7 @@ def _article_texts(cur, keys: list[tuple[str, int]]) -> dict:
     return {(r["lang"], r["page_id"]): r for r in rows}
 
 
-# --- as_of: the versions live on a past date, from the system-versioned article_version (the site's history table, pacome/rag-demo/history.py). ---
+# --- as_of: the versions live on a past date, from the system-versioned article_version (filled by api/drift/history.py). ---
 
 def _historic_versions(arts: list[dict], as_of_ts: str, skipped: list) -> tuple[list[dict], str]:
     """Replace each article by its version live at as_of_ts. Articles without one go to `skipped`.

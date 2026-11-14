@@ -2,7 +2,7 @@
 -- articles an answer was written from, embedded with bge-m3 as "<title>: <paragraph>".
 -- Reused while rev_id matches the article row. Finnish only, so page_id alone is the key.
 --
--- Named ask_chunk, not chunk: `chunk` / `chunk_vector` belong to the site (pacome/rag-demo/chunks.py)
+-- Named ask_chunk, not chunk: `chunk` / `chunk_vector` were the old site's section tables
 -- and hold section-level chunks keyed by (lang, page_id, chunk_no).
 
 CREATE TABLE IF NOT EXISTS ask_chunk (

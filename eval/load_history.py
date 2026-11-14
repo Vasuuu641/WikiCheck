@@ -1,17 +1,13 @@
 """Load every version of the showcase articles from dataset M into the history table
-`article_version`, with Wikipedia's real edit times.
+`article_version`, with Wikipedia's real edit times (make demo-data runs this).
 
-    pacome/.venv/bin/python eval/load_history.py                     # the showcase articles below
-    pacome/.venv/bin/python eval/load_history.py --titles "Lapin sota" "Tarton rauha"
+    .venv/bin/python eval/load_history.py                     # the showcase articles below
+    .venv/bin/python eval/load_history.py --titles "Lapin sota" "Tarton rauha"
 
-There is one history table for the whole app: `article_version`, owned by the site
-(pacome/rag-demo/history.py). This script only calls its loader, `history.ensure_loaded(page_id)`,
-so /api/ask as_of, /api/trace and the site's Opinion drift read the same rows. It therefore runs
-with the site's Python (pacome/.venv: the `mariadb` driver and pyarrow) and needs dataset M in
-pacome/data/m/ (pacome/scripts/load_m.py downloads it).
-
-Safe to run again: articles already loaded are skipped. The site also loads an article by itself
-the first time Opinion drift needs it.
+It calls the drift engine's loader, api/drift/history.ensure_loaded(page_id), so Ask's as_of and
+Opinion drift read the same rows. Needs dataset M in pacome/data/m/ (pacome/scripts/load_m.py
+downloads it). Safe to run again: articles already loaded are skipped. Drift also loads an article
+by itself the first time it needs it.
 """
 import argparse
 import sys
@@ -19,7 +15,7 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "pacome" / "rag-demo"))
+sys.path.insert(0, str(ROOT))
 
 SHOWCASE = [
     "Suomen sisällissota", "Talvisota", "Jatkosota", "Urho Kekkonen",
@@ -33,16 +29,14 @@ def main():
     p.add_argument("--titles", nargs="+", default=SHOWCASE, help="Finnish article titles")
     args = p.parse_args()
 
-    try:
-        import history  # pacome/rag-demo/history.py
-        import rag
-    except ImportError as e:
-        sys.exit(f"{e}\nRun this with the site's Python: pacome/.venv/bin/python eval/load_history.py")
+    from dotenv import load_dotenv
+    load_dotenv(ROOT / ".env")
+    from api.drift import history, store
 
-    conn = rag.connect()
+    conn = store.connect()
     try:
         cur = conn.cursor()
-        marks = ",".join("?" * len(args.titles))
+        marks = ",".join(["%s"] * len(args.titles))
         cur.execute(f"SELECT title, page_id FROM article WHERE lang = 'fi' AND title IN ({marks})", args.titles)
         page_ids = dict(cur.fetchall())
     finally:

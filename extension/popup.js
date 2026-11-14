@@ -1,5 +1,4 @@
-const API_BASE = "http://127.0.0.1:8020";   // FastAPI: consistency, ask, trace (api/)
-const SITE_BASE = "http://127.0.0.1:8001";  // Flask site: opinion drift and the full-page tools (pacome/)
+const API_BASE = "http://127.0.0.1:8020";   // the Aikakone server (api/): checks, Ask, and the drift page and stream
 
 const content = document.getElementById("content");
 const refreshBtn = document.getElementById("refreshBtn");
@@ -243,7 +242,7 @@ async function load(refresh = false) {
     if (seq !== loadSeq || !isCheck(mode)) return;
     checkKey = "";
     content.innerHTML = `<div class="state">The Aikakone service at ${esc(API_BASE)} did not answer.
-      <small>Start it with <code>make api</code> in the repository, then reopen this popup. (${esc(err.message)})</small></div>`;
+      <small>Start it with <code>make run</code> in the repository, then reopen this popup. (${esc(err.message)})</small></div>`;
   }
 }
 
@@ -450,7 +449,7 @@ function renderDrift() {
     </form>
     <div id="driftOut"><div class="state">
       Follow how the Finnish articles changed their position on the same claims, down to the edit that changed it.
-      <div class="demo-links"><a href="${SITE_BASE}/drift?fixture=1" target="_blank">Watch a recorded run on the full page</a></div>
+      <div class="demo-links"><a href="${API_BASE}/drift?fixture=1" target="_blank">Watch a recorded run on the full page</a></div>
     </div></div>`;
   document.getElementById("driftForm").addEventListener("submit", e => {
     e.preventDefault();
@@ -476,7 +475,7 @@ function runDrift(q) {
   const out = document.getElementById("driftOut");
   // On an article, q is its title and lang its edition: the service then runs on that article alone.
   const onPage = currentWiki && q === pageTitle() ? `&lang=${encodeURIComponent(currentWiki.lang)}` : "";
-  const fullUrl = `${SITE_BASE}/drift?q=${encodeURIComponent(q)}${onPage}`;
+  const fullUrl = `${API_BASE}/drift?q=${encodeURIComponent(q)}${onPage}`;
   const SHOWN = 12;   // the popup is small: newest first, the rest are on the full page
   let articles = [], claims = {}, changes = [], summary = "", finished = false;
   let status = "Finding the article and its edit history…";
@@ -516,7 +515,7 @@ function runDrift(q) {
   };
 
   draw();
-  driftSource = new EventSource(`${SITE_BASE}/api/drift/stream?q=${encodeURIComponent(q)}${onPage}`);
+  driftSource = new EventSource(`${API_BASE}/api/drift/stream?q=${encodeURIComponent(q)}${onPage}`);
   on("sources", d => { articles = d.articles || []; status = "Writing the claims to follow…"; });
   on("claims", d => { (d.claims || []).forEach(c => { claims[c.id] = c; }); status = `Reading old versions against ${Object.keys(claims).length} claims…`; });
   on("probes", d => { status = `Narrowing down the edits (round ${(d.round || 0) + 1})…`; });
@@ -534,7 +533,7 @@ function runDrift(q) {
     fail(String(typeof msg === "string" ? msg : (msg.message || JSON.stringify(msg))).replace(/^\w+Error:\s*/, ""));
   });
   driftSource.onerror = () => {
-    if (driftSource && !finished) fail(`The drift service at ${SITE_BASE} did not answer. Start the site with pacome/scripts/run.sh --port 8001.`);
+    if (driftSource && !finished) fail(`The Aikakone server at ${API_BASE} did not answer. Start it with make run in the repository.`);
   };
 }
 

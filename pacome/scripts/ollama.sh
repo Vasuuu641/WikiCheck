@@ -1,4 +1,4 @@
-# Sourced by setup.sh and run.sh. Finds Ollama (project copy first, then system), starts it if
+# Sourced by the Makefile (make ollama). Finds Ollama (project copy first, then system), starts it if
 # needed, and keeps its models inside data/tools/models so nothing lands in your home directory.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TOOLS="$ROOT/data/tools"

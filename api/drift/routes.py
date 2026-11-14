@@ -1,13 +1,13 @@
-"""Opinion drift (/drift): how the top articles for a question changed their stance on shared claims over time.
+"""Opinion drift: how the top articles for a question changed their stance on shared claims over time.
 
   GET /drift                    the page
   GET /api/drift/stream?q=...   SSE; q is a question, or an exact article title (then &lang= may name its edition);
-                                with fixture=1 replays drift_fixture.json, else runs stance.run(q) in a thread
+                                with fixture=1 replays fixture.json, else runs stance.run(q) in a thread
                                 with keep-alive comments every HEARTBEAT seconds
   GET /api/drift/asof           article text at a date (history.text_asof), with the SQL shown
   GET /api/drift/evidence       the paragraph carrying a claim at a version (stance.evidence)
 
-Events follow the shared contract: sources, claims, probes, change, done | problem.
+Events: sources, claims, probes, change, summary, done | problem.
 """
 import functools
 import json
@@ -16,14 +16,14 @@ import threading
 import time
 from pathlib import Path
 
-from flask import Blueprint, Response, jsonify, render_template_string, request
+from fastapi import APIRouter
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from jinja2 import Environment
 
-import history
-import hub
-import stance
+from . import history, stance
 
-bp = Blueprint("drift", __name__)
-FIXTURE_PATH = Path(__file__).parent / "drift_fixture.json"
+router = APIRouter()
+FIXTURE_PATH = Path(__file__).parent / "fixture.json"
 MAX_QUESTION = 300
 HEARTBEAT = 10          # seconds of silence after which a keep-alive comment is sent (proxies cut idle streams)
 EXAMPLES = [
@@ -40,17 +40,14 @@ def sse(event, data):
 
 def _fixture_events(fast=False):
     fixture = json.loads(FIXTURE_PATH.read_text())
-    for i, (event, data) in enumerate(fixture):
-        if event == "probes":
-            yield sse(event, data)
-            time.sleep(0 if fast else 2.2 if data["round"] == 0 else 1.2)
-        else:
-            yield sse(event, data)
-            time.sleep(0 if fast else 0.25)
+    for event, data in fixture:
+        yield sse(event, data)
+        if not fast:
+            time.sleep((2.2 if data["round"] == 0 else 1.2) if event == "probes" else 0.25)
 
 
 def _pump(question, out, stop, lang=None):
-    """Run the engine in a thread so the HTTP stream can send keep-alives while a slow step (Gemini, history load) runs."""
+    """Run the engine in a thread so the stream can send keep-alives while a slow step (Gemini, history load) runs."""
     try:
         for event, data in stance.run(question, lang):
             if stop.is_set():       # the reader went away: stop at the next event instead of scoring the rest
@@ -62,18 +59,15 @@ def _pump(question, out, stop, lang=None):
         out.put(None)
 
 
-@bp.route("/api/drift/stream")
-def stream():
-    q = request.args.get("q", "").strip()
-    fixture = request.args.get("fixture")
-    fast = bool(request.args.get("fast"))     # read here: the request context is gone once the stream starts
-    lang = request.args.get("lang", "").strip().lower()   # the extension sends the edition of the article in the tab
+@router.get("/api/drift/stream")
+def stream(q: str = "", fixture: str = "", fast: str = "", lang: str = ""):
+    q, lang = q.strip(), lang.strip().lower()
     lang = lang if len(lang) == 2 and lang.isalpha() else None
 
     def events():
         try:
             if fixture:
-                yield from _fixture_events(fast)
+                yield from _fixture_events(bool(fast))
                 return
             if not q:
                 raise ValueError("Empty question")
@@ -97,18 +91,17 @@ def stream():
         finally:
             stop.set()
 
-    return Response(events(), mimetype="text/event-stream",
-                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+    return StreamingResponse(events(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
-@bp.route("/api/drift/asof")
-def asof():
+@router.get("/api/drift/asof")
+def asof(page_id: int = 0, date: str = ""):
     try:
-        page_id = int(request.args.get("page_id", 0))
-        rev_id, text, sql = history.text_asof(page_id, request.args.get("date", ""))
-        return jsonify(rev_id=rev_id, text=text, sql=sql)
+        rev_id, text, sql = history.text_asof(page_id, date)
+        return {"rev_id": rev_id, "text": text, "sql": sql}
     except Exception as e:
-        return jsonify(error=f"{type(e).__name__}: {e}"), 500
+        return JSONResponse({"error": f"{type(e).__name__}: {e}"}, status_code=500)
 
 
 @functools.lru_cache(maxsize=256)
@@ -117,23 +110,20 @@ def _evidence(page_id, rev_id, claim):
     return stance.evidence(page_id, rev_id, claim)
 
 
-@bp.route("/api/drift/evidence")
-def evidence():
+@router.get("/api/drift/evidence")
+def evidence(page_id: int = 0, rev_id: int = 0, claim: str = ""):
+    claim = claim.strip()
+    if not claim:
+        return JSONResponse({"error": "missing claim"}, status_code=400)
     try:
-        claim = request.args.get("claim", "").strip()
-        if not claim:
-            return jsonify(error="missing claim"), 400
-        return jsonify(_evidence(int(request.args.get("page_id", 0)), int(request.args.get("rev_id", 0)), claim))
+        return _evidence(page_id, rev_id, claim)
     except Exception as e:
-        return jsonify(error=f"{type(e).__name__}: {e}"), 500
+        return JSONResponse({"error": f"{type(e).__name__}: {e}"}, status_code=500)
 
 
-@bp.route("/drift")
-def page():
-    q = request.args.get("q", "").strip()
-    fixture = bool(request.args.get("fixture"))
-    lang = request.args.get("lang", "").strip()[:3]
-    return render_template_string(PAGE, q=q, lang=lang, fixture=fixture, examples=EXAMPLES)
+@router.get("/drift", response_class=HTMLResponse)
+def page(q: str = "", fixture: str = "", lang: str = ""):
+    return _TEMPLATE.render(q=q.strip(), lang=lang.strip()[:3], fixture=bool(fixture), examples=EXAMPLES)
 
 
 PAGE = r"""<!doctype html>
@@ -621,3 +611,5 @@ document.querySelectorAll('#ex button').forEach(b => b.addEventListener('click',
 if (PARAM_FIXTURE || PARAM_Q) start(PARAM_Q, PARAM_FIXTURE);
 </script>
 </body></html>"""
+
+_TEMPLATE = Environment(autoescape=True).from_string(PAGE)
