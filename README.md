@@ -102,14 +102,7 @@ After a change, click its reload arrow. Try `https://sv.wikipedia.org/wiki/Reger
 
 ## Settings
 
-All in `.env` (template: `.env.example`, never commit `.env`). Model names have defaults in
+All in `.env` (template: `.env.example`). Model names have defaults in
 `api/llm.py`: `CHECK_MODEL` for the cross-language checks (fast, runs on every page) and
 `WRITE_MODEL` for version history summaries. **Find sources** uses the OpenAI-compatible `LLM_*` and `NEUTRALITY_*` endpoints.
 
-## Working together
-
-1. `main` must always pass `make check` and `make smoke`.
-2. Small branches (`name/topic`), merged often.
-3. Schema changes are new numbered files in `db/`; never edit an applied one.
-4. No data and no secrets in git: data in `pacome/data/` (ignored), keys in `.env` (ignored).
-5. Feature freeze: Sunday 2026-11-15, 07:30 Finnish time. Submit by 09:15.
