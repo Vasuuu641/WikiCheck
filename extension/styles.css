@@ -1,5 +1,5 @@
 /* Aikakone popup. The look follows Wikipedia itself (the page the editor is on): serif titles with a
-   hairline, page tabs, blue links, and the two colours of a MediaWiki diff for "this page" and
+   hairline, sans-serif reading text, page tabs, blue links, and the two colours of a MediaWiki diff for "this page" and
    "the other edition". */
 :root {
   --paper: #ffffff;
@@ -121,7 +121,7 @@ main { padding: 12px 16px 16px; overflow-y: auto; flex: 1 1 auto; min-height: 0;
 .side.other { background: var(--other); border-color: var(--other-edge); }
 .side-label { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
 .side-label a { font-weight: 600; }
-.quote { font: 400 13.5px/1.45 var(--serif); overflow-wrap: anywhere; }
+.quote { font: 400 13px/1.5 var(--sans); overflow-wrap: anywhere; }
 .cell + .cell::before { content: ""; display: inline-block; height: .9em; margin: 0 7px -1px; border-left: 1px solid var(--rule); }
 .find {
   display: block; margin-top: 3px; padding: 0; font-size: 11.5px; color: var(--link);
@@ -134,7 +134,7 @@ summary { cursor: pointer; color: var(--link); }
 summary:hover { text-decoration: underline; }
 .para {
   margin-top: 6px; padding: 6px 10px; border-left: 3px solid var(--soft);
-  font: 400 13.5px/1.5 var(--serif); white-space: pre-wrap; overflow-wrap: anywhere;
+  font: 400 13px/1.55 var(--sans); white-space: pre-wrap; overflow-wrap: anywhere;
 }
 pre {
   margin: 6px 0 0; padding: 8px; overflow-x: auto; font: 11px/1.45 ui-monospace, Menlo, Consolas, monospace;
@@ -157,12 +157,12 @@ pre {
 }
 .ask-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px; color: var(--muted); }
 .ask-row input[type=date] { margin-left: 6px; padding: 3px 5px; font: inherit; color: var(--ink); border: 1px solid var(--rule); border-radius: 2px; outline: none; }
-.answer { margin: 14px 0 4px; font: 400 15.5px/1.55 var(--serif); }
+.answer { margin: 14px 0 4px; font: 400 14.5px/1.6 var(--sans); }
 .cite { font: 400 11px/0 var(--sans); vertical-align: super; }
 .source-n { color: var(--muted); margin-right: 4px; }
 
 /* ---- Drift: changes in time order on a rail ---- */
-.summary { margin: 12px 0 2px; font: 400 14.5px/1.55 var(--serif); }
+.summary { margin: 12px 0 2px; font: 400 14px/1.6 var(--sans); }
 .run-status { margin: 12px 0 4px; color: var(--muted); }
 .run-status strong { color: var(--ink); }
 .timeline { margin: 6px 0 0; padding: 0; list-style: none; border-left: 2px solid var(--soft); }

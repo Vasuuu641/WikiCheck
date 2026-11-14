@@ -189,7 +189,7 @@ form button:hover { background:#2a4b8d; border-color:#2a4b8d } form button:disab
 @media (max-width:960px) { .grid { grid-template-columns:1fr } aside.panel { position:static !important; max-height:none !important; padding-left:0 !important; border-left:0 !important } }
 h2 { margin:26px 0 6px; padding-bottom:3px; font:400 19px/1.3 var(--serif); border-bottom:1px solid var(--soft) }
 
-.summary { margin-bottom:6px; font:400 17px/1.6 var(--serif); max-width:72ch }
+.summary { margin-bottom:6px; font:400 16px/1.65 var(--sans); max-width:72ch }
 .summary p { margin:0 0 8px } .summary b { font:600 12px var(--sans); color:var(--muted); margin-right:4px }
 .summary .ai { display:block; font:12px var(--sans); color:var(--muted) }
 #srcwrap > h2 { margin-top:10px }
@@ -231,12 +231,12 @@ svg text { font:11px var(--sans); fill:var(--muted) }
 aside.panel { position:sticky; top:16px; max-height:calc(100vh - 32px); overflow-y:auto; padding-left:20px; border-left:1px solid var(--soft); font-size:13.5px }
 aside.panel h2 { margin-top:0 }
 .muted { color:var(--muted) }
-.quote { margin:6px 0; padding:5px 10px; border-left:3px solid var(--soft); font:400 14.5px/1.5 var(--serif); overflow-wrap:anywhere }
+.quote { margin:6px 0; padding:5px 10px; border-left:3px solid var(--soft); font:400 14px/1.55 var(--sans); overflow-wrap:anywhere }
 .quote.del { background:var(--this); border-color:var(--this-edge) }
 .quote.add { background:var(--other); border-color:var(--other-edge) }
 .kv { display:grid; grid-template-columns:auto 1fr; gap:2px 12px; margin-top:8px; font-size:13px } .kv b { font-weight:400; color:var(--muted) }
 pre { margin:8px 0; padding:8px; overflow-x:auto; font:11px/1.45 ui-monospace,Menlo,Consolas,monospace; background:var(--wash); border:1px solid var(--soft) }
-#asoftext { max-height:360px; overflow-y:auto; white-space:pre-wrap; font:400 14px/1.55 var(--serif) }
+#asoftext { max-height:360px; overflow-y:auto; white-space:pre-wrap; font:400 13.5px/1.6 var(--sans) }
 p.err { margin:6px 0 }
 
 footer { margin-top:40px; padding-top:10px; border-top:1px solid var(--soft); color:var(--muted); font-size:12.5px; max-width:90ch }
