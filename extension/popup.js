@@ -1,9 +1,7 @@
-const API_BASE = "http://127.0.0.1:8020";   // the Aikakone server (api/): checks, Ask, and the drift page and stream
+const API_BASE = "http://127.0.0.1:8020";   // the WikiCheck server (api/): checks, Ask, and the drift page and stream
 
 const content = document.getElementById("content");
 const refreshBtn = document.getElementById("refreshBtn");
-const searchForm = document.getElementById("searchForm");
-const searchInput = document.getElementById("searchInput");
 const titleEl = document.getElementById("pageTitle");
 
 let mode = "conflicts";      // conflicts | gaps | ask | drift
@@ -201,10 +199,7 @@ function renderData(data) {
     : (gaps.length ? gaps.map(gapHtml).join("")
         : `<div class="state">The other editions add nothing important that this page lacks.</div>`);
 
-  const sql = data.sql ? `
-    <details><summary>The SQL MariaDB ran</summary><pre>${esc(data.sql.conflicts)}\n\n${esc(data.sql.gaps)}</pre></details>` : "";
-
-  content.innerHTML = also + list + sql;
+  content.innerHTML = also + list;
   content.querySelectorAll(".find").forEach(btn => btn.addEventListener("click", () => {
     const c = confs[Number(btn.dataset.idx)];
     if (c) highlightOnCurrentPage(c.current.quote, btn);
@@ -241,86 +236,12 @@ async function load(refresh = false) {
   } catch (err) {
     if (seq !== loadSeq || !isCheck(mode)) return;
     checkKey = "";
-    content.innerHTML = `<div class="state">The Aikakone service at ${esc(API_BASE)} did not answer.
+    content.innerHTML = `<div class="state">The WikiCheck service at ${esc(API_BASE)} did not answer.
       <small>Start it with <code>make run</code> in the repository, then reopen this popup. (${esc(err.message)})</small></div>`;
   }
 }
 
 refreshBtn.addEventListener("click", () => currentWiki && load(true));
-
-async function runSearch(q) {
-  const seq = ++loadSeq;
-  refreshBtn.hidden = true;
-  content.innerHTML = spinnerState(`Searching for <strong>${esc(q)}</strong>…`);
-  try {
-    const res = await fetch(`${API_BASE}/api/consistency/search?` + new URLSearchParams({ q }));
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const d = await res.json();
-    if (seq !== loadSeq || !isCheck(mode)) return;
-
-    const conf = (d.conflicts || []).map(c => `
-      <div class="item">
-        <div class="item-head">
-          <span class="kind">${esc(CONFLICT_KINDS[c.conflict_type] || CONFLICT_KINDS.other)}</span>
-          <span class="aside">${esc(c.title_a)}</span>
-        </div>
-        <p class="expl">${esc(nameSides(c.explanation, `the ${langName(c.lang_a)} edition`, `the ${langName(c.lang_b)} edition`))}</p>
-        <div class="links">
-          <a href="${esc(fragmentUrl(c.url_a, c.quote_a))}" target="_blank">Read it in ${esc(langName(c.lang_a))}</a>
-          <a href="${esc(fragmentUrl(c.url_b, c.quote_b))}" target="_blank">Read it in ${esc(langName(c.lang_b))}</a>
-        </div>
-      </div>`).join("");
-
-    const gap = (d.gaps || []).map(g => `
-      <div class="item">
-        <div class="item-head">
-          <span class="kind gap">Missing in ${esc(langName(g.dst_lang))}</span>
-          <span class="aside">${esc(g.dst_title)}</span>
-        </div>
-        <p class="expl">${esc(g.summary)}</p>
-        <div class="links"><a href="${esc(fragmentUrl(g.src_url, g.paragraph))}" target="_blank">Read it in ${esc(langName(g.src_lang))}</a></div>
-      </div>`).join("");
-
-    const arts = (d.articles || []).map(a => `
-      <div class="hit">
-        <span><a href="${esc(a.url)}" target="_blank">${esc(a.title)}</a> <span class="aside">${esc(langName(a.lang))}</span></span>
-        <button class="quiet-btn" data-lang="${esc(a.lang)}" data-title="${esc(a.title)}">${
-          a.analyzed ? `${a.conflicts_count} conflict${a.conflicts_count === 1 ? "" : "s"}, ${a.gaps_count} missing` : "Check it"}</button>
-      </div>`).join("");
-
-    content.innerHTML = `
-      <p class="also">Results for “${esc(d.query)}”, ${d.took_ms} ms.
-        ${currentWiki ? `<a href="#" id="backToPage" class="back">Back to the article</a>` : ""}</p>
-      ${conf ? `<h2 class="section-label">Conflicts already found</h2>${conf}` : ""}
-      ${gap ? `<h2 class="section-label">Missing content already found</h2>${gap}` : ""}
-      ${arts ? `<h2 class="section-label">Closest articles by meaning</h2>${arts}` : ""}
-      ${(!conf && !gap && !arts) ? `<div class="state">Nothing matches “${esc(d.query)}”. Try the name of a person, place or event.</div>` : ""}`;
-
-    content.querySelectorAll(".hit .quiet-btn").forEach(btn => btn.addEventListener("click", () => {
-      currentWiki = { lang: btn.dataset.lang, title: btn.dataset.title };
-      load(false);
-    }));
-    const back = document.getElementById("backToPage");
-    if (back) back.addEventListener("click", e => {
-      e.preventDefault();
-      chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-        currentWiki = parseWikiUrl(tabs[0]?.url);
-        currentWiki ? load(false) : renderNotWiki();
-      });
-    });
-  } catch (err) {
-    if (seq !== loadSeq) return;
-    content.innerHTML = `<div class="state">The search did not run: the service at ${esc(API_BASE)} did not answer.<small>${esc(err.message)}</small></div>`;
-  }
-}
-
-searchForm.addEventListener("submit", e => {
-  e.preventDefault();
-  const q = searchInput.value.trim();
-  if (!q) return;
-  if (!isCheck(mode)) setMode("conflicts", false);
-  runSearch(q);
-});
 
 // ---------------------------------------------------------------------------------------------
 // Modes
@@ -340,7 +261,6 @@ function setMode(next, render = true) {
     b.setAttribute("aria-pressed", on ? "true" : "false");
   });
   refreshBtn.hidden = !isCheck(next) || !currentWiki;
-  searchForm.hidden = !isCheck(next);
   if (!render) return;
   if (next === "ask") renderAsk();
   else if (next === "drift") renderDrift();
@@ -366,15 +286,15 @@ function renderAsk() {
   const title = pageTitle();
   content.innerHTML = `
     <form id="askForm" class="ask-form">
-      <textarea id="askQ" rows="2" aria-label="Question" placeholder="Ask in English, Finnish or Swedish">${
-        title ? esc(`What does Wikipedia say about ${title}?`) : ""}</textarea>
+      <textarea id="askQ" rows="2" aria-label="Question" placeholder="Ask a question to find cited sources (English, Finnish, or Swedish)">${
+        title ? esc(`What do Wikipedia sources say about ${title}?`) : ""}</textarea>
       <div class="ask-row">
-        <label title="Answer from the articles as they stood on this date. Works for Finnish articles whose history is loaded.">As Wikipedia stood on
+        <label title="Check sources as they stood on this date. Works for Finnish articles whose history is loaded.">As Wikipedia stood on
           <input id="askAsOf" type="date" min="2003-01-01"></label>
-        <button type="submit" class="primary">Ask</button>
+        <button type="submit" class="primary">Find sources</button>
       </div>
     </form>
-    <div id="askOut"><div class="state">The answer is written only from passages MariaDB finds, and cites each one.</div></div>`;
+    <div id="askOut"><div class="state">Ask about any topic or claim to get cited passages, neutrality flags, and sources that disagree.</div></div>`;
   const form = document.getElementById("askForm");
   form.addEventListener("submit", e => {
     e.preventDefault();
@@ -427,8 +347,7 @@ async function runAsk(question, asOf) {
       <p class="also">${asOf ? `As Wikipedia stood on ${esc(asOf)}. ` : ""}${
         flaggedN ? `${flaggedN} source${flaggedN === 1 ? "" : "s"} flagged for wording. ` : "Every source reads as neutral. "}${(d.took_ms / 1000).toFixed(1)} s.</p>
       ${confs ? `<h2 class="section-label">Sources that disagree</h2>${confs}` : ""}
-      ${cits ? `<h2 class="section-label">Sources</h2>${cits}` : ""}
-      ${d.sql ? `<details><summary>The SQL MariaDB ran</summary><pre>${esc(d.sql)}</pre></details>` : ""}`;
+      ${cits ? `<h2 class="section-label">Sources</h2>${cits}` : ""}`;
   } catch (err) {
     if (seq !== loadSeq || !document.getElementById("askOut")) return;
     out.innerHTML = `<div class="state">No answer: ${esc(err.message)}</div>`;
@@ -445,10 +364,10 @@ function renderDrift() {
     <form id="driftForm" class="field-row">
       <input id="driftQ" type="text" value="${esc(title)}" aria-label="Article or question"
              placeholder="An article, or a question such as Who started the Winter War?">
-      <button type="submit">Trace</button>
+      <button type="submit">Trace versions</button>
     </form>
     <div id="driftOut"><div class="state">
-      Follow how the Finnish articles changed their position on the same claims, down to the edit that changed it.
+      Track how an article's claims changed across versions, down to the exact edit.
       <div class="demo-links"><a href="${API_BASE}/drift?fixture=1" target="_blank">Watch a recorded run on the full page</a></div>
     </div></div>`;
   document.getElementById("driftForm").addEventListener("submit", e => {
@@ -533,7 +452,7 @@ function runDrift(q) {
     fail(String(typeof msg === "string" ? msg : (msg.message || JSON.stringify(msg))).replace(/^\w+Error:\s*/, ""));
   });
   driftSource.onerror = () => {
-    if (driftSource && !finished) fail(`The Aikakone server at ${API_BASE} did not answer. Start it with make run in the repository.`);
+    if (driftSource && !finished) fail(`The WikiCheck server at ${API_BASE} did not answer. Start it with make run in the repository.`);
   };
 }
 

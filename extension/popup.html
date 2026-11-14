@@ -2,29 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Aikakone</title>
+  <title>WikiCheck</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
     <div class="masthead">
-      <span class="wordmark">Aikakone</span>
+      <span class="wordmark">WikiCheck</span>
       <button id="refreshBtn" class="quiet-btn" title="Compare this article with its other language editions again, ignoring the stored result" hidden>Check again</button>
     </div>
     <h1 id="pageTitle" class="page-title">Wikipedia, checked across languages and time</h1>
     <nav class="modes" id="modes" aria-label="Tools">
       <button class="mode active" data-mode="conflicts" title="Statements that contradict the other language editions">Conflicts<span class="n" id="nConflicts"></span></button>
       <button class="mode" data-mode="gaps" title="Important content the other language editions have and this page lacks">Missing here<span class="n" id="nGaps"></span></button>
-      <button class="mode" data-mode="ask" title="Ask Wikipedia, with citations, today or as of a past date">Ask</button>
-      <button class="mode" data-mode="drift" title="How this article's position changed over the years, edit by edit">Drift</button>
+      <button class="mode" data-mode="ask" title="Ask a question and get cited Wikipedia sources, neutrality checks, and conflicting passages">Find sources</button>
+      <button class="mode" data-mode="drift" title="Track how an article's claims changed across versions and edits">Version history</button>
     </nav>
   </header>
 
   <main>
-    <form id="searchForm" class="field-row search-bar">
-      <input id="searchInput" type="text" placeholder="Find conflicts about a topic or an article" aria-label="Search">
-      <button type="submit">Search</button>
-    </form>
     <div id="content">
       <div class="state">Loading…</div>
     </div>

@@ -341,7 +341,7 @@ def _fetch_wiki_page(lang: str, title: str) -> dict | None:
     """Fetch plain text, Wikidata ID, and 2-letter langlinks from live Wikipedia API."""
     r = requests.get(
         f"https://{lang}.wikipedia.org/w/api.php",
-        headers={"User-Agent": "Aikakone/0.1 (cross-language consistency)"},
+        headers={"User-Agent": "WikiCheck/0.1 (cross-language consistency)"},
         params={
             "action": "query",
             "titles": title.replace("_", " "),

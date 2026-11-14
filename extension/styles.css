@@ -1,4 +1,4 @@
-/* Aikakone popup. The look follows Wikipedia itself (the page the editor is on): serif titles with a
+/* WikiCheck popup. The look follows Wikipedia itself (the page the editor is on): serif titles with a
    hairline, sans-serif reading text, page tabs, blue links, and the two colours of a MediaWiki diff for "this page" and
    "the other edition". */
 :root {
@@ -79,7 +79,6 @@ header { padding: 10px 16px 0; border-bottom: 1px solid var(--rule); flex: none;
 }
 .primary { border-radius: 2px; }
 .field-row button:hover, .primary:hover { background: #2a4b8d; border-color: #2a4b8d; }
-.search-bar { margin-bottom: 12px; }
 #driftForm + #driftOut > .also:first-child, #driftForm + #driftOut > .state { margin-top: 10px; }
 
 main { padding: 12px 16px 16px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
@@ -144,11 +143,6 @@ pre {
 .demo-links { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; text-align: left; }
 .demo-links a { padding: 7px 10px; border: 1px solid var(--soft); background: var(--wash); border-radius: 2px; }
 .demo-links a:hover { background: var(--soft); }
-
-.hit { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--soft); }
-.hit:last-child { border-bottom: 0; }
-.hit .quiet-btn { padding: 0; white-space: nowrap; }
-.back { float: right; }
 
 /* ---- Ask ---- */
 .ask-form textarea {
