@@ -9,26 +9,37 @@ then, what it says now, and where people argued — and MariaDB does both the re
 Data: MariaDB's Wikipedia datasets (S = current text + vectors, M = every version).
 Wikipedia text is CC BY-SA 4.0: credit Wikipedia and share derived text under the same licence.
 
-## Quick start (target: under 15 minutes)
+## What is in here
 
-```sh
-cp .env.example .env
-make up          # MariaDB in Docker on port 3307
-make db          # create tables (db/*.sql)
-make api-install # python deps
-make api         # http://localhost:8000/docs  (serves MOCKS until you replace endpoints)
-```
+The product is a **browser extension** for people who edit Wikipedia. On any article it shows
+cross-language conflicts and missing content, answers questions with citations (also "as of" a past
+date), and shows how the article's position on its main claims drifted, edit by edit.
 
-Frontend: see `web/README.md`. Data loading: see `db/README.md` and `pipeline/README.md`.
-
-## Who owns what
-
-| Area | Folder | Owner | One-line job |
+| Part | Folder | Runs on | What it does |
 |---|---|---|---|
-| The memory | `db/`, `api/history.py` | Backend 1 | Store every past version; answer "what did it look like on date X" |
-| The librarian | `api/search.py`, `api/ask.py`, `eval/` | _name_ | Find passages by meaning; write cited answers; measure quality |
-| The map-maker | `pipeline/` | Backend 2 | Map coordinates, sampled revisions, then-vs-now summaries |
-| The face | `web/` | Frontend | Map, time slider, ask box, SQL panel |
+| Extension | `extension/` | Chrome (load unpacked) | Check, Ask and Drift for the article in the tab |
+| API | `api/` | FastAPI, `127.0.0.1:8020` | `/api/consistency*` (conflicts, gaps), `/api/ask`, `/api/check`, `/api/trace`, `/api/search` |
+| Site | `pacome/` | Flask, `127.0.0.1:8001` | Opinion drift and the full-page tools (mirror, gaps, references, links); the extension's "full view" |
+| Schema | `db/` | MariaDB 11.7+ | see `db/README.md` |
+| Measurements | `eval/` | | retrieval quality, conflict precision, loaders |
+
+One MariaDB database (`wikirag`) serves both servers. One RAG: `api/search.py` + `api/ask.py`
+(paragraph passages, query rewriting, rank fusion, `as_of`). One history table: `article_version`.
+
+## Quick start
+
+1. Database, data, Ollama and the site: follow [pacome/README.md](pacome/README.md)
+   (`pacome/scripts/setup.sh`, then `pacome/scripts/run.sh --port 8001`).
+2. API:
+   ```sh
+   cp .env.example .env     # DB_PORT (3306 for a system MariaDB, 3307 for `make up`), keys, MOCK=0
+   make api-install
+   mariadb -uwikirag -pwikirag -h127.0.0.1 -P3306 wikirag < db/004_schema_consistency.sql   # also 005, 006
+   make api                 # http://127.0.0.1:8020/docs
+   ```
+3. Extension: Chrome, `chrome://extensions`, Developer mode, **Load unpacked**, choose `extension/`.
+   Open `https://sv.wikipedia.org/wiki/Regeringen_Aura_II` or `https://fi.wikipedia.org/wiki/Talvisota`
+   and click the Aikakone icon.
 
 ## Rules for working together
 
@@ -39,9 +50,3 @@ Frontend: see `web/README.md`. Data loading: see `db/README.md` and `pipeline/RE
 5. **`main` must always start** with the quick start above. Test after you merge.
 6. **No data and no secrets in git.** Datasets go in `data/` (ignored). Keys go in `.env` (ignored).
 7. **Feature freeze: Sunday 07:30 Finnish time.** Submit by 09:15.
-
-## The first hour (everyone)
-
-1. Backend 1 + librarian: run `db/spike_vector_versioning.sql` — does a vector index work on a versioned table?
-2. Frontend: build against `mocks/` using the API at `localhost:8000` (served by `api/main.py`).
-3. Backend 2: clone MariaDB's dataset repo, pick 10-20 showcase articles, start the UMAP script.

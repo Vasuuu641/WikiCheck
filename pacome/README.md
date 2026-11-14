@@ -5,6 +5,10 @@ Wikipedia articles on the history of Finland, with MariaDB doing the work: **vec
 by meaning, in any of the three languages) and **system-versioned tables** (every past version of an
 article, queryable by date).
 
+This site is the full view behind the **browser extension** in `../extension/` (see the root README): the extension's
+Drift tab reads `/api/drift/stream` here and opens `/drift` for the article in the tab. It runs on port 8001 next to the
+API on 8020, on the same database.
+
 The site has two areas:
 
 | Area | Page | What it does |
