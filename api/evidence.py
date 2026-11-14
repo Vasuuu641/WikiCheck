@@ -348,7 +348,6 @@ def _fill(items: list[dict], passages: list[dict]) -> None:
             how = "most similar sentence"
         else:
             score, hit, how = best_any[0], None, None
-        best = hit
         point_values = values(items[i]["phrase"], items[i]["lang"])
         hit_values = values(hit, lang) if hit else set()
         other[i][lang] = {"title": v["title"], "url": v["url"], "page_id": v["page_id"],

@@ -8,3 +8,4 @@ numpy
 mwparserfromhell
 pyarrow
 jinja2
+pyflakes

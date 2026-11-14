@@ -6,14 +6,14 @@
   scripts/verda.py status    show the instance
   scripts/verda.py down      DELETE the instance (stops billing)
 
-Credentials come from ../.env (VERDA_CLIENT_ID, VERDA_CLIENT_SECRET). State is kept in data/verda.json.
+Credentials come from the repository's .env (VERDA_CLIENT_ID, VERDA_CLIENT_SECRET). State is kept in pacome/data/verda.json.
 Ollama is not exposed to the internet: the app reaches it through the SSH tunnel (OLLAMA_URL=http://localhost:11435).
 """
 import json, os, subprocess, sys, time
 import requests
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-STATE = os.path.join(ROOT, "data", "verda.json")
+STATE = os.path.join(ROOT, "pacome", "data", "verda.json")   # git-ignored
 KEY = os.path.expanduser("~/.ssh/verda_ed25519")
 BASE = "https://api.verda.com/v1"
 TYPE, LOCATION, IMAGE, HOSTNAME = "1A100.22V", "FIN-01", "24.04.cuda12.9", "wikirag-embed"

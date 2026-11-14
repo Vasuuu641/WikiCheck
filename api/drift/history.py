@@ -2,7 +2,7 @@
 
 One row per article in `article_version`; every earlier version is a history row whose [row_start, row_end)
 is the time that version was live on Wikipedia. Articles are loaded on first use from dataset M's parquet
-files in HISTORY_DIR (default pacome/data/m; pacome/scripts/load_m.py downloads them).
+files in HISTORY_DIR (default pacome/data/m; scripts/load_m.py downloads them).
 
   resolve_fi(article)            Finnish page_id of a search result's topic, or None
   ensure_loaded(page_id)         idempotent load of one article's versions
@@ -77,7 +77,7 @@ def _m_index():
         import pyarrow.parquet as pq
         path = os.path.join(M_DIR, "index.parquet")
         if not os.path.exists(path):
-            raise RuntimeError(f"{M_DIR}/index.parquet is missing: run pacome/scripts/load_m.py")
+            raise RuntimeError(f"{M_DIR}/index.parquet is missing: run scripts/load_m.py")
         t = pq.read_table(path, columns=["page_id", "file"])
         idx = {}
         for pid, f in zip(t.column(0).to_pylist(), t.column(1).to_pylist()):

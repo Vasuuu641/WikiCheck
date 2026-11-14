@@ -5,7 +5,7 @@
     .venv/bin/python eval/load_history.py --titles "Lapin sota" "Tarton rauha"
 
 It calls the drift engine's loader, api/drift/history.ensure_loaded(page_id), so Ask's as_of and
-Opinion drift read the same rows. Needs dataset M in pacome/data/m/ (pacome/scripts/load_m.py
+Opinion drift read the same rows. Needs dataset M in pacome/data/m/ (scripts/load_m.py
 downloads it). Safe to run again: articles already loaded are skipped. Drift also loads an article
 by itself the first time it needs it.
 """

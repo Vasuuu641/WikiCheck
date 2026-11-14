@@ -24,7 +24,7 @@ Steps:
   4. The LLM answers from the passages only, citing [1], [2], ... in the request's `lang`, else
      the question's language (api/language.py); an answer in another language is retried once
      with a stronger instruction. Several matching events: one line each, in date order.
-Returns the shape in docs/API_CONTRACT.md: answer, citations, sql, took_ms. Pass a dict as
+Returns answer, citations, sql, took_ms (plus conflicts and edit links in editor mode). Pass a dict as
 `trace` to also get what happened at each step (used by /api/ask?debug=1 and the test page).
 """
 import copy

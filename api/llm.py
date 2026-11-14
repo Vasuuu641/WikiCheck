@@ -74,10 +74,10 @@ def chat(messages: list[dict], temperature: float = 0.0, max_tokens: int | None 
 
 
 def google_key() -> str:
-    """The Google AI key, under either name: GEMINI_API_KEY (api/) or GOOGLE_API_KEY (pacome/)."""
+    """The Google AI key: GEMINI_API_KEY (GOOGLE_API_KEY, its other common name, is accepted too)."""
     key = os.getenv("GEMINI_API_KEY", "").strip() or os.getenv("GOOGLE_API_KEY", "").strip()
     if not key:
-        raise RuntimeError("GEMINI_API_KEY (or GOOGLE_API_KEY) must be set in .env")
+        raise RuntimeError("GEMINI_API_KEY must be set in .env")
     return key
 
 

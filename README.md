@@ -1,52 +1,74 @@
-# Aikakone — a time machine for Finnish Wikipedia
+# Aikakone — Wikipedia, checked across languages and time
 
-A map of the History of Finland on Wikipedia that you can travel through time and ask questions to,
-with every answer linked to its source. Built on MariaDB (system-versioned tables + native vector search).
+A browser extension for people who edit Wikipedia. On the article in the tab it shows:
 
-**One sentence for the jury:** Wikipedia only shows today's version; Aikakone shows what it said
-then, what it says now, and where people argued — and MariaDB does both the remembering and the finding.
+- **Conflicts**: statements that contradict the same article in other language editions
+- **Missing here**: important content the other editions have and this one lacks
+- **Ask**: an answer with citations from Wikipedia passages, today or as Wikipedia stood on a past date
+- **Drift**: how the article's position on its main claims changed over the years, down to the edit
+  that changed it (popup, and a full page with the charts at `/drift`)
 
-Data: MariaDB's Wikipedia datasets (S = current text + vectors, M = every version).
-Wikipedia text is CC BY-SA 4.0: credit Wikipedia and share derived text under the same licence.
+Built on MariaDB: native vector search finds the passages, and a system-versioned table holds every
+version of the Finnish articles, so "as of" questions and drift are plain SQL.
 
-## What is in here
+Data: MariaDB's Wikipedia datasets (S = current text and vectors, M = every version of the Finnish
+History-of-Finland articles). Wikipedia text is CC BY-SA 4.0: credit Wikipedia, share derived text alike.
 
-The product is a **browser extension** for people who edit Wikipedia. On any article it shows
-cross-language conflicts and missing content, answers questions with citations (also "as of" a past
-date), and shows how the article's position on its main claims drifted, edit by edit.
+## Layout
 
-| Part | Folder | Runs on | What it does |
-|---|---|---|---|
-| Extension | `extension/` | Chrome (load unpacked) | Check, Ask and Drift for the article in the tab |
-| API | `api/` | FastAPI, `127.0.0.1:8020` | `/api/consistency*` (conflicts, gaps), `/api/ask`, `/api/check`, `/api/trace`, `/api/search` |
-| Site | `pacome/` | Flask, `127.0.0.1:8001` | Opinion drift and the full-page tools (mirror, gaps, references, links); the extension's "full view" |
-| Schema | `db/` | MariaDB 11.7+ | see `db/README.md` |
-| Measurements | `eval/` | | retrieval quality, conflict precision, loaders |
+| Folder | What it is |
+|---|---|
+| `extension/` | Chrome extension (Manifest V3). Calls the server on `127.0.0.1:8020` |
+| `api/` | The one server, FastAPI. `consistency.py` + `conflicts.py`: cross-language checks. `ask.py` + `search.py` + `rewrite.py` + `review.py` + `evidence.py`: Ask. `drift/`: opinion drift. `llm.py`: every model name and LLM call. `decisions.py`: Gemini Decisions API client |
+| `db/` | Schema, applied by `make schema` (see `db/README.md`) |
+| `eval/` | Measurements: retrieval quality (`run_eval.py`), conflict precision (`conflicts_eval.py`), results |
+| `scripts/` | `smoke.py` (end-to-end test), `load_m.py` (dataset M), `ollama.sh`, `verda.py` (optional rented GPU) |
+| `pacome/data/` | Git-ignored: dataset M, the Ollama binary and model |
 
-One MariaDB database (`wikirag`) serves both servers. One RAG: `api/search.py` + `api/ask.py`
-(paragraph passages, query rewriting, rank fusion, `as_of`). One history table: `article_version`.
+## First time
 
-## Quick start
+Needs Python 3.11+, a MariaDB 11.7+ server (or Docker: `make db-docker`, then `DB_PORT=3307`), and
+a Gemini key. Linux x86_64 installs Ollama by itself; elsewhere install it from ollama.com.
 
-1. Database, data, Ollama and the site: follow [pacome/README.md](pacome/README.md)
-   (`pacome/scripts/setup.sh`, then `pacome/scripts/run.sh --port 8001`).
-2. API:
-   ```sh
-   cp .env.example .env     # DB_PORT (3306 for a system MariaDB, 3307 for `make up`), keys, MOCK=0
-   make api-install
-   mariadb -uwikirag -pwikirag -h127.0.0.1 -P3306 wikirag < db/004_schema_consistency.sql   # also 005, 006
-   make api                 # http://127.0.0.1:8020/docs
-   ```
-3. Extension: Chrome, `chrome://extensions`, Developer mode, **Load unpacked**, choose `extension/`.
-   Open `https://sv.wikipedia.org/wiki/Regeringen_Aura_II` or `https://fi.wikipedia.org/wiki/Talvisota`
-   and click the Aikakone icon.
+```sh
+make setup        # .venv, Ollama + bge-m3, tables; creates .env from .env.example
+                  # fill GEMINI_API_KEY and LLM_* in .env
+```
 
-## Rules for working together
+Load the articles and their vectors once, with MariaDB's starter (it brings its own Python packages):
 
-1. **The contract is `docs/API_CONTRACT.md`.** Change it only by telling the others. Mocks in `mocks/` follow it.
-2. **Stay in your folder.** Need a change elsewhere? Ask the owner or open a small PR.
-3. **Schema belongs to Backend 1.** Schema changes = a new numbered file in `db/`, never edit an applied one.
-4. **Small branches, merge to `main` every couple of hours.** Name: `yourname/short-topic`.
-5. **`main` must always start** with the quick start above. Test after you merge.
-6. **No data and no secrets in git.** Datasets go in `data/` (ignored). Keys go in `.env` (ignored).
-7. **Feature freeze: Sunday 07:30 Finnish time.** Submit by 09:15.
+```sh
+git clone --depth 1 https://github.com/MariaDB/mariadb-vector-wikipedia-rag.git pacome/reference/mariadb-vector-wikipedia-rag
+cd pacome/reference/mariadb-vector-wikipedia-rag
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+echo "DB_PORT=3306" > .env && .venv/bin/python create_tables.py && .venv/bin/python load.py --vectors
+cd -
+make demo-data    # dataset M (~315 MB) and the edit history of the showcase articles
+```
+
+## Every day
+
+```sh
+make run          # Ollama if needed, then the server on http://127.0.0.1:8020 (/drift, /docs)
+make smoke        # in another terminal: the extension's and the drift page's endpoints, end to end
+make check        # before a commit: compile and lint the Python, syntax-check the extension
+```
+
+Extension: Chrome, `chrome://extensions`, Developer mode, **Load unpacked**, choose `extension/`.
+After a change, click its reload arrow. Try `https://sv.wikipedia.org/wiki/Regeringen_Aura_II`
+(conflicts), `https://en.wikipedia.org/wiki/Hauho` (missing content) and
+`https://fi.wikipedia.org/wiki/Talvisota` (drift).
+
+## Settings
+
+All in `.env` (template: `.env.example`, never commit `.env`). Model names have defaults in
+`api/llm.py`: `CHECK_MODEL` for the cross-language checks (fast, runs on every page) and
+`WRITE_MODEL` for drift. Ask uses the OpenAI-compatible `LLM_*` and `NEUTRALITY_*` endpoints.
+
+## Working together
+
+1. `main` must always pass `make check` and `make smoke`.
+2. Small branches (`name/topic`), merged often.
+3. Schema changes are new numbered files in `db/`; never edit an applied one.
+4. No data and no secrets in git: data in `pacome/data/` (ignored), keys in `.env` (ignored).
+5. Feature freeze: Sunday 2026-11-15, 07:30 Finnish time. Submit by 09:15.

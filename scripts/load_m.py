@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Download dataset M (every version of the Finnish History-of-Finland articles) and index it.
 
-  scripts/load_m.py            download data/m/versions-01..16.parquet, verify SHA256SUMS, write data/m/index.parquet
+  scripts/load_m.py            download pacome/data/m/versions-01..16.parquet, verify SHA256SUMS, write index.parquet
 
 index.parquet: page_id, title, file, versions  (one row per article and file it appears in).
 Resumable: files that already match their checksum are skipped.
@@ -9,7 +9,7 @@ Resumable: files that already match their checksum are skipped.
 import hashlib, os, subprocess, sys
 import pyarrow as pa, pyarrow.parquet as pq
 
-D = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "m")
+D = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "pacome", "data", "m")   # git-ignored
 BASE = "https://github.com/MariaDB/mariadb-wikipedia-datasets/releases/download/m-2026-10/"
 FILES = [f"versions-{i:02d}.parquet" for i in range(1, 17)]
 

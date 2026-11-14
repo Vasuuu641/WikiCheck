@@ -8,6 +8,7 @@ below must be in the database (Talvisota with its history loaded, as eval/load_h
 """
 import argparse
 import json
+import re
 import sys
 import time
 import urllib.parse
@@ -91,7 +92,7 @@ def main():
             with urllib.request.urlopen(req, timeout=180) as r:
                 d = json.loads(r.read())
             assert d.get("answer") and d.get("citations"), str(d)[:200]
-            assert "[1]" in d["answer"], "answer has no citation mark"
+            assert re.search(r"\[\d+\]", d["answer"]), "answer has no citation mark"
             return f"{len(d['citations'])} citations"
         check("Ask tab", ask)
 
