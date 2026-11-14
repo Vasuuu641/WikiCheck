@@ -63,3 +63,11 @@ def ask(body: AskBody):
 @app.get("/api/article/{page_id}/changes")
 def changes(page_id: int, from_: str | None = Query(None, alias="from"), to: str | None = None):
     return mock("changes") if MOCK else real_not_ready("changes")
+
+@app.get("/api/search")
+def api_search(q: str, limit: int = 10):
+    from api.search import search
+    hits, sql = search(q, limit)
+    for h in hits:
+        h["text"] = h["text"][:300]      # keep the response small
+    return {"hits": hits, "sql": sql}
