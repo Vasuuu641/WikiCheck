@@ -1,0 +1,3 @@
+{"answer":"MOCK ANSWER. The Winter War ended with the Moscow Peace Treaty in March 1940 [1].",
+ "citations":[{"n":1,"page_id":1,"rev_id":0,"title":"Talvisota","url":"https://fi.wikipedia.org/?curid=1","passage":"mock passage"}],
+ "sql":"SELECT ... (mock)","took_ms":0}
