@@ -1,0 +1,493 @@
+{
+  "label": "baseline",
+  "summary": {
+    "n": 37,
+    "hit@1": 0.5675675675675675,
+    "hit@5": 0.7567567567567568,
+    "hit@10": 0.8648648648648649,
+    "mrr": 0.6471793221793222
+  },
+  "results": [
+    {
+      "lang": "en",
+      "question": "When did Finland declare its independence?",
+      "expected": "Suomen itsenäisyysjulistus",
+      "only_in_fi": false,
+      "rank": 3,
+      "top3": [
+        "Finlands självständighet",
+        "Independence Day (Finland)",
+        "Finnish Declaration of Independence"
+      ],
+      "ms": 2878
+    },
+    {
+      "lang": "en",
+      "question": "Which war did Finland fight against the Soviet Union in the winter of 1939–1940?",
+      "expected": "Talvisota",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Vinterkriget",
+        "Background of the Winter War",
+        "Vinterkriget (film)"
+      ],
+      "ms": 371
+    },
+    {
+      "lang": "en",
+      "question": "The 1918 war between the Reds and the Whites in Finland",
+      "expected": "Suomen sisällissota",
+      "only_in_fi": false,
+      "rank": null,
+      "top3": [
+        "Battle of Vilppula",
+        "Battle of Tampere",
+        "Battle of Syrjäntaka"
+      ],
+      "ms": 334
+    },
+    {
+      "lang": "en",
+      "question": "Which peace treaty ended the Winter War?",
+      "expected": "Moskovan rauhansopimus (1940)",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Moscow Peace Treaty",
+        "Treaty of Frederiksborg",
+        "Parisfreden (1856)"
+      ],
+      "ms": 228
+    },
+    {
+      "lang": "en",
+      "question": "Defensive line on the Karelian Isthmus named after the commander-in-chief",
+      "expected": "Mannerheim-linja",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Mannerheimlinjen",
+        "Karelian Front",
+        "Karelian Group"
+      ],
+      "ms": 327
+    },
+    {
+      "lang": "en",
+      "question": "Finland as an autonomous part of the Russian Empire",
+      "expected": "Suomen suuriruhtinaskunta",
+      "only_in_fi": false,
+      "rank": 8,
+      "top3": [
+        "Finlands historia",
+        "Finnish Declaration of Independence",
+        "Monarchy of Finland"
+      ],
+      "ms": 262
+    },
+    {
+      "lang": "en",
+      "question": "The Russian occupation of Finland during the Great Northern War",
+      "expected": "Isoviha",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Great Wrath",
+        "Continuation War",
+        "Stora ofreden"
+      ],
+      "ms": 277
+    },
+    {
+      "lang": "en",
+      "question": "Peasant uprising in Ostrobothnia in the 1590s",
+      "expected": "Nuijasota",
+      "only_in_fi": false,
+      "rank": 2,
+      "top3": [
+        "Pekka Vesainen",
+        "Cudgel War",
+        "Pohjalaisia (play)"
+      ],
+      "ms": 301
+    },
+    {
+      "lang": "en",
+      "question": "The attempt to assassinate Mannerheim in 1920",
+      "expected": "Mannerheimin murhayritys 1920",
+      "only_in_fi": true,
+      "rank": 1,
+      "top3": [
+        "Mannerheimin murhayritys 1920",
+        "Gustaf Mannerheim",
+        "Carl Gustaf Emil Mannerheim"
+      ],
+      "ms": 291
+    },
+    {
+      "lang": "en",
+      "question": "A revolt of crofters at Kuorsumaa",
+      "expected": "Kuorsumaan torpparikapina",
+      "only_in_fi": true,
+      "rank": 1,
+      "top3": [
+        "Kuorsumaan torpparikapina",
+        "David's Rebellion",
+        "Pork mutiny"
+      ],
+      "ms": 310
+    },
+    {
+      "lang": "en",
+      "question": "Trial of electronic voting in the 2008 municipal elections",
+      "expected": "Sähköisen äänestyksen kokeilu kunnallisvaaleissa 2008",
+      "only_in_fi": true,
+      "rank": 1,
+      "top3": [
+        "Sähköisen äänestyksen kokeilu kunnallisvaaleissa 2008",
+        "Kunnallisvaalit 2008",
+        "2008 Finnish municipal elections"
+      ],
+      "ms": 294
+    },
+    {
+      "lang": "sv",
+      "question": "Kriget mellan Finland och Sovjetunionen 1941–1944",
+      "expected": "Jatkosota",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Continuation War",
+        "Battle of Porlampi",
+        "Fortsättningskriget"
+      ],
+      "ms": 259
+    },
+    {
+      "lang": "sv",
+      "question": "Kriget mot de tyska trupperna i Lappland 1944–1945",
+      "expected": "Lapin sota",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Lapplandskriget",
+        "Lapland War",
+        "Battle of Rovaniemi"
+      ],
+      "ms": 308
+    },
+    {
+      "lang": "sv",
+      "question": "Fredsavtalet mellan Finland och Sovjetryssland i Dorpat 1920",
+      "expected": "Tarton rauha",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Fredsfördraget i Tartu",
+        "Frändefolkskrigen",
+        "Mellanfreden i Moskva"
+      ],
+      "ms": 264
+    },
+    {
+      "lang": "sv",
+      "question": "Tvisten om Ålands ställning i Nationernas förbund",
+      "expected": "Ahvenanmaan kysymys",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Ålandsfrågan",
+        "Åland Islands dispute",
+        "Ålandskonventionen"
+      ],
+      "ms": 245
+    },
+    {
+      "lang": "sv",
+      "question": "Avtalet om vänskap, samarbete och ömsesidigt bistånd med Sovjetunionen",
+      "expected": "YYA-sopimus",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "VSB-avtalet",
+        "Naapuruussopimus",
+        "Finno-Soviet Treaty of 1948"
+      ],
+      "ms": 298
+    },
+    {
+      "lang": "sv",
+      "question": "Kriget då Sverige förlorade Finland till Ryssland 1808–1809",
+      "expected": "Suomen sota",
+      "only_in_fi": false,
+      "rank": 9,
+      "top3": [
+        "Battle of Lapua",
+        "Battle of Kauhajoki",
+        "Finska deputationen"
+      ],
+      "ms": 229
+    },
+    {
+      "lang": "sv",
+      "question": "Det finska kavalleriet under trettioåriga kriget",
+      "expected": "Hakkapeliitat",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Hakkapeliter",
+        "Hakkapeliitta",
+        "Raising the Flag on the Three-Country Cairn"
+      ],
+      "ms": 238
+    },
+    {
+      "lang": "sv",
+      "question": "Den stora branden i Åbo 1827",
+      "expected": "Turun palo",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Åbo brand",
+        "Great Fire of Turku",
+        "Oulun palo 1882"
+      ],
+      "ms": 256
+    },
+    {
+      "lang": "sv",
+      "question": "Ståndslantdagen 1882",
+      "expected": "Säätyvaltiopäivät 1882",
+      "only_in_fi": true,
+      "rank": 1,
+      "top3": [
+        "Säätyvaltiopäivät 1882",
+        "Lantdagsordningen 1869",
+        "Lantdagen 1905"
+      ],
+      "ms": 220
+    },
+    {
+      "lang": "sv",
+      "question": "Området nära Helsingfors som arrenderades ut till Sovjetunionen efter kriget",
+      "expected": "Porkkalan vuokra-alue",
+      "only_in_fi": false,
+      "rank": 7,
+      "top3": [
+        "Moscow Armistice",
+        "Evacuation of Finnish Karelia",
+        "Hanko Naval Base"
+      ],
+      "ms": 273
+    },
+    {
+      "lang": "fi",
+      "question": "Mitä suomettuminen tarkoitti kylmän sodan aikana?",
+      "expected": "Suomettuminen",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Suomettuminen",
+        "Natottuminen",
+        "Kola Peninsula"
+      ],
+      "ms": 269
+    },
+    {
+      "lang": "fi",
+      "question": "Suomen talouskriisi 1990-luvun alussa",
+      "expected": "Suomen 1990-luvun alun lama",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Suomen 1990-luvun alun lama",
+        "Early 1990s depression in Finland",
+        "Bankkrisen i Finland"
+      ],
+      "ms": 244
+    },
+    {
+      "lang": "fi",
+      "question": "Karjalasta evakuoidut ihmiset sotien jälkeen",
+      "expected": "Siirtoväki",
+      "only_in_fi": false,
+      "rank": 6,
+      "top3": [
+        "Luovutettu Karjala",
+        "Karjalan historia",
+        "Karjala-kysymys"
+      ],
+      "ms": 247
+    },
+    {
+      "lang": "fi",
+      "question": "Venäläistämisen ajat 1800-luvun lopulla ja 1900-luvun alussa",
+      "expected": "Sortovuodet",
+      "only_in_fi": false,
+      "rank": 2,
+      "top3": [
+        "Venäläisvastaisuus",
+        "Russification of Finland",
+        "Suomen venäläiset"
+      ],
+      "ms": 253
+    },
+    {
+      "lang": "fi",
+      "question": "Saksassa koulutetut suomalaiset vapaaehtoiset ensimmäisen maailmansodan aikana",
+      "expected": "Jääkäriliike",
+      "only_in_fi": false,
+      "rank": 3,
+      "top3": [
+        "Suomalainen Waffen-SS-vapaaehtoispataljoona",
+        "Talvisodan vapaaehtoiset",
+        "Jääkäriliike"
+      ],
+      "ms": 282
+    },
+    {
+      "lang": "fi",
+      "question": "Oikeistoradikaalien aseellinen kapinayritys vuonna 1932",
+      "expected": "Mäntsälän kapina",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Mäntsälä rebellion",
+        "Mäntsälän kapina",
+        "Weapons Cache Case"
+      ],
+      "ms": 284
+    },
+    {
+      "lang": "fi",
+      "question": "Keisarin julistus vuonna 1899, joka rajoitti Suomen autonomiaa",
+      "expected": "Helmikuun manifesti",
+      "only_in_fi": false,
+      "rank": null,
+      "top3": [
+        "Rauhoitusreskripti",
+        "Kieliasetus (1850)",
+        "Säätyvaltiopäivät 1899"
+      ],
+      "ms": 260
+    },
+    {
+      "lang": "fi",
+      "question": "Ruotsin ja Novgorodin välinen rauha vuonna 1323",
+      "expected": "Pähkinäsaaren rauha",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Treaty of Nöteborg",
+        "Treaty of Knäred",
+        "Russo-Swedish War (1554–1557)"
+      ],
+      "ms": 198
+    },
+    {
+      "lang": "fi",
+      "question": "Upseerien salaliitto Kustaa III:n Venäjän-sodan aikana",
+      "expected": "Anjalan liitto",
+      "only_in_fi": false,
+      "rank": 3,
+      "top3": [
+        "Kustaa III",
+        "Kustaa III:n sota",
+        "Anjalan liitto"
+      ],
+      "ms": 259
+    },
+    {
+      "lang": "fi",
+      "question": "Suomen ja Saksan välinen sopimus kesällä 1944",
+      "expected": "Ryti–Ribbentrop-sopimus",
+      "only_in_fi": false,
+      "rank": 5,
+      "top3": [
+        "Suomen ja Neuvostoliiton kauttakulkusopimus 1940",
+        "Suomen ja Saksan kauttakulkusopimus",
+        "Suomen ja Neuvostoliiton hyökkäämättömyyssopimus"
+      ],
+      "ms": 203
+    },
+    {
+      "lang": "fi",
+      "question": "Toisen maailmansodan jälkeinen rauhansopimus, jossa Suomi menetti alueita",
+      "expected": "Pariisin rauhansopimus (1947)",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Paris Peace Treaties, 1947",
+        "Luovutetut alueet",
+        "Parisfreden (1947)"
+      ],
+      "ms": 263
+    },
+    {
+      "lang": "en",
+      "question": "Who was the president of Finland from 1956 to 1982?",
+      "expected": "Urho Kekkonen",
+      "only_in_fi": false,
+      "rank": null,
+      "top3": [
+        "Presidentvalet i Finland 1982",
+        "1956 Finnish presidential election",
+        "Presidentvalet i Finland 1956"
+      ],
+      "ms": 237
+    },
+    {
+      "lang": "en",
+      "question": "Who led the Senate that declared Finland independent in 1917?",
+      "expected": "P. E. Svinhufvud",
+      "only_in_fi": false,
+      "rank": null,
+      "top3": [
+        "Senate of Finland",
+        "Senaten för Finland",
+        "Regeringen Svinhufvud I"
+      ],
+      "ms": 253
+    },
+    {
+      "lang": "sv",
+      "question": "Vem var Finlands första president?",
+      "expected": "K. J. Ståhlberg",
+      "only_in_fi": false,
+      "rank": 1,
+      "top3": [
+        "Kaarlo Juho Ståhlberg",
+        "List of heads of state of Finland",
+        "Timeline of Finnish history"
+      ],
+      "ms": 181
+    },
+    {
+      "lang": "fi",
+      "question": "Kuka johti Suomen armeijaa talvisodassa ja jatkosodassa?",
+      "expected": "Carl Gustaf Emil Mannerheim",
+      "only_in_fi": false,
+      "rank": null,
+      "top3": [
+        "Jatkosodan hyökkäysvaihe",
+        "Suomalainen Waffen-SS-vapaaehtoispataljoona",
+        "Jatkosota"
+      ],
+      "ms": 290
+    },
+    {
+      "lang": "fi",
+      "question": "Sodan jälkeinen presidentti, joka loi uuden linjan suhteessa Neuvostoliittoon",
+      "expected": "Juho Kusti Paasikivi",
+      "only_in_fi": false,
+      "rank": 5,
+      "top3": [
+        "Paasikiven–Kekkosen linja",
+        "Paasikivi–Kekkonen doctrine",
+        "Mauno Koivisto"
+      ],
+      "ms": 250
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Aikakone</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="logo">Aikakone</span>
+      <span class="subtitle">Cross-Language Consistency</span>
+    </div>
+    <button id="refreshBtn" class="icon-btn" title="Re-analyze this article" hidden>↻</button>
+  </header>
+
+  <form id="searchForm" class="search-bar">
+    <input id="searchInput" type="text" placeholder="Search any topic, claim, or article…">
+    <button type="submit">Search</button>
+  </form>
+
+  <main id="content">
+    <div class="state">Loading…</div>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>

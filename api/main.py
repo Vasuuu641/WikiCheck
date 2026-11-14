@@ -63,3 +63,60 @@ def ask(body: AskBody):
 @app.get("/api/article/{page_id}/changes")
 def changes(page_id: int, from_: str | None = Query(None, alias="from"), to: str | None = None):
     return mock("changes") if MOCK else real_not_ready("changes")
+
+@app.get("/api/search")
+def api_search(q: str, limit: int = 10):
+    from api.search import search
+    hits, sql = search(q, limit)
+    for h in hits:
+        h["text"] = h["text"][:300]      # keep the response small
+    return {"hits": hits, "sql": sql}
+
+@app.post("/api/ask")
+def ask(body: AskBody):
+    if MOCK_ASK:
+        return mock("ask")
+    from api.ask import answer_with_citations
+    return answer_with_citations(body.question)
+
+
+@app.get("/api/consistency")
+def consistency(
+    lang: str,
+    title: str | None = None,
+    page_id: int | None = None,
+    compute: bool = True,
+    refresh: bool = False,
+):
+    from api.consistency import get_consistency
+    return get_consistency(lang=lang, title=title, page_id=page_id,
+                           compute_if_missing=compute, refresh=refresh)
+
+
+class AnalyzeBody(BaseModel):
+    wikidata_id: str
+    force: bool = False
+
+
+@app.get("/api/consistency/search")
+def consistency_search(q: str, limit: int = 8):
+    from api.consistency import search_consistency
+    return search_consistency(q=q, limit=limit)
+
+
+@app.post("/api/consistency/analyze")
+def consistency_analyze(body: AnalyzeBody):
+    from api.consistency import analyze_entity
+    return analyze_entity(body.wikidata_id, force=body.force)
+
+
+class InvalidateBody(BaseModel):
+    wikidata_id: str | None = None
+    lang: str | None = None
+    title: str | None = None
+
+
+@app.post("/api/consistency/invalidate")
+def consistency_invalidate(body: InvalidateBody):
+    from api.consistency import invalidate_entity
+    return {"invalidated": invalidate_entity(body.wikidata_id, body.lang, body.title)}

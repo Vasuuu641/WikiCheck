@@ -35,7 +35,7 @@ def embed_question(text: str) -> list[float]:
 
 
 SEARCH_SQL = """
-SELECT a.lang, a.page_id, a.title, a.url, v.distance
+SELECT a.lang, a.page_id, a.rev_id, a.wikidata_id, a.title, a.url, a.text, v.distance
 FROM (SELECT lang, page_id, VEC_DISTANCE_COSINE(embedding, VEC_FromText(%s)) AS distance
       FROM article_vector
       ORDER BY distance
