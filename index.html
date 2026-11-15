@@ -906,7 +906,7 @@
 
           <div class="wiki-site-sub">
             <span id="siteSub">From Wikipedia, the free encyclopedia</span>
-            <span>Coordinates: 61°10′15″N 024°33′30″E</span>
+            <span id="wikiCoords">Coordinates: 61°10′15″N 024°33′30″E</span>
           </div>
 
           <div class="wiki-edit-banner" id="wikiEditBanner" hidden>
@@ -934,8 +934,9 @@
               <h1 id="driftFullTitle">Version history · Hauho</h1>
               <p style="margin:0;color:var(--muted);font-size:13.5px;">How Wikipedia's position on key claims changed over the years, down to the exact edit (MariaDB System-Versioned Tables + Gemini Decisions API).</p>
             </div>
-            <div style="display:flex;gap:8px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <button type="button" class="wiki-btn" id="driftSwitchHauho">Trace: Hauho (14 changes)</button>
+              <button type="button" class="wiki-btn" id="driftSwitchAura">Trace: Regeringen Aura II (6 changes)</button>
               <button type="button" class="wiki-btn" id="driftSwitchTalvisota">Trace: Talvisota / Finnish History (Recorded run)</button>
               <button type="button" class="wiki-btn primary" id="driftBackToWiki">Back to Wikipedia article</button>
             </div>
@@ -1144,6 +1145,390 @@ window.WIKI_ARTICLES = {
     ],
     "html": "<div id=\"mw-content-text\" class=\"mw-body-content\">\n  <div class=\"mw-parser-output\">\n    <table class=\"infobox wiki-infobox vevent\" style=\"float: right; margin: 0 0 1em 1em; border: 1px solid #a2a9b1; padding: 0.2em; background-color: #f8f9fa; font-size: 88%; width: 22em; line-height: 1.5em;\">\n      <tbody>\n        <tr>\n          <th colspan=\"2\" class=\"infobox-above summary\" style=\"text-align: center; font-size: 125%; font-weight: bold; background-color: #eaecf0;\">Talvisota</th>\n        </tr>\n        <tr>\n          <td colspan=\"2\" class=\"infobox-subheader\" style=\"text-align: center;\">Osa toista maailmansotaa</td>\n        </tr>\n        <tr>\n          <th scope=\"row\">Aika</th>\n          <td>30. marraskuuta 1939 – 13. maaliskuuta 1940 (105 päivää)</td>\n        </tr>\n        <tr>\n          <th scope=\"row\">Paikka</th>\n          <td>Suomen ja Neuvostoliiton raja-alueet</td>\n        </tr>\n        <tr>\n          <th scope=\"row\">Tulos</th>\n          <td>Moskovan rauhansopimus; Suomi säilytti itsenäisyytensä mutta luovutti alueita Neuvostoliitolle</td>\n        </tr>\n        <tr>\n          <th colspan=\"2\" class=\"infobox-header\" style=\"text-align: center; background-color: #eaecf0;\">Osapuolet</th>\n        </tr>\n        <tr>\n          <td style=\"width: 50%; vertical-align: top; text-align: center;\"><b>Suomi</b></td>\n          <td style=\"width: 50%; vertical-align: top; text-align: center;\"><b>Neuvostoliitto</b></td>\n        </tr>\n        <tr>\n          <th colspan=\"2\" class=\"infobox-header\" style=\"text-align: center; background-color: #eaecf0;\">Komentajat</th>\n        </tr>\n        <tr>\n          <td style=\"vertical-align: top; text-align: center;\">C. G. E. Mannerheim</td>\n          <td style=\"vertical-align: top; text-align: center;\">Kliment Vorošilov<br>Semjon Timošenko</td>\n        </tr>\n      </tbody>\n    </table>\n\n    <p><b>Talvisota</b> oli 30. marraskuuta 1939 – 13. maaliskuuta 1940 Suomen ja Neuvostoliiton välillä käyty sota. Neuvostoliitto aloitti sodan hyökkäämällä ilman sodanjulistusta, ja sota päättyi 105 päivää myöhemmin Moskovan rauhansopimukseen. Hyökkäystä oli edeltänyt puna-armeijan lavastama provokaatio, Mainilan laukaukset, josta syytettiin Suomea.</p>\n\n    <p>Taustalla vaikutti elokuussa 1939 solmittu Saksan ja Neuvostoliiton välinen Molotov–Ribbentrop-sopimus ja sen salainen lisäpöytäkirja, jossa Suomi oli määritelty Neuvostoliiton etupiiriin. Syksyllä 1939 käydyissä neuvotteluissa Neuvostoliitto oli vaatinut Suomelta alueluovutuksia ja tukikohtaoikeuksia, joihin Suomen hallitus ei suostunut.</p>\n\n    <h2><span class=\"mw-headline\" id=\"Sodan_tausta\">Sodan tausta</span></h2>\n    <p>Toisen maailmansodan kynnyksellä natsi-Saksa ja Neuvostoliitto jakoivat Itä-Euroopan etupiireihin. Molotov–Ribbentrop-sopimus solmittiin Moskovassa 23. elokuuta 1939. Sen salaisen lisäpöytäkirjan mukaan Suomi, Viro, Latvia ja myöhemmin Liettua kuuluivat Neuvostoliiton intressipiiriin. Syksyllä 1939 Neuvostoliitto solmi Baltian maiden kanssa niin sanotut avunantosopimukset ja perusti niihin sotilastukikohtia. Samankaltaisia vaatimuksia esitettiin Suomelle neuvotteluissa, joita käytiin Moskovassa loka–marraskuussa 1939.</p>\n\n    <h2><span class=\"mw-headline\" id=\"Sodan_kulku\">Sodan kulku</span></h2>\n    <p>Neuvostoliitto lavasti 26. marraskuuta 1939 rajaloukkauksen nimeltä Mainilan laukaukset ja irtisanoi Suomen ja Neuvostoliiton hyökkäämättömyyssopimuksen. Puna-armeija aloitti suurhyökkäyksen Suomea vastaan aamulla 30. marraskuuta 1939 Karjalankannaksella ja Laatokan Karjalassa sekä useissa kohdissa itärajaa aina Jäämerelle saakka. Samalla Neuvostoliiton ilmavoimat pommittivat Helsinkiä ja muita asutuskeskuksia.</p>\n\n    <p>Puna-armeijan tavoitteena oli valloittaa Suomi lyhyessä ajassa ja asettaa valtaan Terijoen hallitus eli Suomen kansanhallitus johtajanaan Otto Wille Kuusinen. Suomen puolustusvoimat kykenivät kuitenkin torjuntavoittoihin Kannaksen Mannerheim-linjalla ja motittamaan vihollisdivisioonia pohjoisempana (muun muassa Suomussalmen taistelu ja Raatteen tie).</p>\n\n    <h2><span class=\"mw-headline\" id=\"Moskovan_rauha\">Moskovan rauha</span></h2>\n    <p>Ankarat torjuntataistelut talvipakkasissa ja puna-armeijan massiiviset tappiot pakottivat Neuvostoliiton johdon luopumaan koko Suomen miehittämisestä. Sota päättyi 13. maaliskuuta 1940 solmittuun Moskovan rauhansopimukseen. Moskovan rauhansopimus määräsi Suomen luovuttamaan Neuvostoliitolle Karjalankannaksen, Viipurin ja Laatokan Karjalan sekä osia Sallasta ja Kalastajasaarennosta ja vuokraamaan Hangon sotilastukikohdaksi. Suomi säilytti kalliisti lunastetun itsenäisyytensä.</p>\n\n    <h2><span class=\"mw-headline\" id=\"Lähteet\">Lähteet</span></h2>\n    <div class=\"reflist\" style=\"font-size: 90%;\">\n      <ol class=\"references\">\n        <li id=\"cite_note-1\"><span class=\"mw-cite-backlink\"><b>^</b></span> <span class=\"reference-text\">Trotter, William R.: <i>A Frozen Hell: The Russo-Finnish Winter War of 1939–1940</i>. Algonquin Books, 2000.</span></li>\n        <li id=\"cite_note-2\"><span class=\"mw-cite-backlink\"><b>^</b></span> <span class=\"reference-text\">Leskinen, Jari & Juutilainen, Antti (toim.): <i>Talvisodan pikkujättiläinen</i>. WSOY, 1999.</span></li>\n      </ol>\n    </div>\n  </div>\n</div>",
     "historyHtml": "\n    <div id=\"mw-history-content\">\n      <h1 id=\"firstHeading\" class=\"firstHeading\">Talvisota: Revision history</h1>\n      <p>View logs for this page: <a href=\"#logs\">Filter revisions</a></p>\n      <section id=\"pagehistory\">\n        <ul class=\"mw-contributions-list\">\n          \n        <li class=\"mw-history-line\">\n          <span class=\"mw-history-histlinks\">(<a href=\"#diff\" class=\"mw-history-undo\">cur</a> | <a href=\"#prev\">prev</a>)</span>\n          <input type=\"radio\" value=\"22109405\" name=\"oldid\">\n          <input type=\"radio\" value=\"22109405\" name=\"diff\">\n          <a href=\"#view\" class=\"mw-changeslist-date\">13. maaliskuuta 2025</a>\n          <span class=\"history-user\"><a href=\"#user\">SotahistoriaPro</a></span>\n          <span class=\"mw-changeslist-separator\">. .</span>\n          <span class=\"history-size\">(48210 bytes)</span>\n          <span class=\"mw-changeslist-separator\">. .</span>\n          <span class=\"comment\">(Moskovan rauhan 85-vuotispäivän päivitykset ja lähdeviitteet)</span>\n        </li>\n        \n        <li class=\"mw-history-line\">\n          <span class=\"mw-history-histlinks\">(<a href=\"#diff\" class=\"mw-history-undo\">cur</a> | <a href=\"#prev\">prev</a>)</span>\n          <input type=\"radio\" value=\"21092834\" name=\"oldid\">\n          <input type=\"radio\" value=\"21092834\" name=\"diff\">\n          <a href=\"#view\" class=\"mw-changeslist-date\">30. marraskuuta 2024</a>\n          <span class=\"history-user\"><a href=\"#user\">Rintamatutkija</a></span>\n          <span class=\"mw-changeslist-separator\">. .</span>\n          <span class=\"history-size\">(47650 bytes)</span>\n          <span class=\"mw-changeslist-separator\">. .</span>\n          <span class=\"comment\">(tarkennuksia Mainilan laukauksiin ja joukkojen ryhmitykseen)</span>\n        </li>\n        \n        <li class=\"mw-history-line\">\n          <span class=\"mw-history-histlinks\">(<a href=\"#diff\" class=\"mw-history-undo\">cur</a> | <a href=\"#prev\">prev</a>)</span>\n          <input type=\"radio\" value=\"19482019\" name=\"oldid\">\n          <input type=\"radio\" value=\"19482019\" name=\"diff\">\n          <a href=\"#view\" class=\"mw-changeslist-date\">15. lokakuuta 2022</a>\n          <span class=\"history-user\"><a href=\"#user\">KannasExpert</a></span>\n          <span class=\"mw-changeslist-separator\">. .</span>\n          <span class=\"history-size\">(45120 bytes)</span>\n          <span class=\"mw-changeslist-separator\">. .</span>\n          <span class=\"comment\">(Mannerheim-linjan puolustustaistelut)</span>\n        </li>\n        \n        <li class=\"mw-history-line\">\n          <span class=\"mw-history-histlinks\">(<a href=\"#diff\" class=\"mw-history-undo\">cur</a> | <a href=\"#prev\">prev</a>)</span>\n          <input type=\"radio\" value=\"128490\" name=\"oldid\">\n          <input type=\"radio\" value=\"128490\" name=\"diff\">\n          <a href=\"#view\" class=\"mw-changeslist-date\">13. lokakuuta 2003</a>\n          <span class=\"history-user\"><a href=\"#user\">Wikipedisti</a></span>\n          <span class=\"mw-changeslist-separator\">. .</span>\n          <span class=\"history-size\">(1240 bytes)</span>\n          <span class=\"mw-changeslist-separator\">. .</span>\n          <span class=\"comment\">(artikkelin aloitus)</span>\n        </li>\n        \n        </ul>\n      </section>\n    </div>\n    "
+  },
+  "fi:Auran_II_hallitus": {
+    "lang": "fi",
+    "title": "Auran II hallitus",
+    "slug": "Auran_II_hallitus",
+    "url": "https://fi.wikipedia.org/wiki/Auran_II_hallitus",
+    "editionLabel": "Vapaasta tietosanakirjasta Wikipediasta",
+    "langCount": "4 kieltä",
+    "siblings": [
+      {
+        "lang": "fi",
+        "label": "Suomi",
+        "key": "fi:Auran_II_hallitus",
+        "url": "https://fi.wikipedia.org/wiki/Auran_II_hallitus"
+      },
+      {
+        "lang": "en",
+        "label": "English",
+        "key": "en:Aura_II_cabinet",
+        "url": "https://en.wikipedia.org/wiki/Aura_II_cabinet"
+      },
+      {
+        "lang": "sv",
+        "label": "Svenska",
+        "key": "sv:Regeringen_Aura_II",
+        "url": "https://sv.wikipedia.org/wiki/Regeringen_Aura_II"
+      }
+    ],
+    "html": `<div id="mw-content-text" class="mw-body-content">
+  <div class="mw-parser-output">
+    <table class="infobox wiki-infobox" style="float: right; margin: 0 0 1em 1em; border: 1px solid #a2a9b1; padding: 0.2em; background-color: #f8f9fa; font-size: 88%; width: 22em; line-height: 1.5em;">
+      <tbody>
+        <tr>
+          <th colspan="2" class="infobox-above" style="text-align: center; font-size: 125%; font-weight: bold; background-color: #eaecf0;">Auran II hallitus</th>
+        </tr>
+        <tr>
+          <td colspan="2" class="infobox-subheader" style="text-align: center; font-weight: bold;">Suomen tasavallan 54. hallitus</td>
+        </tr>
+        <tr>
+          <th scope="row">Pääministeri</th>
+          <td>Teuvo Aura</td>
+        </tr>
+        <tr>
+          <th scope="row">Hallitustyyppi</th>
+          <td>Virkamieshallitus</td>
+        </tr>
+        <tr>
+          <th scope="row">Toimikausi</th>
+          <td>29.10.1971–23.2.1972 (118 päivää)</td>
+        </tr>
+        <tr>
+          <th scope="row">Edeltäjä</th>
+          <td>Karjalaisen II hallitus</td>
+        </tr>
+        <tr>
+          <th scope="row">Seuraaja</th>
+          <td>Paasion II hallitus</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><b>Auran II hallitus</b> oli Suomen tasavallan 54. hallitus, joka toimi virkamieshallituksena 29. lokakuuta 1971 – 23. helmikuuta 1972 kaikkiaan 118 päivän ajan. Hallituksen nimitti tasavallan presidentti Urho Kekkonen sen jälkeen, kun Ahti Karjalaisen II hallitus oli hajonnut keskustapuolueen ja SDP:n väliseen maataloustulokiistaan.</p>
+
+    <h2><span class="mw-headline" id="Hallituksen_muodostaminen">Hallituksen muodostaminen ja toiminta</span></h2>
+    <p>Karjalaisen II hallituksen kaaduttua maataloustulolain ja MTK:n tulovaatimusten aiheuttamaan kiistaan presidentti Urho Kekkonen hajotti eduskunnan 29. lokakuuta 1971 ja määräsi uudet ennenaikaiset eduskuntavaalit pidettäviksi tammikuussa 1972. Samalla Kekkonen nimitti Helsingin kaupunginjohtaja Teuvo Auran johtaman toisen virkamieshallituksen hoitamaan juoksevia asioita vaalien yli.</p>
+
+    <p>Auran II hallitus valmisteli vuoden 1972 talousarvion loppuun ja jatkoi Suomen ja Euroopan talousyhteisön (EEC) välisen vapaakauppasopimuksen virkamiestason neuvotteluja. Tammikuun 1972 eduskuntavaalien jälkeen hallitus jätti paikkansa Rafael Paasion II hallitukselle 23. helmikuuta 1972.</p>
+
+    <h2><span class="mw-headline" id="Ministerit">Kokoonpano</span></h2>
+    <table class="wikitable sortable" style="font-size: 90%; width: 100%; border: 1px solid #a2a9b1; border-collapse: collapse;">
+      <thead>
+        <tr style="background-color: #eaecf0;">
+          <th style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em; text-align: left;">Salkku</th>
+          <th style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em; text-align: left;">Ministeri</th>
+          <th style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em; text-align: left;">Aloitti</th>
+          <th style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em; text-align: left;">Lopetti</th>
+          <th style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em; text-align: left;">Puolue</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Pääministeri</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Teuvo Aura</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29.10.1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23.2.1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">ammattiministeri (LKP)</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Ministeri valtioneuvoston kansliassa, liikenneministeri</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Esa Timonen</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29.10.1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23.2.1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">ammattiministeri (Kesk.)</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Ulkoasiainministeri</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Olavi J. Mattila</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29.10.1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23.2.1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">ammattiministeri</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Ministeri ulkoasiainministeriössä, ministeri kauppa- ja teollisuusministeriössä</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Reino Rossi</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29.10.1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23.2.1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">ammattiministeri</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Oikeusministeri</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">K. J. Lång</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29.10.1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23.2.1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">ammattiministeri (SDP)</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Sisäasiainministeri</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Heikki Tuominen</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29.10.1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23.2.1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">ammattiministeri</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Puolustusministeri</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Arvo Pentti</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29.10.1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23.2.1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">ammattiministeri (Kesk.)</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Valtiovarainministeri</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Päiviö Hetemäki</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29.10.1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23.2.1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">ammattiministeri (Kok.)</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Opetusministeri</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Matti Louekoski</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29.10.1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23.2.1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">ammattiministeri (SDP)</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Ministeri opetusministeriössä</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Jouko Tyyri</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29.10.1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23.2.1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">ammattiministeri (Kesk.)</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Maa- ja metsätalousministeri</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Samuli Suomela</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29.10.1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23.2.1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">ammattiministeri</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Kauppa- ja teollisuusministeri</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Gunnar Korhonen</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29.10.1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23.2.1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">ammattiministeri</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Sosiaali- ja terveysministeri</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Alli Lahtinen</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29.10.1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23.2.1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">ammattiministeri (SDP)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2><span class="mw-headline" id="Lähteet">Lähteet</span></h2>
+    <div class="reflist" style="font-size: 90%;">
+      <ol class="references">
+        <li id="cite_note-1"><span class="mw-cite-backlink"><b>^</b></span> <span class="reference-text">Valtioneuvosto: 54. Aura II 29.10.1971–23.2.1972. Hallitukset ja ministerit vuodesta 1917.</span></li>
+      </ol>
+    </div>
+  </div>
+</div>`,
+    "historyHtml": `
+    <div id="mw-history-content">
+      <h1 id="firstHeading" class="firstHeading">Auran II hallitus: Muokkaushistoria</h1>
+      <p>View logs for this page: <a href="#logs">Filter revisions</a></p>
+      <section id="pagehistory">
+        <ul class="mw-contributions-list">
+          <li class="mw-history-line">
+            <span class="mw-history-histlinks">(<a href="#diff" class="mw-history-undo">cur</a> | <a href="#prev">prev</a>)</span>
+            <input type="radio" value="21804912" name="oldid">
+            <input type="radio" value="21804912" name="diff">
+            <a href="#view" class="mw-changeslist-date">14. marraskuuta 2024</a>
+            <span class="history-user"><a href="#user">ValtiopäiväHistorioitsija</a></span>
+            <span class="mw-changeslist-separator">. .</span>
+            <span class="history-size">(7120 bytes)</span>
+            <span class="mw-changeslist-separator">. .</span>
+            <span class="comment">(täydennetty maataloustulokiistaa ja EEC-valmistelua)</span>
+          </li>
+          <li class="mw-history-line">
+            <span class="mw-history-histlinks">(<a href="#diff" class="mw-history-undo">cur</a> | <a href="#prev">prev</a>)</span>
+            <input type="radio" value="19204811" name="oldid">
+            <input type="radio" value="19204811" name="diff">
+            <a href="#view" class="mw-changeslist-date">18. helmikuuta 2021</a>
+            <span class="history-user"><a href="#user">PolitiikkaToimittaja</a></span>
+            <span class="mw-changeslist-separator">. .</span>
+            <span class="history-size">(6340 bytes)</span>
+            <span class="mw-changeslist-separator">. .</span>
+            <span class="comment">(tarkistettu ministeritaulukon toimikaudet valtioneuvoston tietokannasta)</span>
+          </li>
+        </ul>
+      </section>
+    </div>
+    `
+  },
+  "en:Aura_II_cabinet": {
+    "lang": "en",
+    "title": "Aura II cabinet",
+    "slug": "Aura_II_cabinet",
+    "url": "https://en.wikipedia.org/wiki/Aura_II_cabinet",
+    "editionLabel": "From Wikipedia, the free encyclopedia",
+    "langCount": "4 languages",
+    "siblings": [
+      {
+        "lang": "fi",
+        "label": "Suomi",
+        "key": "fi:Auran_II_hallitus",
+        "url": "https://fi.wikipedia.org/wiki/Auran_II_hallitus"
+      },
+      {
+        "lang": "en",
+        "label": "English",
+        "key": "en:Aura_II_cabinet",
+        "url": "https://en.wikipedia.org/wiki/Aura_II_cabinet"
+      },
+      {
+        "lang": "sv",
+        "label": "Svenska",
+        "key": "sv:Regeringen_Aura_II",
+        "url": "https://sv.wikipedia.org/wiki/Regeringen_Aura_II"
+      }
+    ],
+    "html": `<div id="mw-content-text" class="mw-body-content">
+  <div class="mw-parser-output">
+    <table class="infobox wiki-infobox" style="float: right; margin: 0 0 1em 1em; border: 1px solid #a2a9b1; padding: 0.2em; background-color: #f8f9fa; font-size: 88%; width: 22em; line-height: 1.5em;">
+      <tbody>
+        <tr>
+          <th colspan="2" class="infobox-above" style="text-align: center; font-size: 125%; font-weight: bold; background-color: #eaecf0;">Aura II cabinet</th>
+        </tr>
+        <tr>
+          <td colspan="2" class="infobox-subheader" style="text-align: center; font-weight: bold;">54th Cabinet of Finland</td>
+        </tr>
+        <tr>
+          <th scope="row">Prime Minister</th>
+          <td>Teuvo Aura</td>
+        </tr>
+        <tr>
+          <th scope="row">Status</th>
+          <td>Caretaker cabinet</td>
+        </tr>
+        <tr>
+          <th scope="row">Term</th>
+          <td>29 October 1971 – 23 February 1972</td>
+        </tr>
+        <tr>
+          <th scope="row">Predecessor</th>
+          <td>Karjalainen II cabinet</td>
+        </tr>
+        <tr>
+          <th scope="row">Successor</th>
+          <td>Paasio II cabinet</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>The <b>second cabinet of Teuvo Aura</b> was the 54th government of the Republic of Finland, serving as a non-partisan caretaker cabinet from 29 October 1971 to 23 February 1972 (118 days). Appointed by President Urho Kekkonen after the collapse of Ahti Karjalainen's second cabinet over agricultural income pricing, it governed until the formation of Rafael Paasio's minority government following the January 1972 parliamentary election.</p>
+
+    <h2><span class="mw-headline" id="Ministers">Ministers</span></h2>
+    <table class="wikitable sortable" style="font-size: 90%; width: 100%; border: 1px solid #a2a9b1; border-collapse: collapse;">
+      <thead>
+        <tr style="background-color: #eaecf0;">
+          <th style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em; text-align: left;">Portfolio</th>
+          <th style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em; text-align: left;">Minister</th>
+          <th style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em; text-align: left;">Took office</th>
+          <th style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em; text-align: left;">Left office</th>
+          <th style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em; text-align: left;">Party</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Prime Minister</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Teuvo Aura</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29 October 1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23 February 1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">none</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Minister at the Prime Minister's Office</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Esa Timonen</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29 October 1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23 February 1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">none</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Minister for Foreign Affairs</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Olavi J. Mattila</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29 October 1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23 February 1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">none</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Minister at the Ministry for Foreign Affairs</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Reino Rossi</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29 October 1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23 February 1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">none</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Minister of Justice</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">K. J. Lång</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29 October 1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23 February 1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">none</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Minister of Education</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Matti Louekoski</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29 October 1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23 February 1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">none</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Minister at the Ministry of Education</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Jouko Tyyri</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29 October 1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23 February 1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">none</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Minister of Transport</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Esa Timonen</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29 October 1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23 February 1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">none</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Minister at the Ministry of Trade and Industry</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">Reino Rossi</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">29 October 1971</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">23 February 1972</td>
+          <td style="border: 1px solid #a2a9b1; padding: 0.3em 0.5em;">none</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2><span class="mw-headline" id="References">References</span></h2>
+    <div class="reflist" style="font-size: 90%;">
+      <ol class="references">
+        <li id="cite_note-1"><span class="mw-cite-backlink"><b>^</b></span> <span class="reference-text">Finnish Government: 54. Aura II (29 October 1971 – 23 February 1972).</span></li>
+      </ol>
+    </div>
+  </div>
+</div>`,
+    "historyHtml": `
+    <div id="mw-history-content">
+      <h1 id="firstHeading" class="firstHeading">Aura II cabinet: Revision history</h1>
+      <p>View logs for this page: <a href="#logs">Filter revisions</a></p>
+      <section id="pagehistory">
+        <ul class="mw-contributions-list">
+          <li class="mw-history-line">
+            <span class="mw-history-histlinks">(<a href="#diff" class="mw-history-undo">cur</a> | <a href="#prev">prev</a>)</span>
+            <input type="radio" value="1182904112" name="oldid">
+            <input type="radio" value="1182904112" name="diff">
+            <a href="#view" class="mw-changeslist-date">2 November 2024</a>
+            <span class="history-user"><a href="#user">NordicCabinets</a></span>
+            <span class="mw-changeslist-separator">. .</span>
+            <span class="history-size">(5410 bytes)</span>
+            <span class="mw-changeslist-separator">. .</span>
+            <span class="comment">(verified cabinet table dates against Finnish Government register)</span>
+          </li>
+        </ul>
+      </section>
+    </div>
+    `
   }
 };
 
@@ -1604,7 +1989,217 @@ window.WIKICHECK_DATA = {
           }
         }
       ],
+      "gaps": [
+        {
+          "id": 301,
+          "importance": "high",
+          "sim": 0.362,
+          "source": {
+            "lang": "fi",
+            "title": "Auran II hallitus",
+            "url": "https://fi.wikipedia.org/wiki/Auran_II_hallitus"
+          },
+          "summary": "Explains how the MTK agricultural income dispute collapsed Karjalainen's cabinet and prompted President Kekkonen to dissolve Parliament on 29 October 1971.",
+          "paragraph": "Karjalaisen II hallituksen kaaduttua maataloustulolain ja MTK:n tulovaatimusten aiheuttamaan kiistaan presidentti Urho Kekkonen hajotti eduskunnan 29. lokakuuta 1971 ja määräsi uudet ennenaikaiset eduskuntavaalit pidettäviksi tammikuussa 1972. Samalla Kekkonen nimitti Helsingin kaupunginjohtaja Teuvo Auran johtaman toisen virkamieshallituksen hoitamaan juoksevia asioita vaalien yli."
+        },
+        {
+          "id": 302,
+          "importance": "medium",
+          "sim": 0.412,
+          "source": {
+            "lang": "fi",
+            "title": "Auran II hallitus",
+            "url": "https://fi.wikipedia.org/wiki/Auran_II_hallitus"
+          },
+          "summary": "Details the Aura II caretaker cabinet's completion of the 1972 state budget and civil-service negotiations on Finland's EEC free-trade agreement.",
+          "paragraph": "Auran II hallitus valmisteli vuoden 1972 talousarvion loppuun ja jatkoi Suomen ja Euroopan talousyhteisön (EEC) välisen vapaakauppasopimuksen virkamiestason neuvotteluja. Tammikuun 1972 eduskuntavaalien jälkeen hallitus jätti paikkansa Rafael Paasion II hallitukselle 23. helmikuuta 1972."
+        }
+      ]
+    },
+    "fi:Auran_II_hallitus": {
+      "found": true,
+      "cached": true,
+      "took_ms": 91,
+      "article": {
+        "lang": "fi",
+        "page_id": 221904,
+        "wikidata_id": "Q1548874",
+        "title": "Auran II hallitus",
+        "url": "https://fi.wikipedia.org/wiki/Auran_II_hallitus"
+      },
+      "siblings": [
+        {
+          "lang": "sv",
+          "page_id": 412098,
+          "title": "Regeringen Aura II",
+          "url": "https://sv.wikipedia.org/wiki/Regeringen_Aura_II"
+        },
+        {
+          "lang": "en",
+          "page_id": 3180211,
+          "title": "Aura II cabinet",
+          "url": "https://en.wikipedia.org/wiki/Aura_II_cabinet"
+        }
+      ],
+      "conflicts": [
+        {
+          "id": 41,
+          "type": "date",
+          "confidence": 0.95,
+          "current_is_a": true,
+          "explanation": "Article A states that Reino Rossi served until 23 February 1972, whereas Article B lists his end date in the Ministry for Foreign Affairs and Ministry of Trade and Industry as 23 February 1971.",
+          "current": {
+            "lang": "fi",
+            "title": "Auran II hallitus",
+            "url": "https://fi.wikipedia.org/wiki/Auran_II_hallitus",
+            "quote": "Ministeri ulkoasiainministeriössä, ministeri kauppa- ja teollisuusministeriössä | Reino Rossi | 29.10.1971 | 23.2.1972"
+          },
+          "other": {
+            "lang": "sv",
+            "title": "Regeringen Aura II",
+            "url": "https://sv.wikipedia.org/wiki/Regeringen_Aura_II",
+            "quote": "| Minister i utrikesministeriet Reino Rossi | 29.10.1971–23.2.1971 | opolitisk |"
+          }
+        },
+        {
+          "id": 42,
+          "type": "date",
+          "confidence": 0.95,
+          "current_is_a": true,
+          "explanation": "Article A states that Jouko Tyyri served until 23 February 1972, whereas Article B states his term ended on 23 February 1971.",
+          "current": {
+            "lang": "fi",
+            "title": "Auran II hallitus",
+            "url": "https://fi.wikipedia.org/wiki/Auran_II_hallitus",
+            "quote": "Ministeri opetusministeriössä | Jouko Tyyri | 29.10.1971 | 23.2.1972"
+          },
+          "other": {
+            "lang": "sv",
+            "title": "Regeringen Aura II",
+            "url": "https://sv.wikipedia.org/wiki/Regeringen_Aura_II",
+            "quote": "| Minister i undervisningsministeriet Jouko Tyyri | 29.10.1971–23.2.1971 | opolitisk (Centern) |"
+          }
+        },
+        {
+          "id": 43,
+          "type": "date",
+          "confidence": 0.95,
+          "current_is_a": true,
+          "explanation": "Article A lists Esa Timonen's start date at the Prime Minister's Office as 29 October 1971, whereas Article B lists 2 November 1971.",
+          "current": {
+            "lang": "fi",
+            "title": "Auran II hallitus",
+            "url": "https://fi.wikipedia.org/wiki/Auran_II_hallitus",
+            "quote": "Ministeri valtioneuvoston kansliassa, liikenneministeri | Esa Timonen | 29.10.1971 | 23.2.1972"
+          },
+          "other": {
+            "lang": "sv",
+            "title": "Regeringen Aura II",
+            "url": "https://sv.wikipedia.org/wiki/Regeringen_Aura_II",
+            "quote": "| Minister i statsrådets kansli Esa Timonen | 2.11.1971–23.2.1972 | opolitisk (Centern) |"
+          }
+        }
+      ],
       "gaps": []
+    },
+    "en:Aura_II_cabinet": {
+      "found": true,
+      "cached": true,
+      "took_ms": 93,
+      "article": {
+        "lang": "en",
+        "page_id": 3180211,
+        "wikidata_id": "Q1548874",
+        "title": "Aura II cabinet",
+        "url": "https://en.wikipedia.org/wiki/Aura_II_cabinet"
+      },
+      "siblings": [
+        {
+          "lang": "sv",
+          "page_id": 412098,
+          "title": "Regeringen Aura II",
+          "url": "https://sv.wikipedia.org/wiki/Regeringen_Aura_II"
+        },
+        {
+          "lang": "fi",
+          "page_id": 221904,
+          "title": "Auran II hallitus",
+          "url": "https://fi.wikipedia.org/wiki/Auran_II_hallitus"
+        }
+      ],
+      "conflicts": [
+        {
+          "id": 51,
+          "type": "date",
+          "confidence": 0.95,
+          "current_is_a": true,
+          "explanation": "Article A lists Esa Timonen's start date as Minister at the Prime Minister's Office as 29 October 1971, whereas Article B lists it as 2 November 1971.",
+          "current": {
+            "lang": "en",
+            "title": "Aura II cabinet",
+            "url": "https://en.wikipedia.org/wiki/Aura_II_cabinet",
+            "quote": "| Minister at the Prime Minister's Office | Esa Timonen | 29 October 1971 | 23 February 1972 | none |"
+          },
+          "other": {
+            "lang": "sv",
+            "title": "Regeringen Aura II",
+            "url": "https://sv.wikipedia.org/wiki/Regeringen_Aura_II",
+            "quote": "| Minister i statsrådets kansli Esa Timonen | 2.11.1971–23.2.1972 | opolitisk (Centern) |"
+          }
+        },
+        {
+          "id": 52,
+          "type": "date",
+          "confidence": 0.95,
+          "current_is_a": true,
+          "explanation": "Article A states that Reino Rossi served until 23 February 1972, whereas Article B lists his end date in the Ministry for Foreign Affairs as 23 February 1971.",
+          "current": {
+            "lang": "en",
+            "title": "Aura II cabinet",
+            "url": "https://en.wikipedia.org/wiki/Aura_II_cabinet",
+            "quote": "| Minister at the Ministry for Foreign Affairs | Reino Rossi | 29 October 1971 | 23 February 1972 | none |"
+          },
+          "other": {
+            "lang": "sv",
+            "title": "Regeringen Aura II",
+            "url": "https://sv.wikipedia.org/wiki/Regeringen_Aura_II",
+            "quote": "| Minister i utrikesministeriet Reino Rossi | 29.10.1971–23.2.1971 | opolitisk |"
+          }
+        },
+        {
+          "id": 53,
+          "type": "date",
+          "confidence": 0.95,
+          "current_is_a": true,
+          "explanation": "Article A states that Jouko Tyyri left office on 23 February 1972, while Article B lists 23 February 1971.",
+          "current": {
+            "lang": "en",
+            "title": "Aura II cabinet",
+            "url": "https://en.wikipedia.org/wiki/Aura_II_cabinet",
+            "quote": "| Minister at the Ministry of Education | Jouko Tyyri | 29 October 1971 | 23 February 1972 | none |"
+          },
+          "other": {
+            "lang": "sv",
+            "title": "Regeringen Aura II",
+            "url": "https://sv.wikipedia.org/wiki/Regeringen_Aura_II",
+            "quote": "| Minister i undervisningsministeriet Jouko Tyyri | 29.10.1971–23.2.1971 | opolitisk (Centern) |"
+          }
+        }
+      ],
+      "gaps": [
+        {
+          "id": 311,
+          "importance": "high",
+          "sim": 0.388,
+          "source": {
+            "lang": "fi",
+            "title": "Auran II hallitus",
+            "url": "https://fi.wikipedia.org/wiki/Auran_II_hallitus"
+          },
+          "summary": "Details the Aura II caretaker cabinet's completion of the 1972 state budget and civil-service negotiations on Finland's EEC free-trade agreement.",
+          "paragraph": "Auran II hallitus valmisteli vuoden 1972 talousarvion loppuun ja jatkoi Suomen ja Euroopan talousyhteisön (EEC) välisen vapaakauppasopimuksen virkamiestason neuvotteluja. Tammikuun 1972 eduskuntavaalien jälkeen hallitus jätti paikkansa Rafael Paasion II hallitukselle 23. helmikuuta 1972."
+        }
+      ]
     },
     "fi:Talvisota": {
       "found": true,
@@ -1788,11 +2383,11 @@ window.WIKICHECK_DATA = {
       ]
     },
     "aura": {
-      "answer": "Teuvo Aura's second caretaker cabinet (Regeringen Aura II / Auran II hallitus) governed Finland from 29 October 1971 to 23 February 1972 [1][2]. However, the Swedish Wikipedia table contains date typos listing the end date for Reino Rossi and Jouko Tyyri as 23 February 1971 and Esa Timonen's start date as 2 November 1971, contradicting both the Finnish and English editions [1][2].",
+      "answer": "Teuvo Aura's second caretaker cabinet (Regeringen Aura II / Auran II hallitus / Aura II cabinet) governed Finland for 118 days from 29 October 1971 to 23 February 1972 after Ahti Karjalainen's second cabinet collapsed over agricultural income pricing [1][3]. However, the Swedish Wikipedia table contains date typos listing the end date for Reino Rossi and Jouko Tyyri as 23 February 1971 and Esa Timonen's start date at the Prime Minister's Office as 2 November 1971, contradicting both the Finnish and English editions (which record 29 October 1971 – 23 February 1972 for all three roles) [1][2][3].",
       "took_ms": 1350,
       "conflicts": [
         {
-          "about": "Ministerial end dates for Reino Rossi and Jouko Tyyri (1972 vs 1971 typo in Swedish Wikipedia)",
+          "about": "Ministerial end dates for Reino Rossi and Jouko Tyyri (23 February 1972 in Finnish & English vs 23 February 1971 typo in Swedish Wikipedia)",
           "a": {
             "n": 1,
             "phrase": "Ministeri ulkoasiainministeriössä Reino Rossi 29.10.1971 – 23.2.1972"
@@ -1800,6 +2395,17 @@ window.WIKICHECK_DATA = {
           "b": {
             "n": 2,
             "phrase": "Minister i utrikesministeriet Reino Rossi 29.10.1971–23.2.1971"
+          }
+        },
+        {
+          "about": "Start date for Esa Timonen as Minister at the Prime Minister's Office (29 October 1971 in English & Finnish vs 2 November 1971 in Swedish Wikipedia)",
+          "a": {
+            "n": 3,
+            "phrase": "Minister at the Prime Minister's Office | Esa Timonen | 29 October 1971 | 23 February 1972"
+          },
+          "b": {
+            "n": 2,
+            "phrase": "Minister i statsrådets kansli Esa Timonen 2.11.1971–23.2.1972"
           }
         }
       ],
@@ -1811,7 +2417,7 @@ window.WIKICHECK_DATA = {
           "title": "Auran II hallitus (fi)",
           "url": "https://fi.wikipedia.org/wiki/Auran_II_hallitus",
           "edit_url": "https://fi.wikipedia.org/w/index.php?title=Auran_II_hallitus&action=edit",
-          "passage": "Auran II hallitus oli Suomen tasavallan 54. hallitus, joka toimi virkamieshallituksena 29. lokakuuta 1971 – 23. helmikuuta 1972.",
+          "passage": "Auran II hallitus oli Suomen tasavallan 54. hallitus, joka toimi virkamieshallituksena 29. lokakuuta 1971 – 23. helmikuuta 1972. Ministeri ulkoasiainministeriössä Reino Rossi 29.10.1971 – 23.2.1972; ministeri opetusministeriössä Jouko Tyyri 29.10.1971 – 23.2.1972.",
           "neutrality": {
             "level": "neutral",
             "reason": "Neutral factual record."
@@ -1824,16 +2430,270 @@ window.WIKICHECK_DATA = {
           "title": "Regeringen Aura II (sv)",
           "url": "https://sv.wikipedia.org/wiki/Regeringen_Aura_II",
           "edit_url": "https://sv.wikipedia.org/w/index.php?title=Regeringen_Aura_II&action=edit",
-          "passage": "Regeringen Aura II var Republiken Finlands 54:e regering (29 oktober 1971 – 23 februari 1972). Minister i utrikesministeriet Reino Rossi 29.10.1971–23.2.1971.",
+          "passage": "Regeringen Aura II var Republiken Finlands 54:e regering (29 oktober 1971 – 23 februari 1972). Minister i statsrådets kansli Esa Timonen 2.11.1971–23.2.1972. Minister i utrikesministeriet Reino Rossi 29.10.1971–23.2.1971.",
           "neutrality": {
             "level": "neutral",
-            "reason": "Neutral text containing a date discrepancy."
+            "reason": "Neutral text containing ministerial date discrepancies."
+          }
+        },
+        {
+          "n": 3,
+          "page_id": 3180211,
+          "rev_id": 1182904112,
+          "title": "Aura II cabinet (en)",
+          "url": "https://en.wikipedia.org/wiki/Aura_II_cabinet",
+          "edit_url": "https://en.wikipedia.org/w/index.php?title=Aura_II_cabinet&action=edit",
+          "passage": "The second cabinet of Teuvo Aura was the 54th government of Finland (29 October 1971 – 23 February 1972). Minister at the Prime Minister's Office | Esa Timonen | 29 October 1971 | 23 February 1972.",
+          "neutrality": {
+            "level": "neutral",
+            "reason": "Neutral encyclopedic cabinet overview."
           }
         }
       ]
     }
   },
   "drift": {
+    "Aura": [
+      [
+        "sources",
+        {
+          "articles": [
+            {
+              "i": 0,
+              "page_id": 221904,
+              "title": "Auran II hallitus",
+              "url": "https://fi.wikipedia.org/wiki/Auran_II_hallitus",
+              "found_as": "Regeringen Aura II (sv)",
+              "n_revs": 86,
+              "first": "2005-02-18T14:12:00Z",
+              "last": "2025-11-14T19:40:00Z"
+            }
+          ]
+        }
+      ],
+      [
+        "claims",
+        {
+          "claims": [
+            {
+              "id": "ac1",
+              "label": "Caretaker mandate 29 Oct 1971 – 23 Feb 1972",
+              "text": "Teuvo Aura's second caretaker cabinet served for 118 days from 29 October 1971 to 23 February 1972.",
+              "theme": "Mandate"
+            },
+            {
+              "id": "ac2",
+              "label": "Reino Rossi & Jouko Tyyri end date (1972)",
+              "text": "Ministers Reino Rossi and Jouko Tyyri served until 23 February 1972 (rather than the 1971 typo in Swedish Wikipedia).",
+              "theme": "Dates"
+            },
+            {
+              "id": "ac3",
+              "label": "Esa Timonen start date (29 Oct 1971)",
+              "text": "Esa Timonen took office at the Prime Minister's Office on 29 October 1971 when the cabinet was appointed.",
+              "theme": "Dates"
+            },
+            {
+              "id": "ac4",
+              "label": "Agricultural income dispute & snap election",
+              "text": "President Kekkonen appointed Aura II after the Center-SDP agricultural income dispute and dissolved Parliament for January 1972 elections.",
+              "theme": "Context"
+            },
+            {
+              "id": "ac5",
+              "label": "EEC free-trade & 1972 budget preparation",
+              "text": "The caretaker cabinet completed the 1972 budget proposal and continued civil-service EEC free-trade talks.",
+              "theme": "Policy"
+            }
+          ]
+        }
+      ],
+      [
+        "probes",
+        {
+          "round": 0,
+          "items": [
+            {
+              "a": 0,
+              "t": "2005-02-18T14:12:00Z",
+              "rev_id": 210490,
+              "s": {
+                "ac1": [0.9, 0.9],
+                "ac2": [0.0, 0.2],
+                "ac3": [0.0, 0.2],
+                "ac4": [0.0, 0.2],
+                "ac5": [0.0, 0.1]
+              }
+            },
+            {
+              "a": 0,
+              "t": "2009-06-11T10:00:00Z",
+              "rev_id": 6812045,
+              "s": {
+                "ac1": [0.9, 0.95],
+                "ac2": [0.35, 0.75],
+                "ac3": [-0.3, 0.7],
+                "ac4": [0.35, 0.75],
+                "ac5": [0.0, 0.2]
+              }
+            },
+            {
+              "a": 0,
+              "t": "2015-03-22T10:00:00Z",
+              "rev_id": 14820192,
+              "s": {
+                "ac1": [0.9, 0.95],
+                "ac2": [0.9, 0.9],
+                "ac3": [0.85, 0.9],
+                "ac4": [0.85, 0.85],
+                "ac5": [0.35, 0.75]
+              }
+            },
+            {
+              "a": 0,
+              "t": "2024-11-14T10:00:00Z",
+              "rev_id": 21804912,
+              "s": {
+                "ac1": [0.95, 0.95],
+                "ac2": [0.95, 0.95],
+                "ac3": [0.95, 0.95],
+                "ac4": [0.9, 0.9],
+                "ac5": [0.9, 0.9]
+              }
+            }
+          ]
+        }
+      ],
+      [
+        "change",
+        {
+          "a": 0,
+          "claim": "ac5",
+          "rev_before": 19204811,
+          "rev_after": 21804912,
+          "t": "2024-11-14T16:20:00Z",
+          "from": [0.35, 0.75],
+          "to": [0.9, 0.9],
+          "user": "ValtiopäiväHistorioitsija",
+          "comment": "täydennetty maataloustulokiistaa ja EEC-valmistelua",
+          "hunk": {
+            "del": ["Auran II hallitus hoiti juoksevia asioita eduskuntavaalien ajan."],
+            "add": ["Auran II hallitus valmisteli vuoden 1972 talousarvion loppuun ja jatkoi Suomen ja Euroopan talousyhteisön (EEC) välisen vapaakauppasopimuksen virkamiestason neuvotteluja."]
+          },
+          "headline": "EEC free-trade & 1972 budget preparation: stated with attribution until November 2024, stated as fact since"
+        }
+      ],
+      [
+        "change",
+        {
+          "a": 0,
+          "claim": "ac3",
+          "rev_before": 12094810,
+          "rev_after": 14820192,
+          "t": "2015-03-22T12:15:00Z",
+          "from": [-0.3, 0.7],
+          "to": [0.85, 0.9],
+          "user": "PolitiikkaToimittaja",
+          "comment": "tarkistettu Esa Timosen kansliaministerikauden alkamispäivä 29.10.1971 valtioneuvoston rekisteristä",
+          "hunk": {
+            "del": ["Ministeri valtioneuvoston kansliassa Esa Timonen (2.11.1971–23.2.1972)"],
+            "add": ["Ministeri valtioneuvoston kansliassa, liikenneministeri | Esa Timonen | 29.10.1971 | 23.2.1972"]
+          },
+          "headline": "Esa Timonen start date (29 Oct 1971): presented as disputed until March 2015, stated as fact since"
+        }
+      ],
+      [
+        "change",
+        {
+          "a": 0,
+          "claim": "ac2",
+          "rev_before": 9840122,
+          "rev_after": 11049281,
+          "t": "2012-09-04T09:42:00Z",
+          "from": [0.35, 0.75],
+          "to": [0.9, 0.9],
+          "user": "ArkistoTutkija",
+          "comment": "lisätty kaikkien ministereiden tarkat aloitus- ja lopetuspäivämäärät (29.10.1971–23.2.1972)",
+          "hunk": {
+            "del": ["Ulkomaankauppaministeri Reino Rossi ja II opetusministeri Jouko Tyyri."],
+            "add": ["Ministeri ulkoasiainministeriössä, ministeri kauppa- ja teollisuusministeriössä | Reino Rossi | 29.10.1971 | 23.2.1972; Ministeri opetusministeriössä | Jouko Tyyri | 29.10.1971 | 23.2.1972"]
+          },
+          "headline": "Reino Rossi & Jouko Tyyri end date (1972): stated with attribution until September 2012, stated as fact since"
+        }
+      ],
+      [
+        "change",
+        {
+          "a": 0,
+          "claim": "ac4",
+          "rev_before": 6812045,
+          "rev_after": 8910234,
+          "t": "2011-01-19T18:05:00Z",
+          "from": [0.35, 0.75],
+          "to": [0.85, 0.85],
+          "user": "SuomenHistoria",
+          "comment": "tarkennettu Karjalaisen II hallituksen kaatumisen syy (maataloustulokiista) ja eduskunnan hajotus",
+          "hunk": {
+            "del": ["Hallitus nimitettiin Karjalaisen hallituksen eron jälkeen."],
+            "add": ["Karjalaisen II hallituksen kaaduttua maataloustulolain ja MTK:n tulovaatimusten aiheuttamaan kiistaan presidentti Urho Kekkonen hajotti eduskunnan 29. lokakuuta 1971."]
+          },
+          "headline": "Agricultural income dispute & snap election: stated with attribution until January 2011, stated as fact since"
+        }
+      ],
+      [
+        "change",
+        {
+          "a": 0,
+          "claim": "ac3",
+          "rev_before": 4102938,
+          "rev_after": 6812045,
+          "t": "2009-06-11T10:00:00Z",
+          "from": [0.0, 0.2],
+          "to": [-0.3, 0.7],
+          "user": "WikiMuokkaaja",
+          "comment": "lisätty sivutoimiset ministerit",
+          "hunk": {
+            "del": ["Liikenneministeri Esa Timonen."],
+            "add": ["Liikenneministeri ja ministeri valtioneuvoston kansliassa Esa Timonen (nimityspäivä 29.10. tai 2.11.1971)."]
+          },
+          "headline": "Esa Timonen start date (29 Oct 1971): not addressed until June 2009, presented as disputed since"
+        }
+      ],
+      [
+        "change",
+        {
+          "a": 0,
+          "claim": "ac2",
+          "rev_before": 210490,
+          "rev_after": 3910482,
+          "t": "2007-10-28T15:30:00Z",
+          "from": [0.0, 0.2],
+          "to": [0.35, 0.75],
+          "user": "MinisteriöBot",
+          "comment": "ministeriluettelo valtioneuvoston matrikkelista",
+          "hunk": {
+            "del": ["Auran II hallitus toimi 29.10.1971–23.2.1972."],
+            "add": ["Kaikkien ministerien toimikausi kesti koko hallituksen ajan 29.10.1971–23.2.1972."]
+          },
+          "headline": "Reino Rossi & Jouko Tyyri end date (1972): not addressed until October 2007, stated with attribution since"
+        }
+      ],
+      [
+        "summary",
+        {
+          "text": "ANSWER: Across 86 revisions of Auran II hallitus (Regeringen Aura II / Aura II cabinet) since 2005, 6 stance shifts were traced covering ministerial appointment dates, the 1971 agricultural income crisis, and caretaker policy work. While Finnish Wikipedia standardized all ministerial terms to 29 October 1971 – 23 February 1972 between 2012 and 2015 based on the Finnish Government register, Swedish Wikipedia (Regeringen Aura II) retained unfixed table typos listing 23 February 1971 for Reino Rossi and Jouko Tyyri and 2 November 1971 for Esa Timonen."
+        }
+      ],
+      [
+        "done",
+        {
+          "requests": 24,
+          "tokens": 92400,
+          "cache_hits": 8,
+          "ms": 1140
+        }
+      ]
+    ],
     "Hauho": [
       [
         "sources",
@@ -14013,6 +14873,22 @@ window.WIKICHECK_DATA = {
     document.title = `${art.title} - Wikipedia (WikiCheck Demo)`;
     firstHeading.textContent = art.title;
     siteSub.textContent = art.editionLabel || "From Wikipedia, the free encyclopedia";
+    const wikiCoords = document.getElementById("wikiCoords");
+    if (wikiCoords) {
+      wikiCoords.hidden = art.slug !== "Hauho";
+    }
+    const quickFixBtn = document.getElementById("applyQuickFixBtn");
+    if (quickFixBtn) {
+      if (canonicalKey === "sv:Regeringen_Aura_II") {
+        quickFixBtn.hidden = false;
+        quickFixBtn.textContent = "Apply Finnish/English ministerial date fix (29.10.1971–23.2.1972)";
+      } else if (canonicalKey === "en:Hauho") {
+        quickFixBtn.hidden = false;
+        quickFixBtn.textContent = "Apply Finnish/Swedish area fix (443.37 km² & 87.44 km²)";
+      } else {
+        quickFixBtn.hidden = true;
+      }
+    }
     document.getElementById("editArticleName").textContent = art.title;
 
     // Language switcher buttons
@@ -14065,7 +14941,13 @@ window.WIKICHECK_DATA = {
     renderWikipediaPage(key);
   }
 
-  function navigateToArticle(key, initialMode = null) {
+  const navHistory = [];
+
+  function navigateToArticle(key, initialMode = null, pushHistory = true) {
+    const prevKey = wikiKey(currentWiki);
+    if (pushHistory && prevKey && prevKey !== key) {
+      navHistory.push(prevKey);
+    }
     showBrowserTab("wiki");
     wikiViewMode = "read";
     document.getElementById("wikiReadTab").classList.add("active");
@@ -14362,17 +15244,15 @@ window.WIKICHECK_DATA = {
   function lookupAskResponse(question, asOf) {
     const askDb = window.WIKICHECK_DATA?.ask || {};
     const qLower = question.toLowerCase();
-    if (asOf && asOf < "2009-01-01" && (qLower.includes("hauho") || currentWiki?.title === "Hauho")) {
-      return askDb["hauho_asof_2007"] || askDb["hauho"];
-    }
-    if (qLower.includes("peace") || qLower.includes("treaty") || qLower.includes("winter war") || qLower.includes("talvisota")) {
-      return askDb["talvisota"];
-    }
-    if (qLower.includes("aura")) {
+    const curTitle = String(currentWiki?.title || "").toLowerCase();
+    if (qLower.includes("aura") || qLower.includes("regeringen") || qLower.includes("hallitus") || qLower.includes("rossi") || qLower.includes("tyyri") || qLower.includes("timonen") || curTitle.includes("aura")) {
       return askDb["aura"];
     }
-    if (qLower.includes("hauho") || currentWiki?.title === "Hauho") {
-      return askDb["hauho"];
+    if (qLower.includes("peace") || qLower.includes("treaty") || qLower.includes("winter war") || qLower.includes("talvisota") || qLower.includes("vinterkriget") || curTitle.includes("talvisota") || curTitle.includes("winter") || curTitle.includes("vinterkriget")) {
+      return askDb["talvisota"];
+    }
+    if (asOf && asOf < "2009-01-01" && (qLower.includes("hauho") || curTitle === "hauho")) {
+      return askDb["hauho_asof_2007"] || askDb["hauho"];
     }
     return askDb["hauho"];
   }
@@ -14487,10 +15367,17 @@ window.WIKICHECK_DATA = {
   function getDriftEventsForQuery(q) {
     const driftDb = window.WIKICHECK_DATA?.drift || {};
     const ql = String(q || "").toLowerCase();
-    if (ql.includes("talvisota") || ql.includes("winter war") || ql.includes("civil war") || ql.includes("fixture")) {
-      return driftDb["Talvisota"] || driftDb["Hauho"] || [];
+    const curTitle = String(currentWiki?.title || "").toLowerCase();
+    if (ql.includes("aura") || ql.includes("regeringen") || ql.includes("hallitus") || (!ql && curTitle.includes("aura"))) {
+      return driftDb["Aura"] || [];
     }
-    return driftDb["Hauho"] || driftDb["Talvisota"] || [];
+    if (ql.includes("talvisota") || ql.includes("winter war") || ql.includes("vinterkriget") || ql.includes("civil war") || ql.includes("fixture") || (!ql && (curTitle.includes("talvisota") || curTitle.includes("winter") || curTitle.includes("vinterkriget")))) {
+      return driftDb["Talvisota"] || [];
+    }
+    if (curTitle.includes("aura") && !ql.includes("hauho")) {
+      return driftDb["Aura"] || [];
+    }
+    return driftDb["Hauho"] || [];
   }
 
   function runDrift(q) {
@@ -14709,6 +15596,7 @@ window.WIKICHECK_DATA = {
   document.getElementById("tabDriftFull").addEventListener("click", () => openFullDriftView(pageTitle() || "Hauho"));
   document.getElementById("driftBackToWiki").addEventListener("click", () => showBrowserTab("wiki"));
   document.getElementById("driftSwitchHauho").addEventListener("click", () => renderFullDriftTimeline("Hauho"));
+  document.getElementById("driftSwitchAura")?.addEventListener("click", () => renderFullDriftTimeline("Regeringen Aura II"));
   document.getElementById("driftSwitchTalvisota").addEventListener("click", () => renderFullDriftTimeline("Talvisota"));
 
   document.querySelectorAll("#quickDemos .demo-pill").forEach(btn => {
@@ -14728,7 +15616,8 @@ window.WIKICHECK_DATA = {
     load(true);
   });
   document.getElementById("btnBack").addEventListener("click", () => {
-    navigateToArticle("en:Hauho");
+    const prev = navHistory.pop();
+    if (prev) navigateToArticle(prev, null, false);
   });
 
   document.getElementById("urlForm").addEventListener("submit", e => {
@@ -14742,8 +15631,10 @@ window.WIKICHECK_DATA = {
       }
     }
     const val = urlInput.value.toLowerCase();
-    if (val.includes("aura")) navigateToArticle("sv:Regeringen_Aura_II");
-    else if (val.includes("talvisota")) navigateToArticle("fi:Talvisota");
+    if (val.includes("auran_ii_hallitus")) navigateToArticle("fi:Auran_II_hallitus");
+    else if (val.includes("aura_ii_cabinet")) navigateToArticle("en:Aura_II_cabinet");
+    else if (val.includes("aura")) navigateToArticle("sv:Regeringen_Aura_II");
+    else if (val.includes("talvisota") || val.includes("winter")) navigateToArticle("fi:Talvisota");
     else if (val.includes("fi.wikipedia")) navigateToArticle("fi:Hauho");
     else if (val.includes("sv.wikipedia")) navigateToArticle("sv:Hauho");
     else navigateToArticle("en:Hauho");
@@ -14752,7 +15643,9 @@ window.WIKICHECK_DATA = {
   document.getElementById("wikiSearchForm").addEventListener("submit", e => {
     e.preventDefault();
     const q = document.getElementById("wikiSearchInput").value.toLowerCase();
-    if (q.includes("aura")) navigateToArticle("sv:Regeringen_Aura_II");
+    if (q.includes("auran")) navigateToArticle("fi:Auran_II_hallitus");
+    else if (q.includes("cabinet")) navigateToArticle("en:Aura_II_cabinet");
+    else if (q.includes("aura")) navigateToArticle("sv:Regeringen_Aura_II");
     else if (q.includes("talvisota") || q.includes("winter")) navigateToArticle("fi:Talvisota");
     else navigateToArticle("en:Hauho");
   });
@@ -14763,12 +15656,19 @@ window.WIKICHECK_DATA = {
 
   document.getElementById("applyQuickFixBtn").addEventListener("click", () => {
     if (!mwContent) return;
-    mwContent.innerHTML = mwContent.innerHTML
-      .replace(/443\.13/g, "443.37")
-      .replace(/171\.09/g, "171.19")
-      .replace(/86\.26/g, "87.44")
-      .replace(/33\.31/g, "33.76");
-    customArticleHtml[wikiKey(currentWiki)] = mwContent.innerHTML;
+    const key = wikiKey(currentWiki);
+    if (key === "sv:Regeringen_Aura_II") {
+      mwContent.innerHTML = mwContent.innerHTML
+        .replace(/2\.11\.1971–23\.2\.1972/g, "29.10.1971–23.2.1972")
+        .replace(/29\.10\.1971–23\.2\.1971/g, "29.10.1971–23.2.1972");
+    } else {
+      mwContent.innerHTML = mwContent.innerHTML
+        .replace(/443\.13/g, "443.37")
+        .replace(/171\.09/g, "171.19")
+        .replace(/86\.26/g, "87.44")
+        .replace(/33\.31/g, "33.76");
+    }
+    customArticleHtml[key] = mwContent.innerHTML;
     load(true);
   });
 
@@ -14785,7 +15685,7 @@ window.WIKICHECK_DATA = {
   });
 
   // Initial load on https://en.wikipedia.org/wiki/Hauho
-  navigateToArticle("en:Hauho", "conflicts");
+  navigateToArticle("en:Hauho", "conflicts", false);
 })();
 
 </script>
