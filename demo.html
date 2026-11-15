@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hauho - Wikipedia (with WikiCheck Extension Demo)</title>
+  <title>Hauho - Wikipedia</title>
   <style>
     :root {
       --paper: #ffffff;
@@ -39,7 +39,7 @@
     }
     [hidden] { display: none !important; }
 
-    /* ---- Simulated Chrome Browser Frame ---- */
+    /* ---- Chrome Browser Frame ---- */
     .browser-shell {
       display: flex;
       flex-direction: column;
@@ -51,42 +51,40 @@
       display: flex;
       align-items: flex-end;
       gap: 4px;
-      padding: 6px 12px 0;
-      background: #dee1e6;
-      border-bottom: 1px solid #c4c7cc;
+      padding: 7px 12px 0;
+      background: #d3d7de;
       user-select: none;
       flex: none;
     }
 
     .window-dots {
       display: flex;
-      gap: 6px;
+      gap: 7px;
       align-items: center;
-      padding: 0 10px 8px 2px;
+      padding: 0 12px 9px 4px;
     }
     .window-dots span {
-      width: 11px;
-      height: 11px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
       display: inline-block;
     }
-    .dot-r { background: #ff5f57; }
-    .dot-y { background: #febc2e; }
-    .dot-g { background: #28c840; }
+    .dot-r { background: #ff5f57; border: 1px solid #e0443e; }
+    .dot-y { background: #febc2e; border: 1px solid #dea123; }
+    .dot-g { background: #28c840; border: 1px solid #1aab29; }
 
     .b-tab {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      padding: 6px 14px;
+      gap: 8px;
+      padding: 7px 16px;
       font-size: 12.5px;
       color: #474a4f;
-      background: #ebedf0;
-      border: 1px solid transparent;
-      border-bottom: 0;
+      background: #e3e6ec;
+      border: 0;
       border-radius: 8px 8px 0 0;
       cursor: pointer;
-      max-width: 260px;
+      max-width: 240px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -95,20 +93,20 @@
       background: #ffffff;
       color: #202122;
       font-weight: 500;
-      border-color: #c4c7cc;
+      box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.06);
     }
     .b-tab .w-favicon {
-      width: 15px;
-      height: 15px;
+      width: 16px;
+      height: 16px;
       border-radius: 3px;
       background: #fff;
-      border: 1px solid #d0d4d9;
+      border: 1px solid #c8ccd1;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       font-family: var(--serif);
       font-weight: 700;
-      font-size: 10px;
+      font-size: 10.5px;
       flex: none;
     }
 
@@ -116,20 +114,22 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 12px;
+      padding: 6px 14px;
       background: #ffffff;
-      border-bottom: 1px solid #d0d4d9;
+      border-bottom: 1px solid #dadce0;
       flex: none;
-      flex-wrap: wrap;
+      position: relative;
+      z-index: 40;
     }
 
     .nav-btns {
       display: flex;
       gap: 2px;
+      align-items: center;
     }
     .nav-btn {
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       border: 0;
       background: transparent;
       border-radius: 50%;
@@ -138,13 +138,14 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 14px;
+      padding: 0;
     }
     .nav-btn:hover { background: #f1f3f4; }
+    .nav-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
     .omnibox {
-      flex: 1 1 260px;
-      min-width: 200px;
+      flex: 1 1 280px;
+      min-width: 180px;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -157,14 +158,16 @@
     }
     .omnibox:focus-within {
       background: #fff;
-      border-color: #3366cc;
-      box-shadow: 0 0 0 2px rgba(51, 102, 204, 0.15);
+      border-color: #1a73e8;
+      box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.15);
     }
     .lock-icon {
+      display: inline-flex;
+      align-items: center;
       color: #5f6368;
-      font-size: 12px;
       flex: none;
     }
+    .lock-icon svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; }
     .url-input {
       border: 0;
       background: transparent;
@@ -178,96 +181,111 @@
       display: flex;
       align-items: center;
       gap: 4px;
-      flex-wrap: wrap;
-    }
-    .quick-demos-label {
-      font-size: 11.5px;
-      color: #54595d;
-      margin-right: 2px;
     }
     .demo-pill {
-      padding: 4px 9px;
-      font-size: 11.5px;
+      padding: 3px 8px;
+      font-size: 11px;
       border-radius: 999px;
-      border: 1px solid #d0d4d9;
+      border: 1px solid #dadce0;
       background: #f8f9fa;
-      color: #202122;
+      color: #3c4043;
       cursor: pointer;
-      transition: all 0.15s;
+      white-space: nowrap;
     }
-    .demo-pill:hover {
-      background: #eaecf0;
-      border-color: #a2a9b1;
-    }
+    .demo-pill:hover { background: #eaecf0; }
     .demo-pill.active {
-      background: #eaf3ff;
-      border-color: #3366cc;
-      color: #1f4da0;
+      background: #e8f0fe;
+      border-color: #1a73e8;
+      color: #1967d2;
       font-weight: 600;
     }
 
+    /* ---- Authentic Chrome Extensions Toolbar Area ---- */
     .ext-toolbar {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding-left: 6px;
+      gap: 4px;
+      padding-left: 8px;
+      margin-left: 2px;
       border-left: 1px solid #e0e2e6;
     }
-    .ext-btn {
+    .chrome-ext-action {
       position: relative;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 0;
+      background: transparent;
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      padding: 5px 11px;
-      border-radius: 6px;
-      border: 1px solid #c8ccd1;
-      background: #f8f9fa;
-      color: #202122;
-      font-size: 12.5px;
-      font-weight: 600;
+      justify-content: center;
       cursor: pointer;
-      transition: all 0.15s;
+      padding: 0;
+      transition: background 0.15s, box-shadow 0.15s;
     }
-    .ext-btn:hover { background: #eaecf0; }
-    .ext-btn.open {
-      background: #eaf3ff;
-      border-color: #3366cc;
-      color: #1d4fa3;
+    .chrome-ext-action:hover {
+      background: #f1f3f4;
+    }
+    .chrome-ext-action.open {
+      background: #e8f0fe;
+      box-shadow: inset 0 0 0 1.5px #1a73e8;
     }
     .ext-icon-box {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       border-radius: 4px;
       background: #1f5fbf;
       color: #fff;
       font-family: var(--serif);
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
+    /* Exact Chrome action badge (bottom-right of extension icon) */
     .ext-badge {
+      position: absolute;
+      right: 1px;
+      bottom: 1px;
+      min-width: 15px;
+      height: 14px;
+      padding: 0 3.5px;
+      border-radius: 4px;
+      font-size: 9.5px;
+      line-height: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      background: #dc2626;
+      border: 1.5px solid #ffffff;
+      text-align: center;
+      pointer-events: none;
+    }
+    .chrome-puzzle-btn, .chrome-dots-btn {
+      width: 32px;
+      height: 32px;
+      border: 0;
+      background: transparent;
+      border-radius: 50%;
+      color: #5f6368;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 18px;
-      height: 18px;
-      padding: 0 5px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
-      color: #fff;
-      background: #dc2626;
+      cursor: pointer;
+      padding: 0;
     }
+    .chrome-puzzle-btn:hover, .chrome-dots-btn:hover { background: #f1f3f4; }
+    .chrome-puzzle-btn svg, .chrome-dots-btn svg { width: 17px; height: 17px; fill: currentColor; }
 
-    /* ---- Main Workspace: Wikipedia Left + WikiCheck Extension Right ---- */
+    /* ---- Main Workspace: Wikipedia Page + Floating Chrome Extension Popup ---- */
     .workspace {
       flex: 1 1 auto;
       min-height: 0;
       display: flex;
       background: #ffffff;
       position: relative;
+      overflow: hidden;
     }
 
     /* ---- Wikipedia Vector-2022 Pane ---- */
@@ -279,6 +297,15 @@
       background: #ffffff;
       color: #202122;
       scroll-behavior: smooth;
+      /* Leave comfortable space on the right so the floating extension popup sits alongside the article without covering it */
+      padding-right: 484px;
+      transition: padding-right 0.2s ease;
+    }
+    .wiki-pane.ext-closed {
+      padding-right: 0;
+    }
+    @media (max-width: 1080px) {
+      .wiki-pane { padding-right: 0; }
     }
 
     .wiki-topbar {
@@ -328,7 +355,7 @@
     }
     .wiki-search-box {
       display: flex;
-      max-width: 340px;
+      max-width: 320px;
       width: 100%;
     }
     .wiki-search-box input {
@@ -351,7 +378,7 @@
     }
 
     .wiki-container {
-      max-width: 1040px;
+      max-width: 960px;
       margin: 0 auto;
       padding: 18px 28px 64px;
     }
@@ -430,7 +457,6 @@
       gap: 8px;
     }
 
-    /* Wikipedia Content Styling */
     .mw-body-content {
       font-size: 14.5px;
       line-height: 1.6;
@@ -441,9 +467,7 @@
       text-decoration: none;
     }
     .mw-body-content a:hover { text-decoration: underline; }
-    .mw-body-content p {
-      margin: 0.5em 0 1em;
-    }
+    .mw-body-content p { margin: 0.5em 0 1em; }
     .mw-body-content h2 {
       font-family: var(--serif);
       font-size: 21px;
@@ -458,20 +482,12 @@
       font-weight: 600;
       margin: 1.1em 0 0.4em;
     }
-    .mw-editsection {
-      font-family: var(--sans);
-      font-size: 12px;
-      font-weight: 400;
-      color: #54595d;
-      margin-left: 8px;
-    }
     .reference {
       font-size: 11px;
       line-height: 1;
       vertical-align: super;
     }
 
-    /* Expand banner */
     .ambox {
       margin: 0 0 16px;
       padding: 10px 14px;
@@ -492,20 +508,16 @@
       padding-top: 2px;
     }
 
-    /* Infobox */
     .wiki-infobox {
       float: right;
       clear: right;
-      width: 290px;
-      margin: 0 0 16px 22px;
+      width: 270px;
+      margin: 0 0 16px 20px;
       background: #f8f9fa;
       border: 1px solid #a2a9b1;
       padding: 4px;
       font-size: 12.5px;
       line-height: 1.45;
-    }
-    @media (max-width: 1100px) {
-      .wiki-infobox { float: none; width: 100%; max-width: 340px; margin: 0 0 16px 0; }
     }
     .wiki-infobox th, .wiki-infobox td {
       padding: 4px 6px;
@@ -538,7 +550,6 @@
       text-align: left;
     }
 
-    /* Tables in articles (e.g., Regeringen Aura II) */
     .wikitable {
       border-collapse: collapse;
       margin: 1em 0;
@@ -552,12 +563,8 @@
       padding: 6px 10px;
       text-align: left;
     }
-    .wikitable th {
-      background: #eaecf0;
-      font-weight: 600;
-    }
+    .wikitable th { background: #eaecf0; font-weight: 600; }
 
-    /* Edit banner inside Wikipedia */
     .wiki-edit-banner {
       margin: 0 0 14px;
       padding: 12px 14px;
@@ -571,11 +578,7 @@
       gap: 12px;
       flex-wrap: wrap;
     }
-    .wiki-edit-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+    .wiki-edit-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .wiki-btn {
       padding: 5px 11px;
       font-size: 12.5px;
@@ -605,49 +608,54 @@
       transition: background-color 0.3s ease;
     }
 
-    /* ---- WikiCheck Extension Popup Sidebar (Exact styles from extension/styles.css) ---- */
+    /* ---- Authentic Chrome Extension Popup Bubble (Exact 460px × max 600px from extension/styles.css) ---- */
     .extension-dock {
+      position: absolute;
+      top: 8px;
+      right: 14px;
       width: 460px;
-      flex: none;
-      height: 100%;
-      border-left: 1px solid var(--rule);
+      max-height: min(600px, calc(100vh - 104px));
       background: var(--paper);
+      border: 1px solid #c8ccd1;
+      border-radius: 8px;
       display: flex;
       flex-direction: column;
-      box-shadow: -4px 0 18px rgba(0, 0, 0, 0.08);
-      z-index: 20;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.10);
+      z-index: 30;
     }
-    @media (max-width: 900px) {
-      .workspace { flex-direction: column; }
-      .extension-dock { width: 100%; height: 52%; border-left: 0; border-top: 2px solid var(--rule); }
+    /* Caret pointing up to the WikiCheck extension icon in the Chrome toolbar */
+    .extension-dock::before {
+      content: "";
+      position: absolute;
+      top: -7px;
+      right: 72px;
+      width: 12px;
+      height: 12px;
+      background: var(--paper);
+      border-left: 1px solid #c8ccd1;
+      border-top: 1px solid #c8ccd1;
+      transform: rotate(45deg);
+      pointer-events: none;
     }
 
-    .ext-chrome-caption {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 5px 12px;
-      background: #f1f3f4;
-      border-bottom: 1px solid #d0d4d9;
-      font-size: 11px;
-      color: #54595d;
-      flex: none;
-    }
-    .ext-chrome-caption strong { color: #202122; }
-
+    /* Exact CSS from extension/styles.css */
     .wikicheck-popup {
-      flex: 1 1 auto;
-      min-height: 0;
+      width: 460px;
+      max-height: min(600px, calc(100vh - 104px));
       display: flex;
       flex-direction: column;
       font: 13px/1.5 var(--sans);
       color: var(--ink);
       background: var(--paper);
+      border-radius: 8px;
+      overflow: hidden;
     }
     .wikicheck-popup a { color: var(--link); text-decoration: none; }
     .wikicheck-popup a:hover { text-decoration: underline; }
     .wikicheck-popup button { font: inherit; cursor: pointer; }
+    .wikicheck-popup :focus-visible { outline: 2px solid var(--link); outline-offset: 1px; }
 
+    /* ---- header: wordmark, the article, the four tools as page tabs (exact extension/styles.css) ---- */
     .wikicheck-popup header { padding: 10px 16px 0; border-bottom: 1px solid var(--rule); flex: none; }
     .wikicheck-popup .masthead { display: flex; align-items: center; justify-content: space-between; min-height: 22px; }
     .wikicheck-popup .wordmark { font: 400 13px/1 var(--serif); letter-spacing: .04em; color: var(--muted); }
@@ -664,7 +672,7 @@
 
     .wikicheck-popup .modes { display: flex; gap: 2px; margin-bottom: -1px; }
     .wikicheck-popup .mode {
-      padding: 6px 12px 7px; font-size: 13px; color: var(--link);
+      padding: 6px 14px 7px; font-size: 13px; color: var(--link);
       background: none; border: 1px solid transparent; border-bottom: 0; border-radius: 2px 2px 0 0;
     }
     .wikicheck-popup .mode:not(.active):hover { text-decoration: underline; }
@@ -675,6 +683,7 @@
     .wikicheck-popup .n { margin-left: 5px; font-size: 12px; font-weight: 400; color: var(--muted); }
     .wikicheck-popup .n:empty { display: none; }
 
+    /* ---- inputs ---- */
     .wikicheck-popup .field-row { display: flex; }
     .wikicheck-popup .field-row input[type=text] {
       flex: 1; min-width: 0; padding: 6px 9px; font: inherit; color: inherit; background: var(--paper);
@@ -695,6 +704,7 @@
 
     .wikicheck-popup main { padding: 12px 16px 16px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
 
+    /* ---- shared pieces ---- */
     .wikicheck-popup .state { padding: 22px 8px; color: var(--muted); text-align: center; }
     .wikicheck-popup .state strong { color: var(--ink); }
     .wikicheck-popup .state small { display: block; margin-top: 4px; }
@@ -709,6 +719,7 @@
     .wikicheck-popup .also { margin: 0 0 10px; font-size: 12px; color: var(--muted); }
     .wikicheck-popup .section-label { margin: 16px 0 2px; font: 400 15px/1.3 var(--serif); border-bottom: 1px solid var(--soft); padding-bottom: 2px; }
 
+    /* one finding: no box, a hairline between findings */
     .wikicheck-popup .item { padding: 12px 0; border-bottom: 1px solid var(--soft); }
     .wikicheck-popup .item:last-child { border-bottom: 0; }
     .wikicheck-popup .item-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 3px; }
@@ -718,6 +729,7 @@
     .wikicheck-popup .aside { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
     .wikicheck-popup .expl { margin: 0 0 8px; }
 
+    /* the pair of quotes, coloured like the two sides of a diff */
     .wikicheck-popup .side {
       display: grid; grid-template-columns: 62px 1fr; gap: 0 10px; align-items: start;
       padding: 6px 8px; border-left: 3px solid; margin-top: 4px;
@@ -745,6 +757,7 @@
     .wikicheck-popup .demo-links a { padding: 7px 10px; border: 1px solid var(--soft); background: var(--wash); border-radius: 2px; }
     .wikicheck-popup .demo-links a:hover { background: var(--soft); }
 
+    /* ---- Ask ---- */
     .wikicheck-popup .ask-form textarea {
       display: block; width: 100%; padding: 7px 9px; font: inherit; color: inherit; resize: vertical;
       border: 1px solid var(--rule); border-radius: 2px; outline: none;
@@ -755,6 +768,7 @@
     .wikicheck-popup .cite { font: 400 11px/0 var(--sans); vertical-align: super; }
     .wikicheck-popup .source-n { color: var(--muted); margin-right: 4px; }
 
+    /* ---- Drift: changes in time order on a rail ---- */
     .wikicheck-popup .summary { margin: 12px 0 2px; font: 400 14px/1.6 var(--sans); }
     .wikicheck-popup .run-status { margin: 12px 0 4px; color: var(--muted); }
     .wikicheck-popup .run-status strong { color: var(--ink); }
@@ -799,7 +813,7 @@
 </head>
 <body>
   <div class="browser-shell">
-    <!-- Simulated Browser Tabs -->
+    <!-- Chrome Window Tabs -->
     <div class="browser-tabs">
       <div class="window-dots" aria-hidden="true">
         <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
@@ -810,40 +824,53 @@
       </button>
       <button class="b-tab" id="tabDriftFull" type="button">
         <span class="w-favicon" style="background:#1f5fbf;color:#fff;border-color:#1f5fbf;">W</span>
-        <span>WikiCheck · Version history (/drift)</span>
+        <span>WikiCheck · Version history</span>
       </button>
     </div>
 
-    <!-- Simulated Browser Omnibox & Extension Toolbar -->
+    <!-- Chrome Address Bar & Extensions Toolbar -->
     <div class="browser-bar">
       <div class="nav-btns">
-        <button class="nav-btn" id="btnBack" title="Back" type="button">&#8592;</button>
-        <button class="nav-btn" id="btnReload" title="Reload page" type="button">&#8635;</button>
+        <button class="nav-btn" id="btnBack" title="Back" type="button" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        </button>
+        <button class="nav-btn" id="btnReload" title="Reload this page" type="button" aria-label="Reload">
+          <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+        </button>
       </div>
       <form class="omnibox" id="urlForm">
-        <span class="lock-icon" title="HTTPS">&#128274;</span>
+        <span class="lock-icon" title="Connection is secure">
+          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </span>
         <input class="url-input" id="urlInput" type="text" value="https://en.wikipedia.org/wiki/Hauho" aria-label="Address bar">
       </form>
-      <div class="quick-demos" id="quickDemos">
-        <span class="quick-demos-label">Showcase pages:</span>
+      <div class="quick-demos" id="quickDemos" title="Switch demo Wikipedia article">
         <button type="button" class="demo-pill active" data-key="en:Hauho">en: Hauho</button>
         <button type="button" class="demo-pill" data-key="fi:Hauho">fi: Hauho</button>
         <button type="button" class="demo-pill" data-key="sv:Hauho">sv: Hauho</button>
         <button type="button" class="demo-pill" data-key="sv:Regeringen_Aura_II">sv: Regeringen Aura II</button>
         <button type="button" class="demo-pill" data-key="fi:Talvisota">fi: Talvisota</button>
       </div>
-      <div class="ext-toolbar">
-        <button type="button" class="ext-btn open" id="extToggleBtn" title="Toggle WikiCheck Chrome Extension Popup">
+      <div class="ext-toolbar" aria-label="Chrome Extensions">
+        <!-- Pinned WikiCheck Chrome Extension Icon with Badge -->
+        <button type="button" class="chrome-ext-action open" id="extToggleBtn" title="WikiCheck — Wikipedia Cross-Language Checker (click to toggle popup)">
           <span class="ext-icon-box">W</span>
-          <span>WikiCheck</span>
           <span class="ext-badge" id="extBadge">7</span>
+        </button>
+        <!-- Chrome Extensions Puzzle Icon -->
+        <button type="button" class="chrome-puzzle-btn" id="extPuzzleBtn" title="Extensions">
+          <svg viewBox="0 0 24 24"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"/></svg>
+        </button>
+        <!-- Chrome 3-dots menu -->
+        <button type="button" class="chrome-dots-btn" title="Customize and control Google Chrome" aria-label="Menu">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
         </button>
       </div>
     </div>
 
-    <!-- Main Workspace: Wikipedia Page + WikiCheck Extension Popup -->
+    <!-- Main Workspace: Wikipedia Page + Floating Chrome Extension Popup -->
     <div class="workspace">
-      <!-- Left: Wikipedia Page -->
+      <!-- Wikipedia Page -->
       <div class="wiki-pane" id="wikiPane">
         <div class="wiki-topbar">
           <div class="wiki-brand">
@@ -854,7 +881,7 @@
             </div>
           </div>
           <form class="wiki-search-box" id="wikiSearchForm">
-            <input type="search" id="wikiSearchInput" placeholder="Search Wikipedia (try Hauho, Regeringen Aura II, Talvisota)">
+            <input type="search" id="wikiSearchInput" placeholder="Search Wikipedia">
             <button type="submit">Search</button>
           </form>
         </div>
@@ -939,12 +966,8 @@
         </div>
       </div>
 
-      <!-- Right: WikiCheck Chrome Extension Popup (exact extension/popup.html UI) -->
-      <aside class="extension-dock" id="extensionDock">
-        <div class="ext-chrome-caption">
-          <span><strong>WikiCheck Extension</strong> · Chrome Extension (Manifest V3)</span>
-          <span id="backendStatusBadge" title="Connects to local Ollama (127.0.0.1:11434) &amp; WikiCheck API (127.0.0.1:8020) when running, with embedded bge-m3 vectors + MariaDB cache for GitHub Pages">Ollama <code>bge-m3</code> · MariaDB Vector + SVT</span>
-        </div>
+      <!-- Chrome Extension Popup Bubble (Exact extension/popup.html markup & 460x600 layout) -->
+      <aside class="extension-dock" id="extensionDock" aria-label="WikiCheck Extension Popup">
         <div class="wikicheck-popup">
           <header>
             <div class="masthead">
@@ -14692,11 +14715,14 @@ window.WIKICHECK_DATA = {
     btn.addEventListener("click", () => navigateToArticle(btn.dataset.key));
   });
 
-  extToggleBtn.addEventListener("click", () => {
+  const toggleExtensionPopup = () => {
     const isHidden = extensionDock.hidden;
     extensionDock.hidden = !isHidden;
     extToggleBtn.classList.toggle("open", isHidden);
-  });
+    document.getElementById("wikiPane")?.classList.toggle("ext-closed", !isHidden);
+  };
+  extToggleBtn.addEventListener("click", toggleExtensionPopup);
+  document.getElementById("extPuzzleBtn")?.addEventListener("click", toggleExtensionPopup);
 
   document.getElementById("btnReload").addEventListener("click", () => {
     load(true);
