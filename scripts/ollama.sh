@@ -3,6 +3,7 @@
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TOOLS="$ROOT/pacome/data/tools"   # git-ignored
 export OLLAMA_MODELS="$TOOLS/models"
+export OLLAMA_ORIGINS="*"
 # The local server the script starts and checks. The app reads OLLAMA_URL itself (.env), so it can point at a remote GPU.
 LOCAL_OLLAMA_URL="http://localhost:11434"
 
